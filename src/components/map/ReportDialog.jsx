@@ -17,29 +17,60 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Wrench, Users, AlertTriangle, Palette } from 'lucide-react';
+import { Wrench, Users, AlertTriangle } from 'lucide-react';
 
 const CATEGORIES = [
-  { id: 'operations', label: 'תפעול', icon: Wrench },
-  { id: 'community', label: 'קהילה', icon: Users },
-  { id: 'emergency', label: 'חירום', icon: AlertTriangle },
-  { id: 'culture', label: 'תרבות', icon: Palette },
+  { 
+    id: 'operations', 
+    label: 'תפעול', 
+    icon: Wrench,
+    subCategories: [
+      { id: 'waste_centers', label: 'ריכוזי אשפה' },
+      { id: 'recycling', label: 'כלי מחזור' },
+      { id: 'sweeping_routes', label: 'מסלולי טיאוט' },
+      { id: 'pruning_stations', label: 'עמדות גזם' },
+      { id: 'leisure', label: 'פנאי' },
+    ]
+  },
+  { 
+    id: 'community', 
+    label: 'קהילה ותרבות', 
+    icon: Users,
+    subCategories: [
+      { id: 'upcoming_events', label: 'אירועים קרובים' },
+      { id: 'education', label: 'מוסדות חינוך' },
+      { id: 'sports', label: 'מתקני ספורט ופנאי' },
+    ]
+  },
+  { 
+    id: 'emergency', 
+    label: 'חירום וביטחון', 
+    icon: AlertTriangle,
+    subCategories: [
+      { id: 'public_shelters', label: 'מקלטים ציבוריים' },
+      { id: 'emergency_alerts', label: 'התראות חירום' },
+    ]
+  },
 ];
 
 export default function ReportDialog({ isOpen, onClose, location, onSubmit }) {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
+  const [subCategory, setSubCategory] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const selectedCategory = CATEGORIES.find(c => c.id === category);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !category) return;
+    if (!name || !category || !subCategory) return;
 
     setIsSubmitting(true);
     await onSubmit({
       name,
       category,
+      sub_category: subCategory,
       description,
       latitude: location.lat,
       longitude: location.lng,
@@ -48,6 +79,7 @@ export default function ReportDialog({ isOpen, onClose, location, onSubmit }) {
     // Reset form
     setName('');
     setCategory('');
+    setSubCategory('');
     setDescription('');
     setIsSubmitting(false);
   };
@@ -55,6 +87,7 @@ export default function ReportDialog({ isOpen, onClose, location, onSubmit }) {
   const handleClose = () => {
     setName('');
     setCategory('');
+    setSubCategory('');
     setDescription('');
     onClose();
   };
@@ -82,26 +115,44 @@ export default function ReportDialog({ isOpen, onClose, location, onSubmit }) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category">קטגוריה *</Label>
-            <Select value={category} onValueChange={setCategory} required>
-              <SelectTrigger id="category">
-                <SelectValue placeholder="בחר קטגוריה" />
-              </SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.map((cat) => {
-                  const Icon = cat.icon;
-                  return (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      <div className="flex items-center gap-2">
-                        <Icon className="w-4 h-4" />
-                        {cat.label}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
+                          <Label htmlFor="category">קטגוריה *</Label>
+                          <Select value={category} onValueChange={(val) => { setCategory(val); setSubCategory(''); }} required>
+                            <SelectTrigger id="category">
+                              <SelectValue placeholder="בחר קטגוריה" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CATEGORIES.map((cat) => {
+                                const Icon = cat.icon;
+                                return (
+                                  <SelectItem key={cat.id} value={cat.id}>
+                                    <div className="flex items-center gap-2">
+                                      <Icon className="w-4 h-4" />
+                                      {cat.label}
+                                    </div>
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {selectedCategory && (
+                          <div className="space-y-2">
+                            <Label htmlFor="subCategory">תת קטגוריה *</Label>
+                            <Select value={subCategory} onValueChange={setSubCategory} required>
+                              <SelectTrigger id="subCategory">
+                                <SelectValue placeholder="בחר תת קטגוריה" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {selectedCategory.subCategories.map((sub) => (
+                                  <SelectItem key={sub.id} value={sub.id}>
+                                    {sub.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
 
           <div className="space-y-2">
             <Label htmlFor="description">תיאור</Label>
@@ -120,7 +171,7 @@ export default function ReportDialog({ isOpen, onClose, location, onSubmit }) {
             </Button>
             <Button
               type="submit"
-              disabled={!name || !category || isSubmitting}
+              disabled={!name || !category || !subCategory || isSubmitting}
               className="bg-blue-600 hover:bg-blue-700"
             >
               {isSubmitting ? 'שולח...' : 'שלח דיווח'}
