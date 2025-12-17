@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, MapPin, Dumbbell, Baby, TreePine } from "lucide-react";
+import { Search, MapPin, Dumbbell, Baby, TreePine, Map } from "lucide-react";
+import ParksMap from "../components/ParksMap";
 
 export default function ParksPage() {
     const [searchQuery, setSearchQuery] = useState("");
@@ -125,8 +126,12 @@ export default function ParksPage() {
                     </div>
                 </div>
 
-                <Tabs defaultValue="all" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4 mb-6">
+                <Tabs defaultValue="map" className="w-full">
+                    <TabsList className="grid w-full grid-cols-5 mb-6">
+                        <TabsTrigger value="map">
+                            <Map className="w-4 h-4 ml-2" />
+                            מפה
+                        </TabsTrigger>
                         <TabsTrigger value="all">
                             הכל ({filteredParks.length})
                         </TabsTrigger>
@@ -143,6 +148,10 @@ export default function ParksPage() {
                             שטחים ציבוריים ({publicParks.length})
                         </TabsTrigger>
                     </TabsList>
+
+                    <TabsContent value="map">
+                        <ParksMap parks={filteredParks} />
+                    </TabsContent>
 
                     <TabsContent value="all">
                         <ParksList 
