@@ -58,6 +58,16 @@ export default function Layout({ children, currentPageName }) {
         .animate-pulse-subtle {
           animation: pulse-subtle 2s ease-in-out infinite;
         }
+        
+        /* Leaflet Map Styles */
+        .leaflet-container {
+          font-family: 'Heebo', 'Inter', sans-serif;
+        }
+        
+        .custom-marker {
+          background: transparent !important;
+          border: none !important;
+        }
       `}</style>
       <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       {children}
