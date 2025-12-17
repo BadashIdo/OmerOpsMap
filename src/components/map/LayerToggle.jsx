@@ -37,7 +37,7 @@ export default function LayerToggle({ selectedLayers, onLayerToggle }) {
 
   return (
     <div className="relative h-full">
-      <div className="h-full flex flex-col gap-2 p-4 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200 overflow-y-auto">
+      <div className="h-full flex flex-col gap-2 p-2 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200 overflow-y-auto">
       {LAYERS.map(layer => {
         const Icon = layer.icon;
         const isActive = selectedLayers.includes(layer.id);
@@ -46,17 +46,17 @@ export default function LayerToggle({ selectedLayers, onLayerToggle }) {
           <Button
             key={layer.id}
             variant={isActive ? 'default' : 'outline'}
-            size="sm"
+            size="icon"
             onClick={() => handleLayerToggle(layer.id)}
+            title={layer.label}
             className={cn(
-              'w-full justify-start gap-2 transition-all duration-200',
+              'w-10 h-10 transition-all duration-200',
               isActive && layer.activeColor,
               isActive && 'text-white shadow-md',
               !isActive && 'hover:bg-slate-100'
             )}
           >
-            <Icon className="w-4 h-4" />
-            <span>{layer.label}</span>
+            <Icon className="w-5 h-5" />
           </Button>
         );
       })}
