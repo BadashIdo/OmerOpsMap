@@ -12,7 +12,7 @@ const LAYERS = [
 
 export default function LayerToggle({ selectedLayers, onLayerToggle }) {
   return (
-    <div className="flex flex-wrap gap-2 p-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200">
+    <div className="flex flex-wrap gap-2 p-2 sm:p-3 bg-white/98 backdrop-blur-sm rounded-xl shadow-xl border-2 border-slate-300">
       {LAYERS.map(layer => {
         const Icon = layer.icon;
         const isActive = selectedLayers.includes(layer.id);
@@ -24,14 +24,14 @@ export default function LayerToggle({ selectedLayers, onLayerToggle }) {
             size="sm"
             onClick={() => onLayerToggle(layer.id)}
             className={cn(
-              'gap-2 transition-all duration-200',
+              'gap-1.5 sm:gap-2 transition-all duration-200 font-medium',
               isActive && layer.activeColor,
               isActive && 'text-white shadow-md',
-              !isActive && 'hover:bg-slate-100'
+              !isActive && 'hover:bg-slate-100 border-slate-300'
             )}
           >
             <Icon className="w-4 h-4" />
-            <span className="hidden sm:inline">{layer.label}</span>
+            <span>{layer.label}</span>
           </Button>
         );
       })}
