@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MapContainer as LeafletMap, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { Navigation } from 'lucide-react';
 
 const OMER_CENTER = [31.2647, 34.8497];
 const OMER_ZOOM = 14;
@@ -77,8 +78,14 @@ function createCustomIcon(category, type, parkCategory) {
   });
 }
 
-function MapController({ selectedSite }) {
+function MapController({ selectedSite, mapRef }) {
   const map = useMap();
+  
+  useEffect(() => {
+    if (mapRef) {
+      mapRef.current = map;
+    }
+  }, [map, mapRef]);
   
   useEffect(() => {
     if (selectedSite) {
@@ -92,6 +99,28 @@ function MapController({ selectedSite }) {
 }
 
 export default function MapContainer({ sites, parks = [], selectedLayers, onMarkerClick, onParkClick, selectedSite }) {
+  const [userLocation, setUserLocation] = useState(null);
+  const mapRef = useRef(null);
+
+  const handleLocateMe = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ latitude, longitude });
+          if (mapRef.current) {
+            mapRef.current.flyTo([latitude, longitude], 17, { duration: 1 });
+          }
+        },
+        (error) => {
+          alert('לא ניתן לגשת למיקום שלך. אנא ודא שנתת הרשאה לדפדפן.');
+        }
+      );
+    } else {
+      alert('הדפדפן שלך לא תומך בשירותי מיקום.');
+    }
+  };
+
   const filteredSites = sites.filter(site => 
     selectedLayers.includes(site.category) && site.latitude && site.longitude
   );
@@ -117,20 +146,50 @@ export default function MapContainer({ sites, parks = [], selectedLayers, onMark
 
   const filteredParks = parksWithCoords.filter(park => selectedLayers.includes(park.layerId));
 
+  const userLocationIcon = L.divIcon({
+    className: 'custom-marker',
+    html: `
+      <div style="
+        background-color: #3b82f6;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 4px solid white;
+        box-shadow: 0 0 0 2px #3b82f6, 0 2px 8px rgba(0,0,0,0.3);
+      "></div>
+    `,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+  });
+
   return (
-    <LeafletMap
-      center={OMER_CENTER}
-      zoom={OMER_ZOOM}
-      zoomControl={false}
-      className="w-full h-full z-0"
-      style={{ height: '100%', width: '100%' }}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      
-      <ZoomControl position="bottomleft" />
+    <div className="relative w-full h-full">
+      <LeafletMap
+        center={OMER_CENTER}
+        zoom={OMER_ZOOM}
+        zoomControl={false}
+        className="w-full h-full z-0"
+        style={{ height: '100%', width: '100%' }}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        
+        <ZoomControl position="bottomleft" />
+        
+        {userLocation && (
+          <Marker
+            position={[userLocation.latitude, userLocation.longitude]}
+            icon={userLocationIcon}
+          >
+            <Popup>
+              <div className="text-center" dir="rtl">
+                <strong>המיקום שלי</strong>
+              </div>
+            </Popup>
+          </Marker>
+        )}
       
       {filteredSites.map((site) => (
         <Marker
@@ -169,7 +228,16 @@ export default function MapContainer({ sites, parks = [], selectedLayers, onMark
         </Marker>
       ))}
 
-      <MapController selectedSite={selectedSite} />
-    </LeafletMap>
+        <MapController selectedSite={selectedSite} mapRef={mapRef} />
+      </LeafletMap>
+
+      <button
+        onClick={handleLocateMe}
+        className="absolute bottom-32 left-2 z-[1000] bg-white hover:bg-gray-50 border-2 border-gray-300 rounded-md shadow-md w-8 h-8 flex items-center justify-center transition-colors"
+        title="המיקום שלי"
+      >
+        <Navigation className="w-5 h-5 text-gray-700" />
+      </button>
+    </div>
   );
 }
