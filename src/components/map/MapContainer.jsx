@@ -35,9 +35,18 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-function createCustomIcon(category, type) {
-  const color = CATEGORY_COLORS[category] || '#6B7280';
-  const icon = TYPE_ICONS[type] || '📍';
+function createCustomIcon(category, type, parkCategory) {
+  let color, icon;
+  
+  if (category === 'parks') {
+    color = parkCategory === 'גינת כושר' ? '#3b82f6' : 
+            parkCategory === 'גן ילדים' ? '#ec4899' : '#22c55e';
+    icon = parkCategory === 'גינת כושר' ? '💪' : 
+           parkCategory === 'גן ילדים' ? '🎠' : '🌳';
+  } else {
+    color = CATEGORY_COLORS[category] || '#6B7280';
+    icon = TYPE_ICONS[type] || '📍';
+  }
   
   return L.divIcon({
     className: 'custom-marker',
@@ -76,10 +85,26 @@ function MapController({ selectedSite }) {
   return null;
 }
 
-export default function MapContainer({ sites, selectedLayers, onMarkerClick, selectedSite }) {
+export default function MapContainer({ sites, parks = [], selectedLayers, onMarkerClick, selectedSite }) {
   const filteredSites = sites.filter(site => 
     selectedLayers.includes(site.category) && site.latitude && site.longitude
   );
+
+  // Parse park coordinates from address field
+  const parksWithCoords = parks.map(park => {
+    const coordMatch = park.address?.match(/^(\d+\.\d+),\s*(\d+\.\d+)$/);
+    if (coordMatch) {
+      return {
+        ...park,
+        latitude: parseFloat(coordMatch[1]),
+        longitude: parseFloat(coordMatch[2]),
+        category: 'parks'
+      };
+    }
+    return null;
+  }).filter(park => park !== null);
+
+  const filteredParks = selectedLayers.includes('parks') ? parksWithCoords : [];
 
   return (
     <LeafletMap
@@ -110,7 +135,23 @@ export default function MapContainer({ sites, selectedLayers, onMarkerClick, sel
           </Popup>
         </Marker>
       ))}
-      
+
+      {filteredParks.map((park) => (
+        <Marker
+          key={`park-${park.id}`}
+          position={[park.latitude, park.longitude]}
+          icon={createCustomIcon('parks', null, park.category)}
+        >
+          <Popup>
+            <div className="text-center" dir="rtl">
+              <strong>{park.name}</strong>
+              <div className="text-sm text-gray-600">{park.category}</div>
+              {park.symbol && <div className="text-xs text-gray-500">סמל: {park.symbol}</div>}
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+
       <MapController selectedSite={selectedSite} />
     </LeafletMap>
   );

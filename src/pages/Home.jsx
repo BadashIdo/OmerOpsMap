@@ -13,7 +13,7 @@ import { Bell, MessageCircle, Menu, ChevronDown, ChevronUp } from 'lucide-react'
 import { Badge } from '@/components/ui/badge';
 
 export default function Home() {
-  const [selectedLayers, setSelectedLayers] = useState(['operations', 'community', 'emergency', 'culture']);
+  const [selectedLayers, setSelectedLayers] = useState(['operations', 'community', 'emergency', 'culture', 'parks']);
   const [selectedSite, setSelectedSite] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isAlertsExpanded, setIsAlertsExpanded] = useState(true);
@@ -32,6 +32,11 @@ export default function Home() {
   const { data: liveMessages = [] } = useQuery({
     queryKey: ['liveMessages'],
     queryFn: () => base44.entities.LiveMessage.filter({ is_active: true }),
+  });
+
+  const { data: parks = [] } = useQuery({
+    queryKey: ['parks'],
+    queryFn: () => base44.entities.Park.list(),
   });
 
   const activeAlerts = liveMessages.filter(msg => !dismissedAlerts.includes(msg.id));
@@ -146,6 +151,7 @@ export default function Home() {
         {/* Map */}
         <MapContainer
           sites={sites}
+          parks={parks}
           selectedLayers={selectedLayers}
           onMarkerClick={handleMarkerClick}
           selectedSite={selectedSite}

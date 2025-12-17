@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Wrench, Users, AlertTriangle, Palette } from 'lucide-react';
+import { Wrench, Users, AlertTriangle, Palette, TreePine } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const LAYERS = [
@@ -8,6 +8,7 @@ const LAYERS = [
   { id: 'community', label: 'קהילה', icon: Users, color: 'bg-green-500', activeColor: 'bg-green-600' },
   { id: 'emergency', label: 'חירום', icon: AlertTriangle, color: 'bg-red-500', activeColor: 'bg-red-600' },
   { id: 'culture', label: 'תרבות', icon: Palette, color: 'bg-purple-500', activeColor: 'bg-purple-600' },
+  { id: 'parks', label: 'גנים', icon: TreePine, color: 'bg-green-500', activeColor: 'bg-green-600' },
 ];
 
 export default function LayerToggle({ selectedLayers, onLayerToggle }) {
