@@ -80,6 +80,10 @@ export default function Home() {
       status: 'active',
       is_user_report: true,
     });
+    // הדלק את השכבה המתאימה אם היא לא דלוקה
+    if (reportData.sub_category && !selectedLayers.includes(reportData.sub_category)) {
+      setSelectedLayers(prev => [...prev, reportData.sub_category]);
+    }
   };
 
   return (
