@@ -151,7 +151,7 @@ export default function Home() {
         </div>
 
         {/* Layer Toggle - Sidebar */}
-        <div className="absolute top-4 bottom-4 right-4 z-10 w-14">
+        <div className="absolute top-1/2 -translate-y-1/2 right-4 z-10">
           <LayerToggle
             selectedLayers={selectedLayers}
             onLayerToggle={handleLayerToggle}

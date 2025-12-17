@@ -36,8 +36,8 @@ export default function LayerToggle({ selectedLayers, onLayerToggle }) {
   };
 
   return (
-    <div className="relative h-full">
-      <div className="h-full flex flex-col gap-2 p-2 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200 overflow-y-auto">
+    <div className="relative">
+      <div className="flex flex-col gap-2 p-2 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200">
       {LAYERS.map(layer => {
         const Icon = layer.icon;
         const isActive = selectedLayers.includes(layer.id);
