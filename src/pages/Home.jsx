@@ -54,7 +54,6 @@ export default function Home() {
 
   const handleMarkerClick = useCallback((site) => {
     setSelectedSite(site);
-    setSelectedPark(null);
   }, []);
 
   
