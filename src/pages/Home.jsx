@@ -143,7 +143,9 @@ export default function Home() {
           <SearchBar
             sites={sites}
             streets={streets}
+            parks={parks}
             onSiteSelect={handleMarkerClick}
+            onParkSelect={handleParkClick}
             onOpenChat={() => setIsChatOpen(true)}
           />
         </div>
