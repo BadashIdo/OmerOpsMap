@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Wrench, Users, AlertTriangle, Palette, Dumbbell, Baby, TreePine } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -14,8 +14,30 @@ const LAYERS = [
 ];
 
 export default function LayerToggle({ selectedLayers, onLayerToggle }) {
+  const [notification, setNotification] = useState(null);
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
+  const handleLayerToggle = (layerId) => {
+    const layer = LAYERS.find(l => l.id === layerId);
+    const willBeActive = !selectedLayers.includes(layerId);
+    setNotification({
+      label: layer.label,
+      status: willBeActive ? 'דולק' : 'כבוי'
+    });
+    onLayerToggle(layerId);
+  };
+
   return (
-    <div className="flex flex-wrap gap-2 p-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200">
+    <div className="relative">
+      <div className="flex flex-wrap gap-2 p-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200">
       {LAYERS.map(layer => {
         const Icon = layer.icon;
         const isActive = selectedLayers.includes(layer.id);
@@ -25,7 +47,7 @@ export default function LayerToggle({ selectedLayers, onLayerToggle }) {
             key={layer.id}
             variant={isActive ? 'default' : 'outline'}
             size="sm"
-            onClick={() => onLayerToggle(layer.id)}
+            onClick={() => handleLayerToggle(layer.id)}
             className={cn(
               'gap-2 transition-all duration-200',
               isActive && layer.activeColor,
@@ -38,6 +60,13 @@ export default function LayerToggle({ selectedLayers, onLayerToggle }) {
           </Button>
         );
       })}
+      </div>
+      
+      {notification && (
+        <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-3 py-1.5 rounded-lg shadow-lg text-sm whitespace-nowrap animate-in fade-in slide-in-from-top-2">
+          {notification.label} • {notification.status}
+        </div>
+      )}
     </div>
   );
 }
