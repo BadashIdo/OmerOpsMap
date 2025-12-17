@@ -198,6 +198,10 @@ export default function Home() {
           <SiteCard
             site={selectedSite}
             onClose={() => setSelectedSite(null)}
+            onDelete={() => {
+              queryClient.invalidateQueries({ queryKey: ['sites'] });
+              setSelectedSite(null);
+            }}
           />
         )}
 
