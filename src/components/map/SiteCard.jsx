@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { X, Navigation, Phone, Clock, MapPin, Trash2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import apiClient from '@/api/apiClient'; // Import the new apiClient
+import { useAuth } from '@/lib/AuthContext'; // Import the useAuth hook
 
 const CATEGORY_LABELS = {
   operations: 'תפעול',
@@ -41,15 +43,12 @@ const STATUS_LABELS = {
 };
 
 export default function SiteCard({ site, onClose, onDelete }) {
-  const [currentUser, setCurrentUser] = useState(null);
+  const { user: currentUser } = useAuth(); // Get the current user from AuthContext
   const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    base44.auth.me().then(user => setCurrentUser(user)).catch(() => {});
-  }, []);
 
   if (!site) return null;
 
+  // Check if the user can delete the site
   const canDelete = currentUser && site.is_user_report && site.created_by === currentUser.email;
 
   const handleDelete = async () => {
@@ -57,10 +56,13 @@ export default function SiteCard({ site, onClose, onDelete }) {
     
     setIsDeleting(true);
     try {
-      await base44.entities.Site.delete(site.id);
+      // Use the new apiClient to delete the site
+      // Assuming the API endpoint is /sites/:id
+      await apiClient.delete(`/sites/${site.id}`);
       if (onDelete) onDelete(site.id);
       onClose();
     } catch (error) {
+      console.error("Error deleting site:", error);
       alert('אירעה שגיאה במחיקת הדיווח');
       setIsDeleting(false);
     }
@@ -73,7 +75,7 @@ export default function SiteCard({ site, onClose, onDelete }) {
     if (app === 'waze') {
       url = `https://waze.com/ul?ll=${latitude},${longitude}&navigate=yes&z=17`;
     } else {
-      url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&destination_place_id=${encodeURIComponent(name)}`;
+      url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
     }
     
     window.open(url, '_blank');
@@ -132,38 +134,36 @@ export default function SiteCard({ site, onClose, onDelete }) {
           </p>
         )}
         
-
-        
         {canDelete && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="w-full gap-2"
-                        onClick={handleDelete}
-                        disabled={isDeleting}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        {isDeleting ? 'מוחק...' : 'מחק דיווח'}
-                      </Button>
-                    )}
+          <Button
+            variant="destructive"
+            size="sm"
+            className="w-full gap-2"
+            onClick={handleDelete}
+            disabled={isDeleting}
+          >
+            <Trash2 className="w-4 h-4" />
+            {isDeleting ? 'מוחק...' : 'מחק דיווח'}
+          </Button>
+        )}
 
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        variant="outline"
-                        className="flex-1 gap-2"
-                        onClick={() => openNavigation('google')}
-                      >
-                        <Navigation className="w-4 h-4" />
-                        Google Maps
-                      </Button>
-                      <Button
-                        className="flex-1 gap-2 bg-[#33CCFF] hover:bg-[#00AADD] text-white"
-                        onClick={() => openNavigation('waze')}
-                      >
-                        <Navigation className="w-4 h-4" />
-                        Waze
-                      </Button>
-                    </div>
+        <div className="flex gap-2 pt-2">
+          <Button
+            variant="outline"
+            className="flex-1 gap-2"
+            onClick={() => openNavigation('google')}
+          >
+            <Navigation className="w-4 h-4" />
+            Google Maps
+          </Button>
+          <Button
+            className="flex-1 gap-2 bg-[#33CCFF] hover:bg-[#00AADD] text-white"
+            onClick={() => openNavigation('waze')}
+          >
+            <Navigation className="w-4 h-4" />
+            Waze
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

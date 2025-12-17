@@ -1,16 +1,38 @@
-import base44 from "@base44/vite-plugin"
-import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+import { db } from './db.js'; // Import the mock data
 
-// https://vite.dev/config/
+// A simple Vite plugin to mock API responses
+const mockApiPlugin = () => ({
+  name: 'mock-api',
+  configureServer(server) {
+    server.middlewares.use((req, res, next) => {
+      if (req.url === '/api/sites') {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(db.sites));
+        return;
+      }
+      if (req.url === '/api/streets') {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(db.streets));
+        return;
+      }
+      if (req.url.startsWith('/api/live-messages')) {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(db['live-messages']));
+        return;
+      }
+      next();
+    });
+  },
+});
+
 export default defineConfig({
-  logLevel: 'error', // Suppress warnings, only show errors
-  plugins: [
-    base44({
-      // Support for legacy code that imports the base44 SDK with @/integrations, @/entities, etc.
-      // can be removed if the code has been updated to use the new SDK imports from @base44/sdk
-      legacySDKImports: process.env.BASE44_LEGACY_SDK_IMPORTS === 'true'
-    }),
-    react(),
-  ]
+  plugins: [react(), mockApiPlugin()], // Add the mock API plugin
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
 });

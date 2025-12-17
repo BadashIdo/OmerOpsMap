@@ -1,22 +1,29 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import apiClient from '@/api/apiClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { X, Send, Bot, User, Loader2, Minimize2, Maximize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 
+
+const WELCOME_MESSAGE = {
+    role: 'assistant',
+    content: 'שלום! 👋 אני OmerBot, העוזר הדיגיטלי של המועצה המקומית עומר.\n\nכרגע אני בוט בהרצה. בעתיד אוכל לעזור לך עם מידע על שירותים מוניציפליים והתראות. איך בינתיים אוכל לעזור?'
+};
+
 export default function ChatBot({ isOpen, onClose, initialMessage }) {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [conversation, setConversation] = useState(null);
+  const [conversationId, setConversationId] = useState(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
-    if (isOpen && !conversation) {
+    if (isOpen && !conversationId) {
       initConversation();
     }
   }, [isOpen]);
@@ -35,61 +42,60 @@ export default function ChatBot({ isOpen, onClose, initialMessage }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const initConversation = async () => {
-    try {
-      const newConv = await base44.agents.createConversation({
-        agent_name: 'omer_bot',
-        metadata: { name: 'שיחה חדשה' }
-      });
-      setConversation(newConv);
-      
-      // Add welcome message
-      setMessages([{
-        role: 'assistant',
-        content: 'שלום! 👋 אני OmerBot, העוזר הדיגיטלי של המועצה המקומית עומר.\n\nאני יכול לעזור לך עם מידע על רחובות, מוסדות, שירותים מוניציפליים והתראות. איך אוכל לעזור?'
-      }]);
-    } catch (error) {
-      console.error('Failed to init conversation:', error);
-    }
+  const initConversation = () => {
+    // In the future, this might make a POST call to /conversations
+    // For now, we just generate a client-side ID.
+    const newConvId = crypto.randomUUID();
+    setConversationId(newConvId);
+    setMessages([WELCOME_MESSAGE]);
+    console.log(`Initialized mock conversation with ID: ${newConvId}`);
   };
 
   const handleSend = async () => {
-    if (!inputValue.trim() || isLoading || !conversation) return;
+    if (!inputValue.trim() || isLoading || !conversationId) return;
 
-    const userMessage = inputValue.trim();
-    setInputValue('');
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    const userMessageContent = inputValue.trim();
+    const newUserMessage = { role: 'user', content: userMessageContent };
+    
+    const updatedMessages = [...messages, newUserMessage];
+    setMessages(updatedMessages);
+setInputValue('');
     setIsLoading(true);
 
+    // --- Backend Preparation ---
+    // This simulates calling your future backend endpoint.
+    console.log('Simulating API call to backend with:', {
+        conversation_id: conversationId,
+        messages: updatedMessages,
+    });
+
+    // Simulate network delay
+    setTimeout(() => {
+        const mockResponse = {
+            role: 'assistant',
+            content: `קיבלתי את הודעתך: "${userMessageContent}".\n\nכרגע אני בוט מדומה. כאשר ה-backend האמיתי יחובר, אדע לספק תשובות מועילות.`
+        };
+
+        setMessages(prev => [...prev, mockResponse]);
+        setIsLoading(false);
+    }, 1200);
+
+    /* 
+    // REAL IMPLEMENTATION EXAMPLE:
     try {
-      await base44.agents.addMessage(conversation, {
-        role: 'user',
-        content: userMessage
-      });
-
-      // Subscribe to updates
-      const unsubscribe = base44.agents.subscribeToConversation(conversation.id, (data) => {
-        if (data.messages) {
-          setMessages(data.messages);
-          const lastMessage = data.messages[data.messages.length - 1];
-          if (lastMessage?.role === 'assistant' && !lastMessage.tool_calls?.some(t => t.status === 'running')) {
-            setIsLoading(false);
-          }
-        }
-      });
-
-      // Cleanup after response
-      setTimeout(() => {
-        unsubscribe();
-      }, 60000);
+        // Use the apiClient to call your backend
+        const response = await apiClient.post(`/agents/omer_bot/invoke`, {
+            conversation_id: conversationId,
+            messages: updatedMessages
+        });
+        setMessages(prev => [...prev, response.data]);
     } catch (error) {
-      console.error('Failed to send message:', error);
-      setIsLoading(false);
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'מצטער, אירעה שגיאה. אנא נסה שוב.'
-      }]);
+        console.error("Failed to send message:", error);
+        setMessages(prev => [...prev, { role: 'assistant', content: 'מצטער, אירעה שגיאה.' }]);
+    } finally {
+        setIsLoading(false);
     }
+    */
   };
 
   if (!isOpen) return null;
