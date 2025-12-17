@@ -15,11 +15,7 @@ import { Bell, MessageCircle, Menu, ChevronDown, ChevronUp } from 'lucide-react'
 import { Badge } from '@/components/ui/badge';
 
 export default function Home() {
-  const [selectedLayers, setSelectedLayers] = useState([
-    'waste_centers', 'recycling', 'sweeping_routes', 'pruning_stations', 'leisure',
-    'upcoming_events', 'education', 'sports',
-    'public_shelters', 'emergency_alerts'
-  ]);
+  const [selectedLayers, setSelectedLayers] = useState([]);
   const [selectedSite, setSelectedSite] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isAlertsExpanded, setIsAlertsExpanded] = useState(true);
@@ -169,9 +165,9 @@ export default function Home() {
                         />
         </div>
 
-        {/* Layer Toggle - Sidebar */}
-        <div className="absolute top-1/2 -translate-y-1/2 right-4 z-10">
-          <LayerToggle
+        {/* Layer Toggle - Bottom Right */}
+                    <div className="absolute bottom-4 right-4 z-10">
+                      <LayerToggle
                           selectedLayers={selectedLayers}
                           onLayerToggle={handleLayerToggle}
                           siteCounts={sites.reduce((acc, site) => {

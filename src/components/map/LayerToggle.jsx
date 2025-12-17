@@ -115,7 +115,6 @@ export default function LayerToggle({ selectedLayers, onLayerToggle, siteCounts 
                       <p className="font-semibold text-slate-800">{category.label}</p>
                       <p className="text-xs text-slate-500">
                         {activeSubCount}/{category.subLayers.length} שכבות פעילות
-                        {totalSubCount > 0 && ` • ${totalSubCount} נקודות`}
                       </p>
                     </div>
                     {isExpanded ? (
