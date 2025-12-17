@@ -135,8 +135,8 @@ export default function Home() {
           />
         </div>
 
-        {/* Layer Toggle - Always visible */}
-        <div className="absolute top-20 right-4 left-4 sm:left-auto z-10 flex justify-center sm:justify-start">
+        {/* Layer Toggle */}
+        <div className="absolute top-20 right-4 z-10">
           <LayerToggle
             selectedLayers={selectedLayers}
             onLayerToggle={handleLayerToggle}
