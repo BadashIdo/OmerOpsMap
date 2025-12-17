@@ -77,8 +77,8 @@ export default function Home() {
   const handleReportSubmit = async (reportData) => {
     await createSiteMutation.mutateAsync({
       ...reportData,
-      type: 'other',
       status: 'active',
+      is_user_report: true,
     });
   };
 

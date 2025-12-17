@@ -50,7 +50,7 @@ export default function SiteCard({ site, onClose, onDelete }) {
 
   if (!site) return null;
 
-  const canDelete = currentUser && site.created_by === currentUser.email;
+  const canDelete = currentUser && site.is_user_report && site.created_by === currentUser.email;
 
   const handleDelete = async () => {
     if (!confirm('האם אתה בטוח שברצונך למחוק את הדיווח הזה?')) return;
