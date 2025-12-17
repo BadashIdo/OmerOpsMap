@@ -63,10 +63,15 @@ export default function Layout({ children, currentPageName }) {
         .leaflet-container {
           font-family: 'Heebo', 'Inter', sans-serif;
         }
-        
+
         .custom-marker {
           background: transparent !important;
           border: none !important;
+        }
+
+        /* Move zoom controls up */
+        .leaflet-bottom.leaflet-left {
+          bottom: 80px !important;
         }
       `}</style>
       <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
