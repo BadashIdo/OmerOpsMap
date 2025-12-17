@@ -29,7 +29,7 @@ export default function LayerToggle({ selectedLayers, onLayerToggle }) {
     const layer = LAYERS.find(l => l.id === layerId);
     const willBeActive = !selectedLayers.includes(layerId);
     setNotification({
-      label: layer.label,
+      layerId: layerId,
       status: willBeActive ? 'דולק' : 'כבוי'
     });
     onLayerToggle(layerId);
@@ -43,30 +43,31 @@ export default function LayerToggle({ selectedLayers, onLayerToggle }) {
         const isActive = selectedLayers.includes(layer.id);
         
         return (
-          <Button
-            key={layer.id}
-            variant={isActive ? 'default' : 'outline'}
-            size="icon"
-            onClick={() => handleLayerToggle(layer.id)}
-            title={layer.label}
-            className={cn(
-              'w-10 h-10 transition-all duration-200',
-              isActive && layer.activeColor,
-              isActive && 'text-white shadow-md',
-              !isActive && 'hover:bg-slate-100'
+          <div key={layer.id} className="relative">
+            <Button
+              variant={isActive ? 'default' : 'outline'}
+              size="icon"
+              onClick={() => handleLayerToggle(layer.id)}
+              title={layer.label}
+              className={cn(
+                'w-10 h-10 transition-all duration-200',
+                isActive && layer.activeColor,
+                isActive && 'text-white shadow-md',
+                !isActive && 'hover:bg-slate-100'
+              )}
+            >
+              <Icon className="w-5 h-5" />
+            </Button>
+            
+            {notification && notification.layerId === layer.id && (
+              <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-slate-800 text-white px-3 py-1.5 rounded-lg shadow-lg text-sm whitespace-nowrap animate-in fade-in slide-in-from-right-2">
+                {layer.label} • {notification.status}
+              </div>
             )}
-          >
-            <Icon className="w-5 h-5" />
-          </Button>
+          </div>
         );
       })}
       </div>
-      
-      {notification && (
-        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-3 py-1.5 rounded-lg shadow-lg text-sm whitespace-nowrap animate-in fade-in slide-in-from-bottom-2">
-          {notification.label} • {notification.status}
-        </div>
-      )}
     </div>
   );
 }
