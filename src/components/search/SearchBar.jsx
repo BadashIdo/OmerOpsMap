@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, X, MapPin, Building2, MessageCircle, TreePine } from 'lucide-react';
+import { Search, X, MapPin, Building2, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function SearchBar({ sites, streets, parks, onSiteSelect, onParkSelect, onOpenChat }) {
+export default function SearchBar({ sites, streets, onSiteSelect, onOpenChat }) {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const [results, setResults] = useState({ sites: [], streets: [], parks: [] });
+  const [results, setResults] = useState({ sites: [], streets: [] });
   const inputRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -23,7 +23,7 @@ export default function SearchBar({ sites, streets, parks, onSiteSelect, onParkS
 
   useEffect(() => {
     if (!query.trim()) {
-      setResults({ sites: [], streets: [], parks: [] });
+      setResults({ sites: [], streets: [] });
       return;
     }
 
@@ -33,9 +33,9 @@ export default function SearchBar({ sites, streets, parks, onSiteSelect, onParkS
       .filter(site => 
         site.name?.toLowerCase().includes(normalizedQuery) ||
         site.address?.toLowerCase().includes(normalizedQuery) ||
-        site.street?.toLowerCase().includes(normalizedQuery)
+        site.description?.toLowerCase().includes(normalizedQuery)
       )
-      .slice(0, 5);
+      .slice(0, 8);
 
     const matchedStreets = streets
       .filter(street =>
@@ -43,27 +43,18 @@ export default function SearchBar({ sites, streets, parks, onSiteSelect, onParkS
       )
       .slice(0, 3);
 
-    const matchedParks = parks
-      .filter(park =>
-        park.name?.toLowerCase().includes(normalizedQuery) ||
-        park.address?.toLowerCase().includes(normalizedQuery)
-      )
-      .slice(0, 5);
-
-    setResults({ sites: matchedSites, streets: matchedStreets, parks: matchedParks });
-  }, [query, sites, streets, parks]);
+    setResults({ sites: matchedSites, streets: matchedStreets });
+  }, [query, sites, streets]);
 
   const handleSelect = (item, type) => {
     if (type === 'site') {
       onSiteSelect(item);
-    } else if (type === 'park') {
-      onParkSelect(item);
     }
     setQuery('');
     setIsOpen(false);
   };
 
-  const hasResults = results.sites.length > 0 || results.streets.length > 0 || results.parks.length > 0;
+  const hasResults = results.sites.length > 0 || results.streets.length > 0;
 
   return (
     <div ref={containerRef} className="relative w-full max-w-md">
@@ -161,24 +152,7 @@ export default function SearchBar({ sites, streets, parks, onSiteSelect, onParkS
                 </div>
               )}
 
-              {results.parks.length > 0 && (
-                <div className="p-2 border-t border-slate-100">
-                  <p className="text-xs font-medium text-slate-500 px-2 mb-1">גנים ושטחים ציבוריים</p>
-                  {results.parks.map(park => (
-                    <button
-                      key={park.id}
-                      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-slate-100 transition-colors text-right"
-                      onClick={() => handleSelect(park, 'park')}
-                    >
-                      <TreePine className="w-4 h-4 text-slate-400" />
-                      <div>
-                        <p className="font-medium text-slate-800">{park.name}</p>
-                        <p className="text-xs text-slate-500">{park.category}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+
             </>
           )}
         </div>
