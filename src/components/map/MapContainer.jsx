@@ -91,7 +91,7 @@ function MapController({ selectedSite }) {
   return null;
 }
 
-export default function MapContainer({ sites, parks = [], selectedLayers, onMarkerClick, selectedSite }) {
+export default function MapContainer({ sites, parks = [], selectedLayers, onMarkerClick, onParkClick, selectedSite }) {
   const filteredSites = sites.filter(site => 
     selectedLayers.includes(site.category) && site.latitude && site.longitude
   );
@@ -152,6 +152,9 @@ export default function MapContainer({ sites, parks = [], selectedLayers, onMark
           key={`park-${park.id}`}
           position={[park.latitude, park.longitude]}
           icon={createCustomIcon(null, null, park.category)}
+          eventHandlers={{
+            click: () => onParkClick(park),
+          }}
         >
           <Popup>
             <div className="text-center" dir="rtl">

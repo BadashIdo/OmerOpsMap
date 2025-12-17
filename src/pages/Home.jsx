@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import MapContainer from '@/components/map/MapContainer';
 import LayerToggle from '@/components/map/LayerToggle';
 import SiteCard from '@/components/map/SiteCard';
+import ParkCard from '@/components/map/ParkCard';
 import AlertsBanner from '@/components/alerts/AlertsBanner';
 import SearchBar from '@/components/search/SearchBar';
 import ChatBot from '@/components/chat/ChatBot';
@@ -15,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 export default function Home() {
   const [selectedLayers, setSelectedLayers] = useState(['operations', 'community', 'emergency', 'culture', 'park-fitness', 'park-children', 'park-public']);
   const [selectedSite, setSelectedSite] = useState(null);
+  const [selectedPark, setSelectedPark] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isAlertsExpanded, setIsAlertsExpanded] = useState(true);
   const [dismissedAlerts, setDismissedAlerts] = useState([]);
@@ -52,6 +54,12 @@ export default function Home() {
 
   const handleMarkerClick = useCallback((site) => {
     setSelectedSite(site);
+    setSelectedPark(null);
+  }, []);
+
+  const handleParkClick = useCallback((park) => {
+    setSelectedPark(park);
+    setSelectedSite(null);
   }, []);
 
   const handleDismissAlert = useCallback((alertId) => {
@@ -154,6 +162,7 @@ export default function Home() {
           parks={parks}
           selectedLayers={selectedLayers}
           onMarkerClick={handleMarkerClick}
+          onParkClick={handleParkClick}
           selectedSite={selectedSite}
         />
 
@@ -162,6 +171,14 @@ export default function Home() {
           <SiteCard
             site={selectedSite}
             onClose={() => setSelectedSite(null)}
+          />
+        )}
+
+        {/* Park Card */}
+        {selectedPark && (
+          <ParkCard
+            park={selectedPark}
+            onClose={() => setSelectedPark(null)}
           />
         )}
 
