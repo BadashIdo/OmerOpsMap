@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { X, Navigation, Phone, Clock, MapPin } from 'lucide-react';
+import { X, Navigation, Phone, Clock, MapPin, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 const CATEGORY_LABELS = {
@@ -40,8 +40,31 @@ const STATUS_LABELS = {
   emergency_open: 'פתוח בחירום',
 };
 
-export default function SiteCard({ site, onClose }) {
+export default function SiteCard({ site, onClose, onDelete }) {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    base44.auth.me().then(user => setCurrentUser(user)).catch(() => {});
+  }, []);
+
   if (!site) return null;
+
+  const canDelete = currentUser && site.created_by === currentUser.email;
+
+  const handleDelete = async () => {
+    if (!confirm('האם אתה בטוח שברצונך למחוק את הדיווח הזה?')) return;
+    
+    setIsDeleting(true);
+    try {
+      await base44.entities.Site.delete(site.id);
+      if (onDelete) onDelete(site.id);
+      onClose();
+    } catch (error) {
+      alert('אירעה שגיאה במחיקת הדיווח');
+      setIsDeleting(false);
+    }
+  };
 
   const openNavigation = (app) => {
     const { latitude, longitude, name } = site;
@@ -111,23 +134,36 @@ export default function SiteCard({ site, onClose }) {
         
 
         
-        <div className="flex gap-2 pt-2">
-          <Button
-            variant="outline"
-            className="flex-1 gap-2"
-            onClick={() => openNavigation('google')}
-          >
-            <Navigation className="w-4 h-4" />
-            Google Maps
-          </Button>
-          <Button
-            className="flex-1 gap-2 bg-[#33CCFF] hover:bg-[#00AADD] text-white"
-            onClick={() => openNavigation('waze')}
-          >
-            <Navigation className="w-4 h-4" />
-            Waze
-          </Button>
-        </div>
+        {canDelete && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="w-full gap-2"
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        {isDeleting ? 'מוחק...' : 'מחק דיווח'}
+                      </Button>
+                    )}
+
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1 gap-2"
+                        onClick={() => openNavigation('google')}
+                      >
+                        <Navigation className="w-4 h-4" />
+                        Google Maps
+                      </Button>
+                      <Button
+                        className="flex-1 gap-2 bg-[#33CCFF] hover:bg-[#00AADD] text-white"
+                        onClick={() => openNavigation('waze')}
+                      >
+                        <Navigation className="w-4 h-4" />
+                        Waze
+                      </Button>
+                    </div>
       </CardContent>
     </Card>
   );

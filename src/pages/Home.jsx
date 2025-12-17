@@ -191,13 +191,12 @@ export default function Home() {
         {/* Site Card */}
                     {selectedSite && (
                       <SiteCard
-                        site={selectedSite}
-                        onClose={() => setSelectedSite(null)}
-                        onDelete={() => {
-                          queryClient.invalidateQueries({ queryKey: ['sites'] });
-                          setSelectedSite(null);
-                        }}
-                      />
+                                    site={selectedSite}
+                                    onClose={() => setSelectedSite(null)}
+                                    onDelete={() => {
+                                      queryClient.invalidateQueries({ queryKey: ['sites'] });
+                                    }}
+                                  />
                     )}
 
         {/* Chat FAB */}
