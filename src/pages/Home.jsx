@@ -139,7 +139,7 @@ export default function Home() {
       {/* Main Content */}
       <main className="flex-1 relative overflow-hidden">
         {/* Search Bar */}
-        <div className="absolute top-4 right-4 left-4 z-10 flex justify-center">
+        <div className="absolute top-4 right-4 left-4 z-10 flex justify-center md:right-80">
           <SearchBar
             sites={sites}
             streets={streets}
@@ -150,8 +150,8 @@ export default function Home() {
           />
         </div>
 
-        {/* Layer Toggle */}
-        <div className="absolute top-20 right-4 z-10">
+        {/* Layer Toggle - Sidebar */}
+        <div className="absolute top-4 bottom-4 right-4 z-10 w-64">
           <LayerToggle
             selectedLayers={selectedLayers}
             onLayerToggle={handleLayerToggle}

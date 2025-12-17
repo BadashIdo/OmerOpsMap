@@ -36,8 +36,8 @@ export default function LayerToggle({ selectedLayers, onLayerToggle }) {
   };
 
   return (
-    <div className="relative">
-      <div className="flex flex-wrap gap-2 p-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200">
+    <div className="relative h-full">
+      <div className="h-full flex flex-col gap-2 p-4 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200 overflow-y-auto">
       {LAYERS.map(layer => {
         const Icon = layer.icon;
         const isActive = selectedLayers.includes(layer.id);
@@ -49,21 +49,21 @@ export default function LayerToggle({ selectedLayers, onLayerToggle }) {
             size="sm"
             onClick={() => handleLayerToggle(layer.id)}
             className={cn(
-              'gap-2 transition-all duration-200',
+              'w-full justify-start gap-2 transition-all duration-200',
               isActive && layer.activeColor,
               isActive && 'text-white shadow-md',
               !isActive && 'hover:bg-slate-100'
             )}
           >
             <Icon className="w-4 h-4" />
-            <span className="hidden sm:inline">{layer.label}</span>
+            <span>{layer.label}</span>
           </Button>
         );
       })}
       </div>
       
       {notification && (
-        <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-3 py-1.5 rounded-lg shadow-lg text-sm whitespace-nowrap animate-in fade-in slide-in-from-top-2">
+        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-3 py-1.5 rounded-lg shadow-lg text-sm whitespace-nowrap animate-in fade-in slide-in-from-bottom-2">
           {notification.label} • {notification.status}
         </div>
       )}
