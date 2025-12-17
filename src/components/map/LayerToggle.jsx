@@ -5,9 +5,11 @@ import {
   Trash2, Recycle, Route, TreeDeciduous,
   Palmtree, Calendar, GraduationCap, Dumbbell,
   Shield, Bell,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp,
+  Menu, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 const CATEGORIES = [
   {
@@ -15,7 +17,8 @@ const CATEGORIES = [
     label: 'תפעול',
     icon: Wrench,
     color: 'bg-blue-500',
-    activeColor: 'bg-blue-600',
+    textColor: 'text-blue-600',
+    borderColor: 'border-blue-500',
     subLayers: [
       { id: 'waste_centers', label: 'ריכוזי אשפה', icon: Trash2 },
       { id: 'recycling', label: 'כלי מחזור', icon: Recycle },
@@ -29,7 +32,8 @@ const CATEGORIES = [
     label: 'קהילה ותרבות',
     icon: Users,
     color: 'bg-green-500',
-    activeColor: 'bg-green-600',
+    textColor: 'text-green-600',
+    borderColor: 'border-green-500',
     subLayers: [
       { id: 'upcoming_events', label: 'אירועים קרובים', icon: Calendar },
       { id: 'education', label: 'מוסדות חינוך', icon: GraduationCap },
@@ -41,7 +45,8 @@ const CATEGORIES = [
     label: 'חירום וביטחון',
     icon: AlertTriangle,
     color: 'bg-red-500',
-    activeColor: 'bg-red-600',
+    textColor: 'text-red-600',
+    borderColor: 'border-red-500',
     subLayers: [
       { id: 'public_shelters', label: 'מקלטים ציבוריים', icon: Shield },
       { id: 'emergency_alerts', label: 'התראות חירום', icon: Bell },
@@ -49,28 +54,9 @@ const CATEGORIES = [
   },
 ];
 
-export default function LayerToggle({ selectedLayers, onLayerToggle }) {
-  const [notification, setNotification] = useState(null);
+export default function LayerToggle({ selectedLayers, onLayerToggle, siteCounts = {} }) {
+  const [isOpen, setIsOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState(['operations', 'community', 'emergency']);
-
-  useEffect(() => {
-    if (notification) {
-      const timer = setTimeout(() => {
-        setNotification(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [notification]);
-
-  const handleLayerToggle = (layerId, label) => {
-    const willBeActive = !selectedLayers.includes(layerId);
-    setNotification({
-      layerId: layerId,
-      status: willBeActive ? 'דולק' : 'כבוי',
-      label: label
-    });
-    onLayerToggle(layerId);
-  };
 
   const toggleCategory = (categoryId) => {
     setExpandedCategories(prev => 
@@ -80,90 +66,113 @@ export default function LayerToggle({ selectedLayers, onLayerToggle }) {
     );
   };
 
-  const toggleAllSubLayers = (category) => {
-    const subLayerIds = category.subLayers.map(s => s.id);
-    const allActive = subLayerIds.every(id => selectedLayers.includes(id));
-    
-    subLayerIds.forEach(id => {
-      if (allActive && selectedLayers.includes(id)) {
-        onLayerToggle(id);
-      } else if (!allActive && !selectedLayers.includes(id)) {
-        onLayerToggle(id);
-      }
-    });
-  };
+  const totalActive = selectedLayers.length;
 
   return (
-    <div className="relative">
-      <div className="flex flex-col gap-1 p-2 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200 max-h-[70vh] overflow-y-auto">
-        {CATEGORIES.map(category => {
-          const Icon = category.icon;
-          const isExpanded = expandedCategories.includes(category.id);
-          const activeSubCount = category.subLayers.filter(s => selectedLayers.includes(s.id)).length;
+    <>
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetTrigger asChild>
+          <Button
+            size="icon"
+            className="w-12 h-12 rounded-full bg-white shadow-lg border border-slate-200 hover:bg-slate-50"
+          >
+            <Menu className="w-6 h-6 text-slate-700" />
+            {totalActive > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 rounded-full text-xs text-white flex items-center justify-center font-medium">
+                {totalActive}
+              </span>
+            )}
+          </Button>
+        </SheetTrigger>
+        
+        <SheetContent side="right" className="w-80 p-0">
+          <SheetHeader className="p-4 border-b bg-gradient-to-l from-blue-600 to-blue-700">
+            <SheetTitle className="text-white text-right flex items-center gap-2">
+              <span>שכבות מפה</span>
+            </SheetTitle>
+          </SheetHeader>
           
-          return (
-            <div key={category.id} className="relative">
-              {/* Category Header */}
-              <button
-                onClick={() => toggleCategory(category.id)}
-                className={cn(
-                  'w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200',
-                  category.color,
-                  'text-white hover:opacity-90'
-                )}
-              >
-                <Icon className="w-4 h-4" />
-                <span className="text-sm font-medium flex-1 text-right">{category.label}</span>
-                {activeSubCount > 0 && (
-                  <span className="bg-white/30 text-xs px-1.5 py-0.5 rounded-full">
-                    {activeSubCount}
-                  </span>
-                )}
-                {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
+          <div className="overflow-y-auto h-[calc(100vh-80px)]">
+            {CATEGORIES.map(category => {
+              const Icon = category.icon;
+              const isExpanded = expandedCategories.includes(category.id);
+              const activeSubCount = category.subLayers.filter(s => selectedLayers.includes(s.id)).length;
+              const totalSubCount = category.subLayers.reduce((sum, s) => sum + (siteCounts[s.id] || 0), 0);
               
-              {/* Sub Layers */}
-              {isExpanded && (
-                <div className="mt-1 mr-2 space-y-1">
-                  {category.subLayers.map(subLayer => {
-                    const SubIcon = subLayer.icon;
-                    const isActive = selectedLayers.includes(subLayer.id);
-                    
-                    return (
-                      <button
-                        key={subLayer.id}
-                        onClick={() => handleLayerToggle(subLayer.id, subLayer.label)}
-                        className={cn(
-                          'w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all duration-200',
-                          isActive 
-                            ? 'bg-slate-100 text-slate-800 font-medium' 
-                            : 'text-slate-500 hover:bg-slate-50'
-                        )}
-                      >
-                        <SubIcon className="w-4 h-4" />
-                        <span className="flex-1 text-right">{subLayer.label}</span>
-                        <div className={cn(
-                          'w-3 h-3 rounded-full border-2',
-                          isActive 
-                            ? `${category.color} border-transparent` 
-                            : 'border-slate-300'
-                        )} />
-                      </button>
-                    );
-                  })}
+              return (
+                <div key={category.id} className="border-b border-slate-100">
+                  {/* Category Header */}
+                  <button
+                    onClick={() => toggleCategory(category.id)}
+                    className={cn(
+                      'w-full flex items-center gap-3 px-4 py-3 transition-all duration-200 hover:bg-slate-50',
+                    )}
+                  >
+                    <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', category.color)}>
+                      <Icon className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1 text-right">
+                      <p className="font-semibold text-slate-800">{category.label}</p>
+                      <p className="text-xs text-slate-500">
+                        {activeSubCount}/{category.subLayers.length} שכבות פעילות
+                        {totalSubCount > 0 && ` • ${totalSubCount} נקודות`}
+                      </p>
+                    </div>
+                    {isExpanded ? (
+                      <ChevronUp className="w-5 h-5 text-slate-400" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-slate-400" />
+                    )}
+                  </button>
+                  
+                  {/* Sub Layers */}
+                  {isExpanded && (
+                    <div className="bg-slate-50 py-2">
+                      {category.subLayers.map(subLayer => {
+                        const SubIcon = subLayer.icon;
+                        const isActive = selectedLayers.includes(subLayer.id);
+                        const count = siteCounts[subLayer.id] || 0;
+                        
+                        return (
+                          <button
+                            key={subLayer.id}
+                            onClick={() => onLayerToggle(subLayer.id)}
+                            className={cn(
+                              'w-full flex items-center gap-3 px-4 py-2.5 transition-all duration-200',
+                              isActive ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+                            )}
+                          >
+                            <div className={cn(
+                              'w-8 h-8 rounded-lg flex items-center justify-center transition-all',
+                              isActive ? category.color : 'bg-slate-200'
+                            )}>
+                              <SubIcon className={cn('w-4 h-4', isActive ? 'text-white' : 'text-slate-500')} />
+                            </div>
+                            <div className="flex-1 text-right">
+                              <p className={cn(
+                                'text-sm transition-all',
+                                isActive ? 'font-medium text-slate-800' : 'text-slate-600'
+                              )}>
+                                {subLayer.label}
+                              </p>
+                            </div>
+                            <div className={cn(
+                              'px-2 py-0.5 rounded-full text-xs font-medium',
+                              isActive ? `${category.color} text-white` : 'bg-slate-200 text-slate-600'
+                            )}>
+                              {count}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      
-      {/* Notification Toast */}
-      {notification && (
-        <div className="absolute right-full mr-2 top-4 bg-slate-800 text-white px-3 py-1.5 rounded-lg shadow-lg text-sm whitespace-nowrap animate-in fade-in slide-in-from-right-2 z-50">
-          {notification.label} • {notification.status}
-        </div>
-      )}
-    </div>
+              );
+            })}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

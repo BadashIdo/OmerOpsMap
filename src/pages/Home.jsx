@@ -172,9 +172,15 @@ export default function Home() {
         {/* Layer Toggle - Sidebar */}
         <div className="absolute top-1/2 -translate-y-1/2 right-4 z-10">
           <LayerToggle
-            selectedLayers={selectedLayers}
-            onLayerToggle={handleLayerToggle}
-          />
+                          selectedLayers={selectedLayers}
+                          onLayerToggle={handleLayerToggle}
+                          siteCounts={sites.reduce((acc, site) => {
+                            if (site.sub_category) {
+                              acc[site.sub_category] = (acc[site.sub_category] || 0) + 1;
+                            }
+                            return acc;
+                          }, {})}
+                        />
         </div>
 
         {/* Map */}
