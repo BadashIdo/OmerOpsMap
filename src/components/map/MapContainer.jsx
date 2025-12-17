@@ -11,21 +11,22 @@ const CATEGORY_COLORS = {
   operations: '#3B82F6',
   community: '#22C55E',
   emergency: '#EF4444',
-  culture: '#A855F7',
 };
 
-const TYPE_ICONS = {
-  education: '🏫',
-  sports: '⚽',
-  culture: '🎭',
-  emergency: '🚨',
-  municipal: '🏛️',
-  health: '🏥',
-  outdoor_gym: '💪',
-  playground: '🎠',
-  shelter: '🛡️',
-  synagogue: '🕍',
-  other: '📍',
+const SUB_CATEGORY_CONFIG = {
+  // תפעול
+  waste_centers: { icon: '🗑️', color: '#3B82F6' },
+  recycling: { icon: '♻️', color: '#3B82F6' },
+  sweeping_routes: { icon: '🧹', color: '#3B82F6' },
+  pruning_stations: { icon: '🌿', color: '#3B82F6' },
+  leisure: { icon: '🌳', color: '#3B82F6' },
+  // קהילה ותרבות
+  upcoming_events: { icon: '📅', color: '#22C55E' },
+  education: { icon: '🎒', color: '#22C55E' },
+  sports: { icon: '💪', color: '#22C55E' },
+  // חירום וביטחון
+  public_shelters: { icon: '🛡️', color: '#EF4444' },
+  emergency_alerts: { icon: '🚨', color: '#EF4444' },
 };
 
 // Fix for default marker icons in Leaflet
@@ -36,30 +37,14 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-function createCustomIcon(category, type, parkCategory) {
-  let color, icon;
-  
-  if (parkCategory) {
-    if (parkCategory === 'גינת כושר') {
-      color = '#3b82f6';
-      icon = '💪';
-    } else if (parkCategory === 'גן ילדים') {
-      color = '#ec4899';
-      icon = '🎠';
-    } else if (parkCategory === 'שטח ציבורי') {
-      color = '#22c55e';
-      icon = '🌳';
-    }
-  } else {
-    color = CATEGORY_COLORS[category] || '#6B7280';
-    icon = TYPE_ICONS[type] || '📍';
-  }
+function createCustomIcon(subCategory) {
+  const config = SUB_CATEGORY_CONFIG[subCategory] || { icon: '📍', color: '#6B7280' };
   
   return L.divIcon({
     className: 'custom-marker',
     html: `
       <div style="
-        background-color: ${color};
+        background-color: ${config.color};
         width: 32px;
         height: 32px;
         border-radius: 50%;
@@ -70,7 +55,7 @@ function createCustomIcon(category, type, parkCategory) {
         box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         font-size: 16px;
       ">
-        ${icon}
+        ${config.icon}
       </div>
     `,
     iconSize: [32, 32],
@@ -107,7 +92,7 @@ function MapClickHandler({ onMapClick }) {
   return null;
 }
 
-export default function MapContainer({ sites, parks = [], selectedLayers, onMarkerClick, onParkClick, selectedSite, onMapClick }) {
+export default function MapContainer({ sites, selectedLayers, onMarkerClick, selectedSite, onMapClick }) {
   const [userLocation, setUserLocation] = useState(null);
   const mapRef = useRef(null);
 
@@ -131,29 +116,8 @@ export default function MapContainer({ sites, parks = [], selectedLayers, onMark
   };
 
   const filteredSites = sites.filter(site => 
-    selectedLayers.includes(site.category) && site.latitude && site.longitude
+    selectedLayers.includes(site.sub_category) && site.latitude && site.longitude
   );
-
-  // Parse park coordinates from address field
-  const parksWithCoords = parks.map(park => {
-    const coordMatch = park.address?.match(/^(\d+\.\d+),\s*(\d+\.\d+)$/);
-    if (coordMatch) {
-      let layerId;
-      if (park.category === 'גינת כושר') layerId = 'park-fitness';
-      else if (park.category === 'גן ילדים') layerId = 'park-children';
-      else if (park.category === 'שטח ציבורי') layerId = 'park-public';
-      
-      return {
-        ...park,
-        latitude: parseFloat(coordMatch[1]),
-        longitude: parseFloat(coordMatch[2]),
-        layerId
-      };
-    }
-    return null;
-  }).filter(park => park !== null);
-
-  const filteredParks = parksWithCoords.filter(park => selectedLayers.includes(park.layerId));
 
   const userLocationIcon = L.divIcon({
     className: 'custom-marker',
@@ -204,7 +168,7 @@ export default function MapContainer({ sites, parks = [], selectedLayers, onMark
         <Marker
           key={site.id}
           position={[site.latitude, site.longitude]}
-          icon={createCustomIcon(site.category, site.type)}
+          icon={createCustomIcon(site.sub_category)}
           eventHandlers={{
             click: () => onMarkerClick(site),
           }}
@@ -213,25 +177,6 @@ export default function MapContainer({ sites, parks = [], selectedLayers, onMark
             <div className="text-center" dir="rtl">
               <strong>{site.name}</strong>
               {site.address && <div className="text-sm">{site.address}</div>}
-            </div>
-          </Popup>
-        </Marker>
-      ))}
-
-      {filteredParks.map((park) => (
-        <Marker
-          key={`park-${park.id}`}
-          position={[park.latitude, park.longitude]}
-          icon={createCustomIcon(null, null, park.category)}
-          eventHandlers={{
-            click: () => onParkClick(park),
-          }}
-        >
-          <Popup>
-            <div className="text-center" dir="rtl">
-              <strong>{park.name}</strong>
-              <div className="text-sm text-gray-600">{park.category}</div>
-              {park.symbol && <div className="text-xs text-gray-500">סמל: {park.symbol}</div>}
             </div>
           </Popup>
         </Marker>
