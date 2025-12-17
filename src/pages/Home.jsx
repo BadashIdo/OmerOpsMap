@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import MapContainer from '@/components/map/MapContainer';
 import LayerToggle from '@/components/map/LayerToggle';
 import SiteCard from '@/components/map/SiteCard';
@@ -8,6 +8,7 @@ import ParkCard from '@/components/map/ParkCard';
 import AlertsBanner from '@/components/alerts/AlertsBanner';
 import SearchBar from '@/components/search/SearchBar';
 import ChatBot from '@/components/chat/ChatBot';
+import ReportDialog from '@/components/map/ReportDialog';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Bell, MessageCircle, Menu, ChevronDown, ChevronUp } from 'lucide-react';
@@ -20,6 +21,9 @@ export default function Home() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isAlertsExpanded, setIsAlertsExpanded] = useState(true);
   const [dismissedAlerts, setDismissedAlerts] = useState([]);
+  const [reportLocation, setReportLocation] = useState(null);
+  
+  const queryClient = useQueryClient();
 
   const { data: sites = [] } = useQuery({
     queryKey: ['sites'],
@@ -65,6 +69,26 @@ export default function Home() {
   const handleDismissAlert = useCallback((alertId) => {
     setDismissedAlerts(prev => [...prev, alertId]);
   }, []);
+
+  const handleMapClick = useCallback((latlng) => {
+    setReportLocation(latlng);
+  }, []);
+
+  const createSiteMutation = useMutation({
+    mutationFn: (siteData) => base44.entities.Site.create(siteData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sites'] });
+      setReportLocation(null);
+    },
+  });
+
+  const handleReportSubmit = async (reportData) => {
+    await createSiteMutation.mutateAsync({
+      ...reportData,
+      type: 'other',
+      status: 'active',
+    });
+  };
 
   return (
     <div className="h-screen w-full flex flex-col bg-slate-100" dir="rtl">
@@ -166,6 +190,7 @@ export default function Home() {
           onMarkerClick={handleMarkerClick}
           onParkClick={handleParkClick}
           selectedSite={selectedSite}
+          onMapClick={handleMapClick}
         />
 
         {/* Site Card */}
@@ -198,6 +223,14 @@ export default function Home() {
         <ChatBot
           isOpen={isChatOpen}
           onClose={() => setIsChatOpen(false)}
+        />
+
+        {/* Report Dialog */}
+        <ReportDialog
+          isOpen={!!reportLocation}
+          onClose={() => setReportLocation(null)}
+          location={reportLocation || { lat: 0, lng: 0 }}
+          onSubmit={handleReportSubmit}
         />
       </main>
     </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MapContainer as LeafletMap, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet';
+import { MapContainer as LeafletMap, TileLayer, Marker, Popup, useMap, ZoomControl, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Navigation } from 'lucide-react';
@@ -98,7 +98,16 @@ function MapController({ selectedSite, mapRef }) {
   return null;
 }
 
-export default function MapContainer({ sites, parks = [], selectedLayers, onMarkerClick, onParkClick, selectedSite }) {
+function MapClickHandler({ onMapClick }) {
+  useMapEvents({
+    click: (e) => {
+      onMapClick(e.latlng);
+    },
+  });
+  return null;
+}
+
+export default function MapContainer({ sites, parks = [], selectedLayers, onMarkerClick, onParkClick, selectedSite, onMapClick }) {
   const [userLocation, setUserLocation] = useState(null);
   const mapRef = useRef(null);
 
@@ -229,6 +238,7 @@ export default function MapContainer({ sites, parks = [], selectedLayers, onMark
       ))}
 
         <MapController selectedSite={selectedSite} mapRef={mapRef} />
+        <MapClickHandler onMapClick={onMapClick} />
       </LeafletMap>
 
       <button
