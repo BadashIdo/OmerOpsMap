@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { MapContainer as LeafletMap, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer as LeafletMap, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -121,6 +121,7 @@ export default function MapContainer({ sites, parks = [], selectedLayers, onMark
     <LeafletMap
       center={OMER_CENTER}
       zoom={OMER_ZOOM}
+      zoomControl={false}
       className="w-full h-full z-0"
       style={{ height: '100%', width: '100%' }}
     >
@@ -128,6 +129,8 @@ export default function MapContainer({ sites, parks = [], selectedLayers, onMark
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      
+      <ZoomControl position="bottomleft" />
       
       {filteredSites.map((site) => (
         <Marker
