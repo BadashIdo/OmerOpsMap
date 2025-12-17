@@ -233,7 +233,7 @@ export default function MapContainer({ sites, parks = [], selectedLayers, onMark
 
       <button
         onClick={handleLocateMe}
-        className="absolute bottom-32 left-2 z-[1000] bg-white hover:bg-gray-50 border-2 border-gray-300 rounded-md shadow-md w-8 h-8 flex items-center justify-center transition-colors"
+        className="absolute bottom-36 left-2 z-[1000] bg-white hover:bg-gray-50 border-2 border-gray-300 rounded-md shadow-md w-8 h-8 flex items-center justify-center transition-colors"
         title="המיקום שלי"
       >
         <Navigation className="w-5 h-5 text-gray-700" />
