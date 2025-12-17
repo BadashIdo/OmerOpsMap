@@ -13,7 +13,7 @@ import { Bell, MessageCircle, Menu, ChevronDown, ChevronUp } from 'lucide-react'
 import { Badge } from '@/components/ui/badge';
 
 export default function Home() {
-  const [selectedLayers, setSelectedLayers] = useState(['operations', 'community', 'emergency', 'culture', 'parks']);
+  const [selectedLayers, setSelectedLayers] = useState(['operations', 'community', 'emergency', 'culture', 'park-fitness', 'park-children', 'park-public']);
   const [selectedSite, setSelectedSite] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isAlertsExpanded, setIsAlertsExpanded] = useState(true);

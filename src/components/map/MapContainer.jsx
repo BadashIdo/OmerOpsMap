@@ -38,11 +38,17 @@ L.Icon.Default.mergeOptions({
 function createCustomIcon(category, type, parkCategory) {
   let color, icon;
   
-  if (category === 'parks') {
-    color = parkCategory === 'גינת כושר' ? '#3b82f6' : 
-            parkCategory === 'גן ילדים' ? '#ec4899' : '#22c55e';
-    icon = parkCategory === 'גינת כושר' ? '💪' : 
-           parkCategory === 'גן ילדים' ? '🎠' : '🌳';
+  if (parkCategory) {
+    if (parkCategory === 'גינת כושר') {
+      color = '#3b82f6';
+      icon = '💪';
+    } else if (parkCategory === 'גן ילדים') {
+      color = '#ec4899';
+      icon = '🎠';
+    } else if (parkCategory === 'שטח ציבורי') {
+      color = '#22c55e';
+      icon = '🌳';
+    }
   } else {
     color = CATEGORY_COLORS[category] || '#6B7280';
     icon = TYPE_ICONS[type] || '📍';
@@ -94,17 +100,22 @@ export default function MapContainer({ sites, parks = [], selectedLayers, onMark
   const parksWithCoords = parks.map(park => {
     const coordMatch = park.address?.match(/^(\d+\.\d+),\s*(\d+\.\d+)$/);
     if (coordMatch) {
+      let layerId;
+      if (park.category === 'גינת כושר') layerId = 'park-fitness';
+      else if (park.category === 'גן ילדים') layerId = 'park-children';
+      else if (park.category === 'שטח ציבורי') layerId = 'park-public';
+      
       return {
         ...park,
         latitude: parseFloat(coordMatch[1]),
         longitude: parseFloat(coordMatch[2]),
-        category: 'parks'
+        layerId
       };
     }
     return null;
   }).filter(park => park !== null);
 
-  const filteredParks = selectedLayers.includes('parks') ? parksWithCoords : [];
+  const filteredParks = parksWithCoords.filter(park => selectedLayers.includes(park.layerId));
 
   return (
     <LeafletMap
@@ -140,7 +151,7 @@ export default function MapContainer({ sites, parks = [], selectedLayers, onMark
         <Marker
           key={`park-${park.id}`}
           position={[park.latitude, park.longitude]}
-          icon={createCustomIcon('parks', null, park.category)}
+          icon={createCustomIcon(null, null, park.category)}
         >
           <Popup>
             <div className="text-center" dir="rtl">
