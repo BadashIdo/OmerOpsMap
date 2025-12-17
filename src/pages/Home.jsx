@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import MapContainer from '@/components/map/MapContainer';
 import LayerToggle from '@/components/map/LayerToggle';
 import SiteCard from '@/components/map/SiteCard';
-import ParkCard from '@/components/map/ParkCard';
+
 import AlertsBanner from '@/components/alerts/AlertsBanner';
 import SearchBar from '@/components/search/SearchBar';
 import ChatBot from '@/components/chat/ChatBot';
@@ -15,9 +15,12 @@ import { Bell, MessageCircle, Menu, ChevronDown, ChevronUp } from 'lucide-react'
 import { Badge } from '@/components/ui/badge';
 
 export default function Home() {
-  const [selectedLayers, setSelectedLayers] = useState(['operations', 'community', 'emergency', 'culture', 'park-fitness', 'park-children', 'park-public']);
+  const [selectedLayers, setSelectedLayers] = useState([
+    'waste_centers', 'recycling', 'sweeping_routes', 'pruning_stations', 'leisure',
+    'upcoming_events', 'education', 'sports',
+    'public_shelters', 'emergency_alerts'
+  ]);
   const [selectedSite, setSelectedSite] = useState(null);
-  const [selectedPark, setSelectedPark] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isAlertsExpanded, setIsAlertsExpanded] = useState(true);
   const [dismissedAlerts, setDismissedAlerts] = useState([]);
@@ -40,10 +43,7 @@ export default function Home() {
     queryFn: () => base44.entities.LiveMessage.filter({ is_active: true }),
   });
 
-  const { data: parks = [] } = useQuery({
-    queryKey: ['parks'],
-    queryFn: () => base44.entities.Park.list(),
-  });
+  
 
   const activeAlerts = liveMessages.filter(msg => !dismissedAlerts.includes(msg.id));
   const criticalAlerts = activeAlerts.filter(a => a.priority === 'critical' || a.type === 'emergency');
@@ -61,10 +61,7 @@ export default function Home() {
     setSelectedPark(null);
   }, []);
 
-  const handleParkClick = useCallback((park) => {
-    setSelectedPark(park);
-    setSelectedSite(null);
-  }, []);
+  
 
   const handleDismissAlert = useCallback((alertId) => {
     setDismissedAlerts(prev => [...prev, alertId]);
@@ -165,13 +162,11 @@ export default function Home() {
         {/* Search Bar */}
         <div className="absolute top-4 right-4 left-4 z-10 flex justify-center md:right-20">
           <SearchBar
-            sites={sites}
-            streets={streets}
-            parks={parks}
-            onSiteSelect={handleMarkerClick}
-            onParkSelect={handleParkClick}
-            onOpenChat={() => setIsChatOpen(true)}
-          />
+                          sites={sites}
+                          streets={streets}
+                          onSiteSelect={handleMarkerClick}
+                          onOpenChat={() => setIsChatOpen(true)}
+                        />
         </div>
 
         {/* Layer Toggle - Sidebar */}
@@ -184,34 +179,24 @@ export default function Home() {
 
         {/* Map */}
         <MapContainer
-          sites={sites}
-          parks={parks}
-          selectedLayers={selectedLayers}
-          onMarkerClick={handleMarkerClick}
-          onParkClick={handleParkClick}
-          selectedSite={selectedSite}
-          onMapClick={handleMapClick}
-        />
+                      sites={sites}
+                      selectedLayers={selectedLayers}
+                      onMarkerClick={handleMarkerClick}
+                      selectedSite={selectedSite}
+                      onMapClick={handleMapClick}
+                    />
 
         {/* Site Card */}
-        {selectedSite && (
-          <SiteCard
-            site={selectedSite}
-            onClose={() => setSelectedSite(null)}
-            onDelete={() => {
-              queryClient.invalidateQueries({ queryKey: ['sites'] });
-              setSelectedSite(null);
-            }}
-          />
-        )}
-
-        {/* Park Card */}
-        {selectedPark && (
-          <ParkCard
-            park={selectedPark}
-            onClose={() => setSelectedPark(null)}
-          />
-        )}
+                    {selectedSite && (
+                      <SiteCard
+                        site={selectedSite}
+                        onClose={() => setSelectedSite(null)}
+                        onDelete={() => {
+                          queryClient.invalidateQueries({ queryKey: ['sites'] });
+                          setSelectedSite(null);
+                        }}
+                      />
+                    )}
 
         {/* Chat FAB */}
         {!isChatOpen && (
