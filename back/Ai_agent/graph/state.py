@@ -30,3 +30,5 @@ class GraphState(TypedDict, total=False):
     is_allowed: bool
     moderation_reason: str
     
+    # tool agent
+    tool_results: Optional[dict]

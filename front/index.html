@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OmerOpsMap – AI Agent</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>AI Agent</h1>
+
+      <div class="card">
+        <label for="query">כתוב שאלה (Enter לשליחה, Shift+Enter לשורה חדשה)</label>
+        <textarea id="query" rows="4" placeholder="למשל: מתי הוקמה עיריית עומר?"></textarea>
+
+        <div class="row">
+          <button id="sendBtn">שלח</button>
+          <span id="status" class="status"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row row-space">
+          <h2>תשובה</h2>
+          <button id="copyBtn" class="ghost" title="העתק תשובה">העתק</button>
+        </div>
+        <pre id="answer" class="answer">—</pre>
+      </div>
+
+      <div class="hint">
+        Backend: <code>http://localhost:8000</code> • Endpoint: <code>/ask</code>
+      </div>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

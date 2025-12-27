@@ -17,6 +17,9 @@ langchain-chroma = "*"
 tiktoken = "*"
 tavily-python = "*"
 python-dotenv = "*"
+fastapi = "^0.127.1"
+uvicorn = {extras = ["standard"], version = "^0.40.0"}
+pydantic = "^2.12.5"
 
 [tool.poetry.group.dev.dependencies]
 black = "*"

@@ -4,5 +4,5 @@ from graph.nodes.moderate import moderate
 
 __all__ = [
     "moderate",
-    # "tool_agent",
+    "tool_agent",
 ]
