@@ -8,27 +8,6 @@
   width: 100%;
 }
 
-/* עוטף את כפתור המיקום ומצמיד אותו ליד הזום */
-.bottom-controls {
-  position: absolute;
-  right: 52px;   /* ליד ה-zoom שנמצא ב-bottomright */
-  bottom: 16px;
-  z-index: 1000; /* מעל המפה */
-  display: flex;
-  gap: 8px;
-}
-
-/* כפתור עגול */
-.map-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  border: 1px solid rgba(0,0,0,0.15);
-  background: white;
-  cursor: pointer;
-  font-size: 18px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-}
 
 .map-btn:disabled {
   opacity: 0.6;
