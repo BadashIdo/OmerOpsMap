@@ -53,7 +53,7 @@ export async function loadSitesFromExcel() {
       const district = pick(r, ["רובע", "רובע ", "רובע  ", "אזור", "שכונה"]);
       const street = pick(r, ["רחוב", "שם רחוב"]);
       const houseNumber = pick(r, ["מספר בית", "מספר", "בית"]);
-      const phone = pick(r, ["טלפון", "טלפון ", "מספר טלפון", "נייד", "פלאפון"]);
+      const phone = pick(r, ["טלפון איש קשר", "טלפון ", "מספר טלפון", "נייד", "פלאפון"]);
       const contactName = pick(r, ["איש קשר", "אחראי", "אחראי/ת", "שם איש קשר", "איש קשר / אחראי"]);
       const description = pick(r, ["תאור כללי", "תיאור כללי", "תיאור", "הערות", "מידע נוסף"]);
 

@@ -12,7 +12,7 @@ export default function SitePopup({ site }) {
   const address =
     has(site.address) ? site.address : [site.street, site.houseNumber].filter(has).join(" ");
 
-  const contactLine = [site.contactName, site.phone].filter(has).join(" • ");
+  const contactLine = [site.contactName, site.phone].filter(has).join("  ");
   const catLine = [site.category, site.subCategory].filter(has).join(" / ");
   const coordLine =
     has(site.lat) && has(site.lng)

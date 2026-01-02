@@ -9,7 +9,6 @@ import SideBar from "../components/SideBar";
 import SearchBar from "../components/SearchBar";
 import Chat from "../components/Chat";
 import MapView from "../components/MapView";
-import Header from "../components/Header";
 
 
 const OMER_CENTER = [31.2632, 34.8419];
