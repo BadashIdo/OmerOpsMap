@@ -1,6 +1,6 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
-import { userIcon } from "../lib/leafletIcons";
+import { userIcon, getCategoryIcon } from "../lib/leafletIcons";
 import SitePopup from "./Site/SitePopup";
 
 
@@ -19,6 +19,7 @@ export default function MapView({ center, mapRef, markerRefs, userLocation, poin
         <Marker
           key={p.id}
           position={[p.lat, p.lng]}
+          icon={getCategoryIcon(p.subCategory)}
           ref={(el) => (markerRefs.current[p.id] = el)}
           eventHandlers={{
             click: (e) => {
