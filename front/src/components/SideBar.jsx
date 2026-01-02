@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import styles from "../styles/SideBar.module.css";
+import { getCategoryIcon } from "../lib/categoryIcons";
 
 export default function SideBar({
   isOpen,
@@ -69,7 +70,9 @@ export default function SideBar({
                 >
                   <div className={`${styles.chev} ${isCatOpen ? styles.chevOpen : ""}`}>˅</div>
                   <div className={styles.cardTitle}>{mainCategory}</div>
-                  <div className={styles.cardIcon}>🔧</div>
+                  <span className={`material-symbols-outlined ${styles.cardIcon}`}>
+                    {getCategoryIcon(mainCategory)}
+                  </span>
                 </button>
 
                 {/* גוף הקטגוריה נסגר/נפתח */}

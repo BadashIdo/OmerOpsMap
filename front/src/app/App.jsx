@@ -12,6 +12,7 @@ import MapView from "../components/MapView";
 
 
 const OMER_CENTER = [31.2632, 34.8419];
+const DISTRICTS = ["רובע א'", "רובע ב'", "רובע ג'", "רובע ד'"];
 
 export default function App() {
   const { points, loadError } = useSites(); // <-- נקודות מהאקסל
@@ -39,7 +40,8 @@ export default function App() {
   // ברגע שהדאטה נטען בפעם הראשונה, נדליק את כולם (רק אם עדיין ריק)
   useMemo(() => {
     if (activeFilters.length === 0 && allSubCategories.length > 0) {
-      setActiveFilters(allSubCategories);
+      // מוסיפים גם את תתי-הקטגוריות וגם את הרובעים
+      setActiveFilters([...allSubCategories, ...DISTRICTS]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allSubCategories]);
@@ -54,14 +56,31 @@ export default function App() {
       if (subCat) struct[mainCat].add(subCat);
     });
 
+    // הוספת קטגוריית רובעים ידנית
+    struct["רובעים"] = DISTRICTS;
+
     return Object.fromEntries(
-      Object.entries(struct).map(([k, v]) => [k, Array.from(v)])
+      Object.entries(struct).map(([k, v]) => [k, Array.isArray(v) ? v : Array.from(v)])
     );
   }, [points]);
 
   const filteredPoints = useMemo(() => {
     if (activeFilters.length === 0) return points;
-    return points.filter((p) => activeFilters.includes(p.subCategory));
+
+    // הפרדה בין רובעים לתתי-קטגוריות
+    const activeDistricts = activeFilters.filter((f) => DISTRICTS.includes(f));
+    const activeSubCategories = activeFilters.filter((f) => !DISTRICTS.includes(f));
+
+    return points.filter((p) => {
+      // בדיקת רובע (אם יש רובעים פעילים)
+      const districtMatch = activeDistricts.length === 0 || activeDistricts.includes(p.district);
+      
+      // בדיקת תת-קטגוריה (אם יש תת-קטגוריות פעילות)
+      const subCategoryMatch = activeSubCategories.length === 0 || activeSubCategories.includes(p.subCategory);
+      
+      // האתר צריך לעמוד בשני התנאים (AND לוגי)
+      return districtMatch && subCategoryMatch;
+    });
   }, [points, activeFilters]);
 
   const results = useMemo(() => {
