@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "ai-agent"
+version = "0.1.0"
+description = "AI Agent for Omer's citizens with moderation gate and tool"
+authors = ["Yehonatan Yamin"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+beautifulsoup4 = "*"
+langchain = "*"
+langchain-community = "*"
+langchainhub = "*"
+langgraph = "*"
+langchain-openai = "*"
+langchain-chroma = "*"
+tiktoken = "*"
+tavily-python = "*"
+python-dotenv = "*"
+fastapi = "^0.127.1"
+uvicorn = {extras = ["standard"], version = "^0.40.0"}
+pydantic = "^2.12.5"
+
+[tool.poetry.group.dev.dependencies]
+black = "*"
+isort = "*"
+pytest = "*"
+pytest-asyncio = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "omer-web-tools"
+version = "0.1.0"
+description = "MCP web search tools (Tavily)"
+authors = ["Yehonatan Yamin"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+fastmcp = "*"
+tavily-python = "*"
+python-dotenv = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
