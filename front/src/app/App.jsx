@@ -22,7 +22,6 @@ export default function App() {
   const watchIdRef = useRef(null);
 
   const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState(null);
   const [showResults, setShowResults] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [isTracking, setIsTracking] = useState(false);
@@ -118,13 +117,16 @@ export default function App() {
   };
 
   const goToPoint = (p) => {
-    setSelectedId(p.id);
     setQuery(p.name);
     setShowResults(false);
 
     const map = mapRef.current;
     if (map) {
-      map.flyTo([p.lat, p.lng], 17, { animate: true, duration: 1.5, noMoveStart: true });
+      // חישוב offset כדי שה-popup יופיע למטה
+      const targetPoint = map.project([p.lat, p.lng], 17);
+      const targetLatLng = map.unproject([targetPoint.x, targetPoint.y - 200], 17);
+      
+      map.flyTo(targetLatLng, 17, { animate: true, duration: 1.5, noMoveStart: true });
 
       setTimeout(() => {
         const marker = markerRefs.current[p.id];
