@@ -11,7 +11,16 @@ export default function MapView({ center, mapRef, markerRefs, userLocation, poin
 
       {userLocation && (
         <Marker position={userLocation} icon={userIcon}>
-          <Popup>אתה כאן</Popup>
+          <Popup>
+            <div style={{ textAlign: "center", direction: "rtl" }}>
+              <div style={{ fontSize: "16px", fontWeight: "bold", marginBottom: "5px" }}>
+                📍 אתה כאן
+              </div>
+              <div style={{ fontSize: "12px", opacity: 0.7 }}>
+                מיקום בזמן אמת
+              </div>
+            </div>
+          </Popup>
         </Marker>
       )}
 

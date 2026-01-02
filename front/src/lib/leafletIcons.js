@@ -1,12 +1,58 @@
 import L from "leaflet";
 
-export const userIcon = new L.Icon({
-  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+// אייקון מיקום משתמש מותאם אישית עם נקודה כחולה
+export const userIcon = new L.DivIcon({
+  html: `
+    <div style="
+      position: relative;
+      width: 30px;
+      height: 30px;
+    ">
+      <!-- מעגל חיצוני מהבהב -->
+      <div style="
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 30px;
+        height: 30px;
+        background: rgba(66, 133, 244, 0.3);
+        border-radius: 50%;
+        animation: userPulse 2s ease-out infinite;
+      "></div>
+      
+      <!-- נקודה כחולה מרכזית -->
+      <div style="
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 16px;
+        height: 16px;
+        background: #4285f4;
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      "></div>
+    </div>
+    
+    <style>
+      @keyframes userPulse {
+        0% {
+          transform: translate(-50%, -50%) scale(0.8);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(-50%, -50%) scale(2);
+          opacity: 0;
+        }
+      }
+    </style>
+  `,
+  className: 'user-location-marker',
+  iconSize: [30, 30],
+  iconAnchor: [15, 15],
+  popupAnchor: [0, -15],
 });
 
 // מיפוי תת-קטגוריות לאייקונים וצבעים (Material Design Icons)

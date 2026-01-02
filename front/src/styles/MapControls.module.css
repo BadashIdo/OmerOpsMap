@@ -22,6 +22,31 @@
   font-size: 24px;
   display: grid;
   place-items: center;
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  transform: scale(1.05);
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
+
+/* כפתור מעקב פעיל */
+.tracking {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 6px 24px rgba(102, 126, 234, 0.5);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 6px 24px rgba(102, 126, 234, 0.5);
+  }
+  50% {
+    box-shadow: 0 6px 30px rgba(102, 126, 234, 0.8);
+  }
 }
 
 .hidden {

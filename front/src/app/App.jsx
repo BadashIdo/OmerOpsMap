@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import "../styles/App.css";
 import appStyles from "../styles/App.module.css";
 import controlsStyles from "../styles/MapControls.module.css";
@@ -19,11 +19,13 @@ export default function App() {
 
   const mapRef = useRef(null);
   const markerRefs = useRef({});
+  const watchIdRef = useRef(null);
 
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
   const [showResults, setShowResults] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
+  const [isTracking, setIsTracking] = useState(false);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -132,11 +134,63 @@ export default function App() {
   };
 
   const handleLocate = () => {
-    const map = mapRef.current;
-    if (!map) return;
-    map.locate({ setView: true, maxZoom: 16 });
-    map.on("locationfound", (e) => setUserLocation(e.latlng));
+    if (isTracking) {
+      // עצירת המעקב
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+      setIsTracking(false);
+      setUserLocation(null);
+    } else {
+      // התחלת מעקב
+      if (!navigator.geolocation) {
+        alert("הדפדפן שלך לא תומך במיקום גיאוגרפי");
+        return;
+      }
+
+      const map = mapRef.current;
+      
+      // אפשרויות למעקב
+      const options = {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      };
+
+      // התחלת מעקב רציף
+      watchIdRef.current = navigator.geolocation.watchPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const newLocation = { lat: latitude, lng: longitude };
+          
+          setUserLocation(newLocation);
+          
+          // אם זה העדכון הראשון, נעבור למיקום
+          if (!isTracking && map) {
+            map.flyTo([latitude, longitude], 16, { animate: true, duration: 1 });
+          }
+          
+          setIsTracking(true);
+        },
+        (error) => {
+          console.error("שגיאה בקבלת מיקום:", error);
+          alert("לא ניתן לקבל מיקום. אנא אפשר הרשאות מיקום בדפדפן.");
+          setIsTracking(false);
+        },
+        options
+      );
+    }
   };
+
+  // ניקוי המעקב כשהקומפוננטה נסגרת
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
+  }, []);
 
 return (
   <div className={appStyles.shell}>
@@ -202,11 +256,11 @@ return (
 
         {/* מיקום עצמי */}
         <button
-          className={controlsStyles.btn}
+          className={`${controlsStyles.btn} ${isTracking ? controlsStyles.tracking : ""}`}
           onClick={handleLocate}
-          title="מיקום עצמי"
+          title={isTracking ? "עצור מעקב" : "התחל מעקב מיקום"}
         >
-          🎯
+          {isTracking ? "📍" : "🎯"}
         </button>
 
         {/* המבורגר */}
