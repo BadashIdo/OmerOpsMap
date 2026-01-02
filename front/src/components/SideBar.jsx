@@ -35,15 +35,13 @@ export default function SideBar({
       <aside className={`${styles.sidebar} ${isOpen ? styles.open : ""}`}>
         {/* Header */}
         <div className={styles.top}>
-          <div className={styles.langPill}>EN ⇄ ע</div>
-
           <div className={styles.brand}>
             <div className={styles.brandTitle}>OmerOpsMap</div>
             <div className={styles.brandSub}>מערכת ניהול עירונית</div>
           </div>
 
           <button className={styles.closeBtn} onClick={onClose} aria-label="סגור">
-            ✕
+            <span className="material-symbols-outlined">chevron_right</span>
           </button>
         </div>
 
@@ -93,8 +91,6 @@ export default function SideBar({
             );
           })}
         </div>
-
-        <div className={styles.footer}>Omer Municipality 2024 ©</div>
       </aside>
     </>
   );

@@ -49,26 +49,7 @@
   background-color: #e0e0e0;
 }
 
-.top-search {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  right: 12px;
-  z-index: 1500;
-  display: flex;
-  justify-content: center;
-  pointer-events: none; /* כדי שהמפה תישאר פעילה מסביב */
-}
-
-.search-box {
-  width: min(720px, 100%);
-  pointer-events: auto; /* מחזיר אינטראקציה רק לקופסה */
-  background: white;
-  border: 1px solid rgba(0,0,0,0.12);
-  border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-  overflow: hidden;
-}
+/* הועבר למטה - ראה שורה 125 */
 
 .search-input-row {
   display: flex;
@@ -120,27 +101,46 @@
   opacity: 0.75;
 }
 
-/* App.css */
-
+/* SearchBar - ממורכז באמצע המסך */
 .top-search {
-  position: fixed; /* שינוי מ-absolute ל-fixed כדי שיישאר נעול למסך */
+  position: fixed;
   top: 10px;
   left: 50%;
-  transform: translateX(-50%); /* ממרכז את תיבת החיפוש בדיוק באמצע */
-  width: 90%; /* גמישות למובייל */
+  transform: translateX(-50%);
+  width: auto;
   max-width: 600px;
-  z-index: 2000; /* ערך גבוה מאוד כדי לעקוף כל אלמנט של Leaflet */
+  z-index: 2000;
   pointer-events: none;
+  display: flex;
+  justify-content: center;
 }
 
 .search-box {
-    direction: rtl;
+  direction: rtl;
   pointer-events: auto;
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  /* וודא שאין margin שגורם לקפיצות */
   margin: 0;
+  width: 600px;
+  max-width: calc(100vw - 40px);
+}
+
+/* מובייל: SearchBar רוחב מלא מקצה לקצה */
+@media (max-width: 768px) {
+  .top-search {
+    left: 10px;
+    right: 10px;
+    width: calc(100% - 20px);
+    max-width: none;
+    transform: none;
+  }
+  
+  .search-box {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 10px;
+  }
 }
 
 .nav-link:hover {

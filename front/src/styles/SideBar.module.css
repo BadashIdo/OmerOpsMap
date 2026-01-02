@@ -16,16 +16,20 @@
 /* Sidebar */
 .sidebar {
   position: fixed;
-  top: 0;
-  right: 0;
-  height: 100vh;
+  top: 80px;
+  right: 15px;
+  bottom: 15px;
+  height: auto;
+  max-height: calc(100vh - 95px);
   width: min(360px, 92vw);
   background: #2e3440;
   color: #e6eaf2;
   z-index: 1100;
-  transform: translateX(100%);
+  transform: translateX(calc(100% + 20px));
   transition: transform 0.25s ease;
-  border-left: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -33,6 +37,19 @@
 }
 .open {
   transform: translateX(0);
+}
+
+/* מובייל: Sidebar מלא מתחת ל-SearchBar */
+@media (max-width: 768px) {
+  .sidebar {
+    top: 70px;
+    left: 10px;
+    right: 10px;
+    bottom: 90px;
+    width: calc(100% - 20px);
+    height: auto;
+    border-radius: 16px;
+  }
 }
 
 /* Top */
@@ -263,13 +280,4 @@
 .checkbox {
   width: 18px;
   height: 18px;
-}
-
-/* Footer */
-.footer {
-  padding: 10px 14px 16px;
-  text-align: center;
-  font-size: 12px;
-  opacity: 0.55;
-  flex: 0 0 auto; /* חשוב: לא להצטמצם */
 }
