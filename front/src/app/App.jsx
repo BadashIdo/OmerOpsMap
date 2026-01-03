@@ -3,19 +3,34 @@ import "../styles/App.css";
 import appStyles from "../styles/App.module.css";
 import controlsStyles from "../styles/MapControls.module.css";
 import { useSites } from "../hooks/useSites";
+import { useTemporarySites } from "../hooks/useTemporarySites";
+import { useWebSocket } from "../hooks/useWebSocket";
+import { AuthProvider, useAuth } from "../context/AuthContext";
 import { normalize } from "../lib/text";
 
 import SideBar from "../components/SideBar";
 import SearchBar from "../components/SearchBar";
 import Chat from "../components/Chat";
 import MapView from "../components/MapView";
+import TemporaryEventsPanel from "../components/TemporaryEventsPanel";
+import NotificationToast from "../components/NotificationToast";
+import LoginPage from "../components/LoginPage";
+import AdminPanel from "../components/AdminPanel";
+import RequestForm from "../components/RequestForm";
 
 
 const OMER_CENTER = [31.2632, 34.8419];
 const DISTRICTS = ["רובע א'", "רובע ב'", "רובע ג'", "רובע ד'"];
 
-export default function App() {
-  const { points, loadError } = useSites(); // <-- נקודות מהאקסל
+function AppContent() {
+  const { isAdmin, isLoading: authLoading } = useAuth();
+  
+  // Data refresh trigger for WebSocket updates
+  const [dataRefreshTrigger, setDataRefreshTrigger] = useState(0);
+  
+  // Load sites from API
+  const { points, loadError } = useSites(dataRefreshTrigger);
+  const { temporarySites } = useTemporarySites(dataRefreshTrigger);
 
   const mapRef = useRef(null);
   const markerRefs = useRef({});
@@ -28,11 +43,83 @@ export default function App() {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isTempPanelOpen, setIsTempPanelOpen] = useState(false);
+  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
+  
+  // Request form state
+  const [requestFormOpen, setRequestFormOpen] = useState(false);
+  const [requestLocation, setRequestLocation] = useState(null);
+  
+  // Notifications
+  const [notifications, setNotifications] = useState([]);
+  
+  // Pending requests count for admin badge
+  const [pendingCount, setPendingCount] = useState(0);
+
+  // WebSocket for real-time updates
+  useWebSocket((message) => {
+    console.log("WebSocket message:", message);
+    
+    if (message.type === "data_changed") {
+      // Refresh data when changes occur
+      setDataRefreshTrigger((prev) => prev + 1);
+      
+      // Show notification
+      const actionText = {
+        create: "נוסף",
+        update: "עודכן",
+        delete: "נמחק",
+        expired: "פג תוקפו"
+      }[message.action] || "שונה";
+      
+      const typeText = message.data_type === "temporary" ? "אירוע זמני" : "אתר";
+      const name = message.data?.name || "";
+      
+      addNotification(`${typeText} ${actionText}: ${name}`, message.action === "delete" || message.action === "expired" ? "warning" : "update");
+    }
+    
+    // Handle new request notification for admins
+    if (message.type === "data_changed" && message.data_type === "request" && message.action === "new") {
+      if (isAdmin) {
+        addNotification(`בקשה חדשה: ${message.data?.name || ""}`, "info");
+        setPendingCount((prev) => prev + 1);
+      }
+    }
+    
+    // Handle request approved/rejected
+    if (message.type === "data_changed" && message.data_type === "request") {
+      if (message.action === "approved" || message.action === "rejected") {
+        setPendingCount((prev) => Math.max(0, prev - 1));
+      }
+    }
+  });
+
+  // Add notification helper
+  const addNotification = (message, type = "info") => {
+    const id = Date.now();
+    setNotifications((prev) => [...prev, { id, message, type }]);
+  };
+
+  const removeNotification = (id) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+  
+  // Handle long press on map
+  const handleMapLongPress = (location) => {
+    setRequestLocation(location);
+    setRequestFormOpen(true);
+  };
 
   // כל תתי-הקטגוריות (מתוך points!)
   const allSubCategories = useMemo(
     () => [...new Set(points.map((p) => p.subCategory))].filter(Boolean),
     [points]
+  );
+  
+  // All temporary event categories
+  const allTempCategories = useMemo(
+    () => [...new Set(temporarySites.map((t) => t.category))].filter(Boolean),
+    [temporarySites]
   );
 
   // פילטרים דיפולטיים: בהתחלה "הכול דלוק"
@@ -41,11 +128,11 @@ export default function App() {
   // ברגע שהדאטה נטען בפעם הראשונה, נדליק את כולם (רק אם עדיין ריק)
   useMemo(() => {
     if (activeFilters.length === 0 && allSubCategories.length > 0) {
-      // מוסיפים גם את תתי-הקטגוריות וגם את הרובעים
-      setActiveFilters([...allSubCategories, ...DISTRICTS]);
+      // מוסיפים גם את תתי-הקטגוריות וגם את הרובעים וגם קטגוריות זמניות
+      setActiveFilters([...allSubCategories, ...DISTRICTS, ...allTempCategories, "אירועים זמניים"]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allSubCategories]);
+  }, [allSubCategories, allTempCategories]);
 
   const categoriesStructure = useMemo(() => {
     const struct = {};
@@ -59,18 +146,23 @@ export default function App() {
 
     // הוספת קטגוריית רובעים ידנית
     struct["רובעים"] = DISTRICTS;
+    
+    // Add temporary events category
+    if (allTempCategories.length > 0) {
+      struct["אירועים זמניים"] = allTempCategories;
+    }
 
     return Object.fromEntries(
       Object.entries(struct).map(([k, v]) => [k, Array.isArray(v) ? v : Array.from(v)])
     );
-  }, [points]);
+  }, [points, allTempCategories]);
 
   const filteredPoints = useMemo(() => {
     if (activeFilters.length === 0) return points;
 
     // הפרדה בין רובעים לתתי-קטגוריות
     const activeDistricts = activeFilters.filter((f) => DISTRICTS.includes(f));
-    const activeSubCategories = activeFilters.filter((f) => !DISTRICTS.includes(f));
+    const activeSubCategories = activeFilters.filter((f) => !DISTRICTS.includes(f) && !allTempCategories.includes(f) && f !== "אירועים זמניים");
 
     return points.filter((p) => {
       // בדיקת רובע (אם יש רובעים פעילים)
@@ -82,17 +174,37 @@ export default function App() {
       // האתר צריך לעמוד בשני התנאים (AND לוגי)
       return districtMatch && subCategoryMatch;
     });
-  }, [points, activeFilters]);
+  }, [points, activeFilters, allTempCategories]);
+  
+  // Filter temporary sites
+  const filteredTemporarySites = useMemo(() => {
+    if (activeFilters.length === 0) return temporarySites;
+    
+    const activeTempCategories = activeFilters.filter((f) => allTempCategories.includes(f));
+    
+    // If "אירועים זמניים" is not active, hide all temporary sites
+    if (!activeFilters.includes("אירועים זמניים")) {
+      return [];
+    }
+    
+    // If no specific temp categories selected, show all
+    if (activeTempCategories.length === 0) {
+      return temporarySites;
+    }
+    
+    return temporarySites.filter((t) => activeTempCategories.includes(t.category));
+  }, [temporarySites, activeFilters, allTempCategories]);
 
   const results = useMemo(() => {
     const q = normalize(query);
     if (!q) return [];
 
-    const scored = filteredPoints
+    // Search in permanent sites
+    const scoredPermanent = filteredPoints
       .map((p) => {
         const name = normalize(p.name);
-        const address = normalize(p.address);
-        const desc = normalize(p.description);
+        const address = normalize(p.address || "");
+        const desc = normalize(p.description || "");
 
         let score = 0;
         if (name.startsWith(q)) score += 3;
@@ -100,13 +212,33 @@ export default function App() {
         if (address.includes(q)) score += 1;
         if (desc.includes(q)) score += 1;
 
-        return { p, score };
+        return { item: p, score, type: "permanent" };
       })
-      .filter((x) => x.score > 0)
+      .filter((x) => x.score > 0);
+    
+    // Search in temporary sites
+    const scoredTemporary = filteredTemporarySites
+      .map((t) => {
+        const name = normalize(t.name);
+        const desc = normalize(t.description || "");
+        const category = normalize(t.category || "");
+
+        let score = 0;
+        if (name.startsWith(q)) score += 3;
+        if (name.includes(q)) score += 2;
+        if (category.includes(q)) score += 1;
+        if (desc.includes(q)) score += 1;
+
+        return { item: t, score, type: "temporary" };
+      })
+      .filter((x) => x.score > 0);
+    
+    // Combine and sort all results
+    const allScored = [...scoredPermanent, ...scoredTemporary]
       .sort((a, b) => b.score - a.score);
 
-    return scored.slice(0, 8).map((x) => x.p);
-  }, [query, filteredPoints]);
+    return allScored.slice(0, 8).map((x) => x.item);
+  }, [query, filteredPoints, filteredTemporarySites]);
 
   const toggleFilter = (subCat) => {
     setActiveFilters((prev) =>
@@ -194,6 +326,11 @@ export default function App() {
     };
   }, []);
 
+  // Show login page while auth is loading or if not logged in
+  if (authLoading) {
+    return null; // LoginPage handles loading state
+  }
+
 return (
   <div className={appStyles.shell}>
     <div className={appStyles.mapLayer}>
@@ -209,7 +346,7 @@ return (
             borderRadius: 8,
           }}
         >
-          שגיאה בטעינת אקסל: {loadError}
+          שגיאה בטעינת נתונים: {loadError}
         </div>
       )}
 
@@ -241,6 +378,55 @@ return (
       />
 
       <Chat isOpen={isChatOpen} setIsOpen={setIsChatOpen} />
+      
+      {/* Temporary Events Panel */}
+      <TemporaryEventsPanel
+        isOpen={isTempPanelOpen}
+        onClose={() => setIsTempPanelOpen(false)}
+        events={temporarySites}
+        onEventClick={(event) => {
+          // Navigate to event on map
+          const map = mapRef.current;
+          if (map) {
+            map.flyTo([event.lat, event.lng], 17, { animate: true, duration: 1.5 });
+          }
+        }}
+      />
+      
+      {/* Admin Panel */}
+      {isAdmin && (
+        <AdminPanel
+          isOpen={isAdminPanelOpen}
+          onClose={() => setIsAdminPanelOpen(false)}
+          onDataChange={() => setDataRefreshTrigger((prev) => prev + 1)}
+        />
+      )}
+      
+      {/* Request Form */}
+      <RequestForm
+        isOpen={requestFormOpen}
+        onClose={() => {
+          setRequestFormOpen(false);
+          setRequestLocation(null);
+        }}
+        location={requestLocation}
+        onSuccess={() => {
+          addNotification("הבקשה נשלחה בהצלחה!", "success");
+        }}
+      />
+      
+      {/* Notifications */}
+      <div style={{ position: "fixed", top: 80, right: 20, zIndex: 10000 }}>
+        {notifications.map((notif) => (
+          <div key={notif.id} style={{ marginBottom: 10 }}>
+            <NotificationToast
+              message={notif.message}
+              type={notif.type}
+              onClose={() => removeNotification(notif.id)}
+            />
+          </div>
+        ))}
+      </div>
 
       <div
         className={`${controlsStyles.controls} ${
@@ -264,6 +450,70 @@ return (
         >
           {isTracking ? "📍" : "🎯"}
         </button>
+        
+        {/* אירועים זמניים */}
+        <button
+          className={controlsStyles.btn}
+          onClick={() => setIsTempPanelOpen(true)}
+          title="אירועים זמניים"
+          style={{ position: "relative" }}
+        >
+          ⚡
+          {temporarySites.length > 0 && (
+            <span
+              style={{
+                position: "absolute",
+                top: -5,
+                right: -5,
+                background: "#f44336",
+                color: "white",
+                borderRadius: "50%",
+                width: 20,
+                height: 20,
+                fontSize: 11,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: "bold",
+              }}
+            >
+              {temporarySites.length}
+            </span>
+          )}
+        </button>
+        
+        {/* Admin Panel Button - Only for admins */}
+        {isAdmin && (
+          <button
+            className={controlsStyles.btn}
+            onClick={() => setIsAdminPanelOpen(true)}
+            title="ניהול מערכת"
+            style={{ position: "relative", background: "linear-gradient(135deg, #1a2a6c 0%, #2a5298 100%)", color: "white" }}
+          >
+            🔧
+            {pendingCount > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: -5,
+                  right: -5,
+                  background: "#f44336",
+                  color: "white",
+                  borderRadius: "50%",
+                  width: 20,
+                  height: 20,
+                  fontSize: 11,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: "bold",
+                }}
+              >
+                {pendingCount}
+              </span>
+            )}
+          </button>
+        )}
 
         {/* המבורגר */}
         <button
@@ -273,6 +523,20 @@ return (
         >
           ☰
         </button>
+        
+        {/* יציאה / שינוי משתמש */}
+        <button
+          className={`${controlsStyles.btn} ${controlsStyles.exitBtn}`}
+          onClick={() => {
+            if (confirm("האם לצאת ולחזור לבחירת משתמש?\n(אורח / מנהל)")) {
+              sessionStorage.clear();
+              window.location.reload();
+            }
+          }}
+          title="יציאה ושינוי משתמש"
+        >
+          <span style={{ fontSize: '20px' }}>⎋</span>
+        </button>
       </div>
 
       <MapView
@@ -281,10 +545,93 @@ return (
         markerRefs={markerRefs}
         userLocation={userLocation}
         points={filteredPoints}
+        temporarySites={filteredTemporarySites}
         onMarkerClick={goToPoint}
+        onLongPress={handleMapLongPress}
       />
     </div>
   </div>
   );
 }
 
+// Main App with AuthProvider
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppWithAuth />
+    </AuthProvider>
+  );
+}
+
+function AppWithAuth() {
+  const { admin, isLoading } = useAuth();
+  
+  // Check sessionStorage for guest entry on initial render
+  const [hasEnteredAsGuest, setHasEnteredAsGuest] = useState(() => {
+    return sessionStorage.getItem("omeropsmap_guest") === "true";
+  });
+  
+  const handleGuestEntry = () => {
+    sessionStorage.setItem("omeropsmap_guest", "true");
+    setHasEnteredAsGuest(true);
+  };
+  
+  if (isLoading) {
+    return <LoginPage />;
+  }
+  
+  // Show login if no admin and not entered as guest
+  if (!admin && !hasEnteredAsGuest) {
+    return <LoginPageWrapper onGuestEntry={handleGuestEntry} />;
+  }
+  
+  return <AppContent />;
+}
+
+function LoginPageWrapper({ onGuestEntry }) {
+  const { login, enterAsGuest, isLoading, error } = useAuth();
+  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [localError, setLocalError] = useState("");
+
+  const handleAdminLogin = async (e) => {
+    e.preventDefault();
+    setLocalError("");
+
+    if (!username.trim()) {
+      setLocalError("נא להזין שם משתמש");
+      return;
+    }
+    if (!password) {
+      setLocalError("נא להזין סיסמה");
+      return;
+    }
+
+    const success = await login(username.trim(), password);
+    if (!success) {
+      setLocalError(error || "שגיאה בהתחברות");
+    }
+  };
+
+  const handleGuestEntry = () => {
+    enterAsGuest();
+    onGuestEntry();
+  };
+
+  return (
+    <LoginPage 
+      showLoginForm={showLoginForm}
+      setShowLoginForm={setShowLoginForm}
+      username={username}
+      setUsername={setUsername}
+      password={password}
+      setPassword={setPassword}
+      localError={localError}
+      error={error}
+      isLoading={isLoading}
+      handleAdminLogin={handleAdminLogin}
+      handleGuestEntry={handleGuestEntry}
+    />
+  );
+}

@@ -1,164 +1,126 @@
-# OmerOpsMap 🗺️
+# OmerOpsMap Frontend
 
-A municipal site mapping and management system for the Omer municipality.  
-The application displays municipal sites on an interactive map, allows filtering by categories, viewing detailed site information, and direct navigation using **Waze** and **Google Maps**.
+Interactive map application for managing municipal sites and temporary events in Omer.
 
----
+## Features
 
-## ✨ Key Features
+- 🗺️ Interactive map with permanent sites
+- ⚡ Real-time temporary events display
+- 🔄 Live WebSocket updates
+- 🔍 Advanced search and filtering
+- 📱 Responsive design
+- 🤖 AI chat assistant
 
-- 🗺️ Interactive map (Leaflet + OpenStreetMap)
-- 📍 Load municipal sites from an Excel file
-- 📑 Detailed site popup including:
-  - Site name
-  - District
-  - Address (street + house number)
-  - Contact person and phone (if available)
-  - Category and sub-category
-  - Site type
-  - Coordinates (Latitude / Longitude)
-  - General description (via “More Info” button)
-- 🧭 Direct navigation:
-  - Waze (blue button)
-  - Google Maps (white button)
-- 🧩 Sidebar with categories and sub-categories
-- 🎨 Dark UI with clean white popups
-- ⚡ Built with React + Vite for fast performance
+## Quick Start
 
----
+### 1. Install dependencies
+```bash
+npm install
+```
 
-## 🏗️ Project Structure (Frontend)
+### 2. Configure environment
+```bash
+cp .env.example .env
+# Edit .env if needed
+```
 
-```txt
+### 3. Start development server
+```bash
+npm run dev
+```
+
+Application will be available at http://localhost:5173
+
+## Prerequisites
+
+- Node.js 16+
+- Data Server running at http://localhost:8001
+
+## Environment Variables
+
+Create a `.env` file with:
+
+```env
+VITE_API_URL=http://localhost:8001
+```
+
+## Project Structure
+
+```
 front/
-├─ public/
-│  ├─ icons/                 # Icons (Waze / Google Maps)
-│  └─ sites.xlsx             # Site data (not tracked in git)
-│
-├─ src/
-│  ├─ app/
-│  │  └─ App.jsx
-│  │
-│  ├─ components/
-│  │  ├─ Site/
-│  │  │  ├─ SitePopup.jsx    # Site popup on the map
-│  │  │  └─ SiteActions.jsx  # Navigation buttons (Waze / Google Maps)
-│  │  ├─ MapView.jsx
-│  │  ├─ SideBar.jsx
-│  │  ├─ SearchBar.jsx
-│  │  └─ Chat.jsx
-│  │
-│  ├─ data/
-│  │  └─ loadSitesFromExcel.js
-│  │
-│  ├─ hooks/
-│  ├─ lib/
-│  └─ styles/
-│     ├─ Site.module.css
-│     ├─ SiteActions.module.css
-│     └─ SideBar.module.css
-│
-├─ index.html
-├─ package.json
-├─ vite.config.js
-└─ README.md
+├── src/
+│   ├── api/              # API client
+│   ├── app/              # Main App component
+│   ├── assets/           # Static assets
+│   ├── components/       # React components
+│   │   ├── Site/         # Site-related components
+│   │   ├── MapView.jsx
+│   │   ├── SearchBar.jsx
+│   │   ├── SideBar.jsx
+│   │   ├── Chat.jsx
+│   │   ├── TemporaryEventsPanel.jsx
+│   │   └── NotificationToast.jsx
+│   ├── data/             # Data loading utilities
+│   ├── hooks/            # Custom React hooks
+│   ├── lib/              # Utility libraries
+│   └── styles/           # CSS modules
+├── public/               # Public assets
+└── package.json
+```
 
-## 🧩 Components Overview
+## Available Scripts
 
-### App
-The main application wrapper.  
-Responsible for global layout, state initialization, and connecting all major components (map, sidebar, controls, and chat).
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
 
----
+## Key Components
 
 ### MapView
-Displays the interactive map using **Leaflet** and **OpenStreetMap**.  
-Responsible for:
-- Rendering the map and markers
-- Handling map interactions (zoom, center, marker clicks)
-- Displaying `SitePopup` when a site marker is selected
-
----
+Main map component displaying permanent and temporary sites.
 
 ### SideBar
-The main navigation and filtering panel.  
-Responsible for:
-- Displaying categories and sub-categories
-- Allowing users to expand/collapse categories
-- Filtering visible sites on the map
-- Hiding map controls when opened
+Filterable categories for sites and temporary events.
 
----
+### TemporaryEventsPanel
+Panel showing all active temporary events with details.
 
-### SearchBar
-Provides text-based search across sites.  
-Responsible for:
-- Filtering sites by name, category, or other attributes
-- Updating visible markers in real time
+### NotificationToast
+Real-time notifications for data changes.
 
----
+## API Integration
 
-### Chat
-A conversational interface for interacting with the system.  
-Responsible for:
-- Accepting natural language queries
-- Displaying system responses
-- (Future) Integrating with an AI-powered backend
+The frontend communicates with the Data Server via:
 
----
+- REST API for fetching sites
+- WebSocket for real-time updates
 
-### SitePopup
-Displays detailed information about a single site inside a map popup.  
-Responsible for:
-- Showing site metadata (name, district, address, category, etc.)
-- Displaying coordinates and description
-- Triggering navigation actions via `SiteActions`
+See `src/api/dataService.js` for API methods.
 
----
+## Development
 
-### SiteActions
-Handles site-related actions.  
-Responsible for:
-- Generating navigation links for Waze and Google Maps
-- Enabling/disabling actions based on available coordinates
-- Keeping navigation logic centralized and reusable
+### Adding New Features
 
----
+1. Create component in `src/components/`
+2. Add styles in `src/styles/`
+3. Integrate in `App.jsx`
 
-### loadSitesFromExcel
-Data-loading utility responsible for reading and parsing site data.  
-Responsible for:
-- Loading `sites.xlsx`
-- Converting ITM (EPSG:2039) coordinates to WGS84
-- Normalizing and preparing site objects for the UI
+### State Management
 
----
+Uses React hooks for state management:
+- `useSites` - Permanent sites
+- `useTemporarySites` - Temporary events
+- `useWebSocket` - Real-time updates
 
-### Styles (CSS Modules)
-Component-scoped styles using CSS Modules.  
-Responsible for:
-- Preventing global style conflicts
-- Maintaining consistent UI across components
-- Supporting both dark UI and light popups
-
-
-
-
-## Getting Started (After Cloning the Repository)
-
-Follow these steps to run the project locally after cloning the repository.
-
----
-
-### Clone the Repository
+## Building for Production
 
 ```bash
-git clone <repository-url>
-cd OmerOpsMap/front
-npm install
-public/sites.xlsx --> Ask Yehonatan
-npm run dev
+npm run build
+```
 
-Then go to:
-http://localhost:5173
+Output will be in `dist/` directory.
 
+## Deployment
+
+See main project [SETUP_GUIDE.md](../SETUP_GUIDE.md) for deployment instructions.

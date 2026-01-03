@@ -142,6 +142,61 @@
   background: rgba(255, 80, 80, 0.18);
 }
 
+/* Exit button */
+.exitBtn {
+  margin: 8px 12px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.exitBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(244, 67, 54, 0.4);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.exitBtn:active {
+  transform: translateY(0);
+}
+
+.exitIcon {
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+}
+
+.exitText {
+  flex: 1;
+  text-align: right;
+}
+
+.exitTitle {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.exitSub {
+  font-size: 11px;
+  opacity: 0.85;
+  font-weight: 400;
+}
+
 /* Scroll area */
 .sections {
   /* ✅ זה העיקר: זה יהיה האזור היחיד שגולל */

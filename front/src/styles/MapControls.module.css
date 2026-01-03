@@ -49,6 +49,41 @@
   }
 }
 
+/* כפתור יציאה / שינוי משתמש */
+.exitBtn {
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%) !important;
+  color: white !important;
+  box-shadow: 0 6px 18px rgba(244, 67, 54, 0.3) !important;
+  position: relative;
+}
+
+.exitBtn:hover {
+  box-shadow: 0 8px 24px rgba(244, 67, 54, 0.5) !important;
+  transform: scale(1.08);
+}
+
+.exitBtn::after {
+  content: 'יציאה';
+  position: absolute;
+  left: 100%;
+  margin-left: 10px;
+  background: rgba(244, 67, 54, 0.95);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.exitBtn:hover::after {
+  opacity: 1;
+}
+
 .hidden {
   opacity: 0;
   pointer-events: none;

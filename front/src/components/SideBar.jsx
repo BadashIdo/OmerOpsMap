@@ -52,6 +52,23 @@ export default function SideBar({
           <div className={styles.emergencyIcon}>⚠️</div>
         </div>
 
+        {/* Exit to selection page */}
+        <button 
+          className={styles.exitBtn}
+          onClick={() => {
+            if (confirm("האם לצאת ולחזור לבחירת משתמש?\n(אורח / מנהל)")) {
+              sessionStorage.clear();
+              window.location.reload();
+            }
+          }}
+        >
+          <span className={styles.exitIcon}>⎋</span>
+          <div className={styles.exitText}>
+            <div className={styles.exitTitle}>יציאה</div>
+            <div className={styles.exitSub}>שינוי משתמש (אורח/מנהל)</div>
+          </div>
+        </button>
+
         {/* Content */}
         <div className={styles.sections}>
           {Object.entries(categoriesStructure).map(([mainCategory, subCategories]) => {
