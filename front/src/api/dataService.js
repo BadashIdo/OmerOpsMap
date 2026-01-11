@@ -3,6 +3,39 @@
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+const AI_AGENT_URL = import.meta.env.VITE_AI_AGENT_URL || 'http://localhost:8000';
+
+// =====================
+// AI Agent API
+// =====================
+
+/**
+ * Send a question to the AI Agent
+ * @param {string} query - The user's question
+ * @param {string} contextWindow - Chat history formatted as string
+ * @param {string} selfLocation - Optional user location
+ * @returns {Promise<{final_answer: string, tool_results: object|null}>}
+ */
+export async function askAiAgent(query, contextWindow = '', selfLocation = '') {
+  const response = await fetch(`${AI_AGENT_URL}/ask`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query,
+      context_window: contextWindow,
+      self_location: selfLocation,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || 'שגיאה בתקשורת עם העוזר החכם');
+  }
+
+  return response.json();
+}
 
 /**
  * Fetch all permanent sites

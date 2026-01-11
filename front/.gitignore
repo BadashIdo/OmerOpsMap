@@ -82,7 +82,6 @@ build/
 *.dll
 *.so
 *.dylib
-*.lib
 *.app
 out/
 *.class

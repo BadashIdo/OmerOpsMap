@@ -57,6 +57,90 @@ services:
     restart: unless-stopped
 
   # ==========================================
+  # MCP Math Server
+  # ==========================================
+  mcp_math:
+    build: ./back/MCP_servers/math
+    container_name: omeropsmap_mcp_math
+    ports:
+      - "3334:3334"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:3334/mcp || exit 0"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ==========================================
+  # MCP Web Search Server
+  # ==========================================
+  mcp_web_search:
+    build: ./back/MCP_servers/web_search
+    container_name: omeropsmap_mcp_web_search
+    ports:
+      - "3333:3333"
+    environment:
+      - TAVILY_API_KEY=${TAVILY_API_KEY:-}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:3333/mcp || exit 0"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ==========================================
+  # MCP Nearby Sites Server
+  # ==========================================
+  mcp_nearby_sites:
+    build: ./back/MCP_servers/nearby_sites
+    container_name: omeropsmap_mcp_nearby_sites
+    ports:
+      - "3335:3335"
+    environment:
+      # Connect to data_server inside Docker network
+      - DATA_SERVER_URL=http://data_server:8001
+    depends_on:
+      - data_server
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:3335/mcp || exit 0"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ==========================================
+  # AI Agent (LangGraph + FastAPI)
+  # ==========================================
+  ai_agent:
+    build: ./back/Ai_agent
+    container_name: omeropsmap_ai_agent
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      # MCP URLs - internal Docker network
+      - WEB_MCP_URL=http://mcp_web_search:3333/mcp
+      - MATH_MCP_URL=http://mcp_math:3334/mcp
+      - NEARBY_SITES_MCP_URL=http://mcp_nearby_sites:3335/mcp
+    depends_on:
+      mcp_math:
+        condition: service_started
+      mcp_web_search:
+        condition: service_started
+      mcp_nearby_sites:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    restart: unless-stopped
+
+  # ==========================================
   # Frontend (React + Vite)
   # ==========================================
   frontend:
@@ -69,6 +153,7 @@ services:
     environment:
       - VITE_API_URL=http://localhost:8001
       - VITE_WS_URL=ws://localhost:8001/ws
+      - VITE_AI_AGENT_URL=http://localhost:8000
     volumes:
       - ./front/src:/app/src
       - ./front/public:/app/public
@@ -76,6 +161,7 @@ services:
       - /app/node_modules
     depends_on:
       - data_server
+      - ai_agent
     restart: unless-stopped
 
 volumes:
