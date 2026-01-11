@@ -20,7 +20,7 @@ import ChatBot from "../components/ChatBot";
 
 
 const OMER_CENTER = [31.2632, 34.8419];
-const DISTRICTS = ["רובע א'", "רובע ב'", "רובע ג'", "רובע ד'"];
+const DISTRICTS = ["רובע א'", "רובע ב'", "רובע ג'", "רובע ד'", "פארק תעשיות"];
 
 function AppContent() {
   const { isAdmin, isLoading: authLoading } = useAuth();
@@ -110,11 +110,89 @@ function AppContent() {
     setRequestFormOpen(true);
   };
 
+  /**
+   * מחשב מרחק בין שתי נקודות גיאוגרפיות (Haversine formula)
+   */
+  const calculateDistance = (lat1, lng1, lat2, lng2) => {
+    const R = 6371; // רדיוס כדור הארץ בק"מ
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // מרחק בק"מ
+  };
+
+  /**
+   * מוצא את הרובע הקרוב ביותר לנקודה לפי המרחק הגיאוגרפי
+   */
+  const findClosestDistrict = (targetLat, targetLng, allPoints) => {
+    // נקודות עם district תקין (לא ריק ולא "-")
+    const pointsWithDistrict = allPoints.filter(p => 
+      p.district && 
+      p.district !== "-" && 
+      p.district !== "" &&
+      p.lat && p.lng
+    );
+
+    if (pointsWithDistrict.length === 0) return null;
+
+    let closestPoint = null;
+    let minDistance = Infinity;
+
+    pointsWithDistrict.forEach(p => {
+      const distance = calculateDistance(targetLat, targetLng, p.lat, p.lng);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestPoint = p;
+      }
+    });
+
+    return closestPoint?.district || null;
+  };
+
+  // תיקון אוטומטי של נקודות עם district = "-"
+  const pointsWithFixedDistricts = useMemo(() => {
+    const pointsNeedingFix = points.filter(p => !p.district || p.district === "-" || p.district.trim() === "");
+    
+    if (pointsNeedingFix.length === 0) return points;
+
+    console.log(`🔧 Found ${pointsNeedingFix.length} points with missing district, fixing...`);
+    
+    const fixedPoints = points.map(p => {
+      if (!p.district || p.district === "-" || p.district.trim() === "") {
+        const closestDistrict = findClosestDistrict(p.lat, p.lng, points);
+        if (closestDistrict) {
+          console.log(`   Fixed point ${p.id} (${p.name}): "${p.district || '(empty)'}" → "${closestDistrict}"`);
+          return { ...p, district: closestDistrict };
+        }
+      }
+      return p;
+    });
+
+    return fixedPoints;
+  }, [points]);
+
   // כל תתי-הקטגוריות (מתוך points!)
-  const allSubCategories = useMemo(
-    () => [...new Set(points.map((p) => p.subCategory))].filter(Boolean),
-    [points]
-  );
+  const allSubCategories = useMemo(() => {
+    const subCats = [...new Set(pointsWithFixedDistricts.map((p) => p.subCategory))].filter(Boolean);
+    
+    // Debug: Check how many points have empty subCategory
+    const pointsWithEmptySubCat = points.filter(p => !p.subCategory || p.subCategory.trim() === '');
+    if (pointsWithEmptySubCat.length > 0) {
+      console.log(`📋 Points with empty subCategory: ${pointsWithEmptySubCat.length} out of ${points.length}`);
+      console.log(`   Examples:`, pointsWithEmptySubCat.slice(0, 5).map(p => ({
+        id: p.id,
+        name: p.name,
+        category: p.category || '(empty)',
+        subCategory: p.subCategory || '(empty)'
+      })));
+    }
+    
+    return subCats;
+  }, [pointsWithFixedDistricts]);
   
   // All temporary event categories
   const allTempCategories = useMemo(
@@ -136,7 +214,7 @@ function AppContent() {
 
   const categoriesStructure = useMemo(() => {
     const struct = {};
-    points.forEach((p) => {
+    pointsWithFixedDistricts.forEach((p) => {
       const mainCat = p.category || "ללא קטגוריה";
       const subCat = p.subCategory;
 
@@ -155,26 +233,67 @@ function AppContent() {
     return Object.fromEntries(
       Object.entries(struct).map(([k, v]) => [k, Array.isArray(v) ? v : Array.from(v)])
     );
-  }, [points, allTempCategories]);
+  }, [pointsWithFixedDistricts, allTempCategories]);
 
   const filteredPoints = useMemo(() => {
-    if (activeFilters.length === 0) return points;
+    if (activeFilters.length === 0) return pointsWithFixedDistricts;
 
     // הפרדה בין רובעים לתתי-קטגוריות
     const activeDistricts = activeFilters.filter((f) => DISTRICTS.includes(f));
     const activeSubCategories = activeFilters.filter((f) => !DISTRICTS.includes(f) && !allTempCategories.includes(f) && f !== "אירועים זמניים");
 
-    return points.filter((p) => {
+    const filtered = pointsWithFixedDistricts.filter((p) => {
       // בדיקת רובע (אם יש רובעים פעילים)
       const districtMatch = activeDistricts.length === 0 || activeDistricts.includes(p.district);
       
-      // בדיקת תת-קטגוריה (אם יש תת-קטגוריות פעילות)
-      const subCategoryMatch = activeSubCategories.length === 0 || activeSubCategories.includes(p.subCategory);
+      // בדיקת תת-קטגוריה:
+      // - אם אין תתי-קטגוריות פעילות → כל הנקודות עוברות
+      // - אם יש תתי-קטגוריות פעילות:
+      //   * אם לנקודה יש subCategory תקין → היא עוברת רק אם הוא פעיל
+      //   * אם לנקודה אין subCategory (ריק/null) → היא עוברת (תמיד)
+      const subCategoryMatch = activeSubCategories.length === 0 || 
+        !p.subCategory || 
+        activeSubCategories.includes(p.subCategory);
       
       // האתר צריך לעמוד בשני התנאים (AND לוגי)
       return districtMatch && subCategoryMatch;
     });
-  }, [points, activeFilters, allTempCategories]);
+    
+    // Debug logging
+    console.log(`🔍 Filtering: ${pointsWithFixedDistricts.length} total points, ${filtered.length} after filter`);
+    console.log(`   Active districts: ${activeDistricts.length}, Active subCategories: ${activeSubCategories.length}`);
+    if (pointsWithFixedDistricts.length !== filtered.length) {
+      const filteredOut = pointsWithFixedDistricts.length - filtered.length;
+      console.log(`   ⚠️ Filtered out ${filteredOut} points`);
+      
+      // Show which points were filtered out
+      const filteredOutPoints = pointsWithFixedDistricts.filter((p) => {
+        const districtMatch = activeDistricts.length === 0 || activeDistricts.includes(p.district);
+        const subCategoryMatch = activeSubCategories.length === 0 || 
+          !p.subCategory || 
+          activeSubCategories.includes(p.subCategory);
+        return !(districtMatch && subCategoryMatch);
+      });
+      
+      if (filteredOutPoints.length > 0) {
+        console.log(`   Filtered out points (${filteredOutPoints.length} total):`);
+        // Show all filtered out points as a table for easier viewing
+        console.table(filteredOutPoints.map(p => ({
+          ID: p.id,
+          Name: p.name || '(no name)',
+          District: p.district || '(empty)',
+          SubCategory: p.subCategory || '(empty)',
+          Category: p.category || '(empty)',
+          Reason: !activeDistricts.includes(p.district) ? 'District not active' : 
+                  (!p.subCategory || !activeSubCategories.includes(p.subCategory)) ? 'SubCategory not active' : 'Unknown'
+        })));
+      }
+    } else {
+      console.log(`   ✅ All points are visible!`);
+    }
+    
+    return filtered;
+  }, [pointsWithFixedDistricts, activeFilters, allTempCategories]);
   
   // Filter temporary sites
   const filteredTemporarySites = useMemo(() => {
