@@ -272,6 +272,23 @@ http://localhost:5173
 - להוסיף/לערוך/למחוק אירועים זמניים
 - לצפות בבקשות משתמשים
 - לאשר/לדחות בקשות
+- להעלות קבצי Excel להעלאת נתונים (בפאנל ניהול)
+
+### 💬 צ'אט AI (בהכנה לאינטגרציה עתידית)
+
+בצד שמאל למטה של המסך תראה כפתור צ'אט 💬.
+
+**סטטוס נוכחי:** הממשק מוכן, אך שירות ה-AI Agent עדיין בפיתוח.
+
+**כשהשירות יהיה מוכן:**
+- פתח את הצ'אט על ידי לחיצה על הכפתור
+- שאל שאלות על המערכת, אתרים, נתונים וכו'
+- קבל תשובות מותאמות אישית מה-AI
+
+**למפתחים:** 
+- **מדריך אינטגרציה מלא:** [AI_AGENT_INTEGRATION.md](AI_AGENT_INTEGRATION.md) 📖
+- **תיעוד AI Agent:** [back/README.MD](back/README.MD)
+- **הגדרות סביבה:** [ENV_TEMPLATE.md](ENV_TEMPLATE.md)
 
 ---
 
@@ -389,21 +406,23 @@ OmerOpsMap/
 │
 ├── data_server/            # Backend (FastAPI + PostgreSQL)
 │   ├── Dockerfile
-│   ├── docker-compose.yml  # (אופציונלי - להרצה נפרדת)
 │   ├── app/                # קוד Python
 │   ├── alembic/            # Migrations
 │   └── scripts/            # סקריפטים (import_excel_to_db.py)
 │
 ├── front/                  # Frontend (React + Vite)
 │   ├── Dockerfile.dev
-│   ├── docker-compose.yml  # (אופציונלי - להרצה נפרדת)
 │   ├── src/                # קוד React
 │   └── public/             # קבצים סטטיים (sites.xlsx)
 │
-└── back/                   # AI Agent + MCP (לא בשימוש כרגע)
-    ├── Ai_agent/
+└── back/                   # 🔮 AI Agent + MCP (בפיתוח - למיזוג עתידי)
+    ├── Ai_agent/           # ⚠️ אל תמחק! בעבודה
     └── MCP_servers/
 ```
+
+### ⚠️ שים לב
+- התיקייה `back/` נמצאת בפיתוח פעיל - **אל תמחק!**
+- Ports 8000, 3333, 3334 שמורים לשימוש עתידי של AI Agent
 
 ---
 

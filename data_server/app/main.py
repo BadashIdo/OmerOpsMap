@@ -5,6 +5,7 @@ import logging
 
 from app.api.router import api_router
 from app.services.expiry_scheduler import start_scheduler, stop_scheduler
+from app.config import get_settings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -74,9 +75,10 @@ app = FastAPI(
 )
 
 # CORS configuration - allow frontend to access API
+settings = get_settings()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify exact origins
+    allow_origins=settings.allowed_origins.split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

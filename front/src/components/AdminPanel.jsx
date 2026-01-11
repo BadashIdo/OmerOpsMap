@@ -4,12 +4,14 @@ import { getPendingRequestsCount } from "../api/dataService";
 import RequestsTab from "./admin/RequestsTab";
 import PermanentSitesTab from "./admin/PermanentSitesTab";
 import TemporarySitesTab from "./admin/TemporarySitesTab";
+import DataImportTab from "./admin/DataImportTab";
 import styles from "../styles/AdminPanel.module.css";
 
 const TABS = [
   { id: "requests", label: "בקשות", icon: "📋" },
   { id: "permanent", label: "אתרים קבועים", icon: "📍" },
   { id: "temporary", label: "אירועים זמניים", icon: "⚡" },
+  { id: "import", label: "יבוא נתונים", icon: "📤" },
 ];
 
 export default function AdminPanel({ isOpen, onClose, onDataChange }) {
@@ -100,6 +102,11 @@ export default function AdminPanel({ isOpen, onClose, onDataChange }) {
             <TemporarySitesTab
               authHeader={getAuthHeader()}
               onDataChange={handleDataChange}
+            />
+          )}
+          {activeTab === "import" && (
+            <DataImportTab
+              authHeader={getAuthHeader()}
             />
           )}
         </div>

@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8001
     
+    # CORS configuration
+    allowed_origins: str = "http://localhost:5173,http://localhost:3000"
+    
     # Initial admin (optional)
     initial_admin_username: str | None = None
     initial_admin_password: str | None = None

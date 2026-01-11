@@ -47,6 +47,11 @@ docker exec omeropsmap_data_server python scripts/import_excel_to_db.py
 - התראות Toast
 - תפוגה אוטומטית של אירועים
 
+### 📤 העלאת דאטה
+- **CLI משופר** - preview, merge/replace modes, logging
+- **UI בממשק Admin** - drag & drop, תצוגה מקדימה
+- תמיכה מלאה בקבצי Excel (ITM → WGS84)
+
 ### 🔐 מערכת הרשאות
 - **אורח** - צפייה + דיווח על אירועים
 - **מנהל** - CRUD מלא + אישור בקשות
@@ -55,6 +60,12 @@ docker exec omeropsmap_data_server python scripts/import_excel_to_db.py
 - לחיצה ארוכה על המפה לדיווח
 - Admin מאשר/דוחה
 - היסטוריית בקשות
+
+### 💬 AI ChatBot (בהכנה לאינטגרציה)
+- ממשק צ'אט מודרני בצד שמאל למטה
+- מוכן לחיבור עם AI Agent (Port 8000)
+- Session management ו-WebSocket support
+- תיעוד מלא של API endpoints
 
 ---
 
@@ -102,7 +113,7 @@ OmerOpsMap/
 │   ├── src/              # קוד React
 │   └── public/           # קבצים סטטיים
 │
-└── back/                 # AI Agent (לא בשימוש כרגע)
+└── back/                 # 🔮 AI Agent (בפיתוח - למיזוג עתידי)
 ```
 
 ---
@@ -115,6 +126,37 @@ OmerOpsMap/
 | [ARCHITECTURE.md](ARCHITECTURE.md) | ארכיטקטורה, Use Cases, דיאגרמות |
 | [DIAGRAMS_ONLY.md](DIAGRAMS_ONLY.md) | כל הדיאגרמות |
 | [ENV_TEMPLATE.md](ENV_TEMPLATE.md) | תבניות .env |
+| [CLEANUP_AND_OPTIMIZATION_PLAN.md](CLEANUP_AND_OPTIMIZATION_PLAN.md) | תכנית ניקיון ואופטימיזציה |
+
+## 🔮 AI Agent (בפיתוח)
+
+התיקייה `back/` מכילה AI Agent + MCP servers שנמצאים בפיתוח פעיל על ידי חבר צוות.
+כאשר יהיו מוכנים, הם יימזגו למערכת הראשית.
+
+**Frontend מוכן:** הממשק כבר כולל ChatBot מלוטש (צד שמאל למטה 💬)
+
+**Ports שמורים:**
+- 8000: AI Agent API
+- 3333: Web Search MCP
+- 3334: Math MCP
+
+**תיעוד:**
+- [AI_AGENT_INTEGRATION.md](AI_AGENT_INTEGRATION.md) - **מדריך אינטגרציה מלא** 📖
+- [back/README.MD](back/README.MD) - תיעוד AI Agent
+
+---
+
+## 📚 תיעוד מלא
+
+📖 **[DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md)** - **אינדקס מרכזי לכל התיעוד**
+
+**מדריכים עיקריים:**
+- [START_HERE.md](START_HERE.md) - מדריך התקנה שלב-אחר-שלב
+- [AI_AGENT_INTEGRATION.md](AI_AGENT_INTEGRATION.md) - אינטגרציה AI Agent
+- [DATA_UPLOAD_GUIDE.md](DATA_UPLOAD_GUIDE.md) - העלאת דאטה
+- [ARCHITECTURE.md](ARCHITECTURE.md) - ארכיטקטורה + Use Cases
+- [ENV_TEMPLATE.md](ENV_TEMPLATE.md) - משתני סביבה
+- [CHANGELOG.md](CHANGELOG.md) - שינויים
 
 ---
 

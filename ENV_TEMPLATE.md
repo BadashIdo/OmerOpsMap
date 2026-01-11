@@ -21,6 +21,13 @@
 #
 SECRET_KEY=your-super-secret-key-change-this-in-production-12345
 
+# CORS Origins
+# ------------
+# רשימת origins מופרדים בפסיק שמורשים לגשת ל-API
+# בפיתוח: localhost. בפרודקשן: דומיין האמיתי
+#
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+
 # Initial Admin
 # -------------
 # Admin ייווצר אוטומטית בהפעלה הראשונה
@@ -156,16 +163,35 @@ INITIAL_ADMIN_EMAIL=admin@city.gov.il
 
 ---
 
-## 📁 קבצי .env נוספים (לא בשימוש כרגע)
+## 📁 קבצי .env נוספים
+
+### front/.env (אופציונלי - לצ'אט AI)
+
+```env
+# AI Agent URL
+# כתובת שירות ה-AI Agent (יחובר בעתיד)
+VITE_AI_AGENT_URL=http://localhost:8000
+```
+
+**הסבר:**
+- **VITE_AI_AGENT_URL**: כתובת שירות ה-AI Agent
+  - בפיתוח: `http://localhost:8000`
+  - בפרודקשן: `https://your-domain.com/ai` או כתובת ייעודית
+  - אם לא מוגדר, ברירת המחדל היא `http://localhost:8000`
+
+---
 
 ### back/Ai_agent/.env
 
 ```env
-# OpenAI API Key (לשימוש עתידי)
+# OpenAI API Key (יחובר בעתיד)
 OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-# Tavily API Key (לשימוש עתידי)
+# Tavily API Key (יחובר בעתיד)
 TAVILY_API_KEY=tvly-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Data Server URL (לחיבור למערכת הראשית)
+DATA_SERVER_URL=http://localhost:8001
 ```
 
 ### back/MCP_servers/web_search/.env

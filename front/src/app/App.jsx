@@ -10,13 +10,13 @@ import { normalize } from "../lib/text";
 
 import SideBar from "../components/SideBar";
 import SearchBar from "../components/SearchBar";
-import Chat from "../components/Chat";
 import MapView from "../components/MapView";
 import TemporaryEventsPanel from "../components/TemporaryEventsPanel";
 import NotificationToast from "../components/NotificationToast";
 import LoginPage from "../components/LoginPage";
 import AdminPanel from "../components/AdminPanel";
 import RequestForm from "../components/RequestForm";
+import ChatBot from "../components/ChatBot";
 
 
 const OMER_CENTER = [31.2632, 34.8419];
@@ -42,9 +42,9 @@ function AppContent() {
   const [isTracking, setIsTracking] = useState(false);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [isTempPanelOpen, setIsTempPanelOpen] = useState(false);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   
   // Request form state
   const [requestFormOpen, setRequestFormOpen] = useState(false);
@@ -377,8 +377,6 @@ return (
         onPick={goToPoint}
       />
 
-      <Chat isOpen={isChatOpen} setIsOpen={setIsChatOpen} />
-      
       {/* Temporary Events Panel */}
       <TemporaryEventsPanel
         isOpen={isTempPanelOpen}
@@ -427,6 +425,9 @@ return (
           </div>
         ))}
       </div>
+      
+      {/* AI ChatBot - Bottom Left */}
+      <ChatBot isOpen={isChatOpen} setIsOpen={setIsChatOpen} />
 
       <div
         className={`${controlsStyles.controls} ${
