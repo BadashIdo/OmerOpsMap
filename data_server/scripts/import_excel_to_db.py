@@ -111,15 +111,31 @@ def parse_excel(excel_path: str, logger: ImportLogger) -> Tuple[List[PermanentSi
     errors = []
     
     for row_idx, r in rows:
-        # Get coordinates
-        y = to_number(pick(r, ["קו אורך", "קו-אורך", "אורך", "Y"]))
-        x = to_number(pick(r, ["קו רוחב", "קו-רוחב", "רוחב", "X"]))
+        # Get coordinates (support multiple column name formats)
+        # Note: In ITM (EPSG:2039), X is Easting (east-west) and Y is Northing (north-south)
+        # The Excel columns might be labeled confusingly as "קו אורך X" and "קו רוחב Y"
+        # We need to identify which values are Easting (smaller, ~180k-200k) vs Northing (larger, ~500k-800k)
         
-        if x is None or y is None:
+        coord1 = to_number(pick(r, ["קו אורך", "קו אורך X", "קו אורך (Y)", "קו-אורך", "אורך", "Y"]))
+        coord2 = to_number(pick(r, ["קו רוחב", "קו רוחב Y", "קו רוחב (X)", "קו-רוחב", "רוחב", "X"]))
+        
+        if coord1 is None or coord2 is None:
             error_msg = f"⚠️  Row {row_idx}: Missing coordinates"
             logger.log(error_msg)
             errors.append(error_msg)
             continue
+        
+        # Determine which is Easting (X) and which is Northing (Y) based on typical ITM ranges
+        # Easting: typically 100,000 - 300,000
+        # Northing: typically 500,000 - 800,000
+        if coord1 > coord2:
+            # coord1 is larger, likely Northing (Y)
+            x = coord2  # Easting
+            y = coord1  # Northing
+        else:
+            # coord2 is larger, likely Northing (Y)
+            x = coord1  # Easting
+            y = coord2  # Northing
         
         # Transform coordinates
         lat, lng = transform_coordinates(x, y)
@@ -138,7 +154,7 @@ def parse_excel(excel_path: str, logger: ImportLogger) -> Tuple[List[PermanentSi
             errors.append(error_msg)
             continue
         
-        category = pick(r, ["קטגוריה", "קטגוריה ראשית"])
+        category = pick(r, ["קטגוריה", "קטגוריה ראשית", "קטגוריה ראשית "])
         sub_category = pick(r, ["תת קטגוריה", "תת-קטגוריה", "תת קטגוריה ", "תתקטגוריה"])
         site_type = pick(r, ["סוג אתר", "סוג"])
         district = pick(r, ["רובע", "רובע ", "רובע  ", "אזור", "שכונה"])

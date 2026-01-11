@@ -14,6 +14,9 @@ export default function DataImportTab({ authHeader }) {
   
   // Import mode
   const [importMode, setImportMode] = useState("merge"); // 'merge' or 'replace'
+  
+  // API URL from environment
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -68,10 +71,10 @@ export default function DataImportTab({ authHeader }) {
     formData.append("file", file);
 
     try {
-      const response = await fetch("http://localhost:8001/api/admin/import/preview", {
+      const response = await fetch(`${API_URL}/api/admin/import/preview`, {
         method: "POST",
         headers: {
-          Authorization: authHeader,
+          ...authHeader,
         },
         body: formData,
       });
@@ -114,11 +117,11 @@ export default function DataImportTab({ authHeader }) {
 
     try {
       const response = await fetch(
-        `http://localhost:8001/api/admin/import/execute?mode=${importMode}`,
+        `${API_URL}/api/admin/import/execute?mode=${importMode}`,
         {
           method: "POST",
           headers: {
-            Authorization: authHeader,
+            ...authHeader,
           },
           body: formData,
         }

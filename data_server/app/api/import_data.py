@@ -1,10 +1,10 @@
 """
 API endpoints for data import from Excel files
 """
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from typing import List, Dict
+from typing import List, Dict, Literal
 import tempfile
 import shutil
 from pathlib import Path
@@ -120,8 +120,8 @@ async def preview_import(
 
 @router.post("/execute", response_model=ImportExecuteResponse)
 async def execute_import(
-    request: ImportExecuteRequest,
     file: UploadFile = File(...),
+    mode: Literal["merge", "replace"] = Query(default="merge", description="Import mode: merge or replace"),
     db: AsyncSession = Depends(get_db),
     admin: Admin = Depends(get_current_admin)
 ):
@@ -137,13 +137,6 @@ async def execute_import(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File must be an Excel file (.xlsx or .xls)"
-        )
-    
-    # Validate mode
-    if request.mode not in ['merge', 'replace']:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Mode must be 'merge' or 'replace'"
         )
     
     # Save uploaded file to temporary location
@@ -164,7 +157,7 @@ async def execute_import(
         sites_deleted = 0
         sites_skipped = 0
         
-        if request.mode == 'replace':
+        if mode == 'replace':
             # Delete all existing sites
             for site in existing_sites:
                 await db.delete(site)
@@ -194,7 +187,7 @@ async def execute_import(
         
         return ImportExecuteResponse(
             success=True,
-            message=f"Import completed successfully in {request.mode} mode",
+            message=f"Import completed successfully in {mode} mode",
             sites_added=sites_added,
             sites_deleted=sites_deleted,
             sites_skipped=sites_skipped,
