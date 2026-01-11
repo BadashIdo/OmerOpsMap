@@ -98,7 +98,7 @@ export default function MapView({ center, mapRef, markerRefs, userLocation, poin
         <Marker
           key={`temporary-${t.id}`}
           position={[t.lat, t.lng]}
-          icon={getTemporaryIcon(t.priority, t.category)}
+          icon={getTemporaryIcon(t.priority)}
           ref={(el) => (markerRefs.current[`temporary-${t.id}`] = el)}
           eventHandlers={{
             click: (e) => {

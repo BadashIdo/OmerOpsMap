@@ -1,6 +1,4 @@
 import styles from "../styles/TemporaryEventsPanel.module.css";
-import { getCategoryEmoji } from "../lib/temporaryIcons";
-
 /**
  * Panel showing list of all temporary events
  */
