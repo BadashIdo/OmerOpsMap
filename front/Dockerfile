@@ -16,6 +16,10 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Build argument for API URL (passed from Railway)
+ARG VITE_API_URL=http://localhost:8001
+ENV VITE_API_URL=$VITE_API_URL
+
 # Build the application (needs devDependencies like vite)
 RUN npm run build
 
