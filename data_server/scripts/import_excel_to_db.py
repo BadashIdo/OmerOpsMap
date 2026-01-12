@@ -339,8 +339,8 @@ Examples:
     parser.add_argument(
         '--file',
         type=str,
-        default='/app/sites.xlsx',
-        help='Path to Excel file (default: /app/sites.xlsx)'
+        default='/app/Omer_GIS_Reorganized_Final.xlsx',
+        help='Path to Excel file (default: /app/Omer_GIS_Reorganized_Final.xlsx)'
     )
     
     parser.add_argument(
@@ -364,8 +364,8 @@ Examples:
     excel_path = Path(args.file)
     if not excel_path.exists():
         logger.log(f"❌ Excel file not found: {excel_path}")
-        logger.log("Please copy sites.xlsx to the container first:")
-        logger.log("docker cp front/public/sites.xlsx omeropsmap_data_server:/app/sites.xlsx")
+        logger.log("Please copy Omer_GIS_Reorganized_Final.xlsx to the container first:")
+        logger.log("docker cp front/public/Omer_GIS_Reorganized_Final.xlsx omeropsmap_data_server:/app/Omer_GIS_Reorganized_Final.xlsx")
         return
     
     # Execute based on mode
