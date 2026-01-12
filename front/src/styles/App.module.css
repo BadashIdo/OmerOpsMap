@@ -1,0 +1,24 @@
+.shell {
+  position: relative;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: var(--app-bg);
+}
+
+/* המפה מתחת להדר */
+.mapLayer {
+  position: absolute;
+  inset: 0;
+}
+
+/* שטח עליון שמפנה מקום להדר */
+.topInset {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--header-h) + env(safe-area-inset-top));
+  pointer-events: none;
+  z-index: 900;
+}

@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "mcp-math"
+version = "0.1.0"
+description = "Math MCP server (add, multiply, etc.)"
+authors = ["Yehonatan Yamin"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+fastmcp = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

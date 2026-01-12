@@ -1,0 +1,6 @@
+
+
+# grapg/chains/moderation.py ---------------------------------------------
+moderation_llm:
+  model_name: "gpt-4o-mini"
+  temperature: 0

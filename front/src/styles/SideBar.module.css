@@ -1,0 +1,338 @@
+/* Overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 1090;
+}
+.overlayVisible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  top: 80px;
+  right: 15px;
+  bottom: 15px;
+  height: auto;
+  max-height: calc(100vh - 95px);
+  width: min(360px, 92vw);
+  background: #2e3440;
+  color: #e6eaf2;
+  z-index: 1100;
+  transform: translateX(calc(100% + 20px));
+  transition: transform 0.25s ease;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.open {
+  transform: translateX(0);
+}
+
+/* מובייל: Sidebar מלא מתחת ל-SearchBar */
+@media (max-width: 768px) {
+  .sidebar {
+    top: 70px;
+    left: 10px;
+    right: 10px;
+    bottom: 90px;
+    width: calc(100% - 20px);
+    height: auto;
+    border-radius: 16px;
+  }
+}
+
+/* Top */
+.top {
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto; /* חשוב: לא להצטמצם */
+}
+
+.langPill {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.brand {
+  flex: 1;
+  text-align: center;
+}
+.brandTitle {
+  font-weight: 800;
+  font-size: 18px;
+}
+.brandSub {
+  margin-top: 3px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.closeBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.06);
+  color: #e6eaf2;
+  cursor: pointer;
+}
+
+/* Emergency card */
+.emergency {
+  margin: 0 14px 12px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto; /* חשוב: לא להצטמצם */
+}
+
+.toggleFake {
+  width: 52px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.12);
+  position: relative;
+}
+.toggleFake::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.9);
+}
+
+.emergencyTitle {
+  flex: 1;
+  text-align: right;
+  font-weight: 700;
+  color: #ff6b6b;
+}
+
+.emergencyIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 80, 80, 0.18);
+}
+
+/* Exit button */
+.exitBtn {
+  margin: 8px 12px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.exitBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(244, 67, 54, 0.4);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.exitBtn:active {
+  transform: translateY(0);
+}
+
+.exitIcon {
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+}
+
+.exitText {
+  flex: 1;
+  text-align: right;
+}
+
+.exitTitle {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.exitSub {
+  font-size: 11px;
+  opacity: 0.85;
+  font-weight: 400;
+}
+
+/* Scroll area */
+.sections {
+  /* ✅ זה העיקר: זה יהיה האזור היחיד שגולל */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+
+  /* layout + רווחים */
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  padding: 0 14px 14px;
+
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.22) rgba(255,255,255,0.06);
+}
+
+/* Chrome / Edge / Safari */
+.sections::-webkit-scrollbar {
+  width: 6px;
+}
+.sections::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.06);
+  border-radius: 999px;
+}
+.sections::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.22);
+  border-radius: 999px;
+  border: 2px solid rgba(0,0,0,0);
+  background-clip: padding-box;
+}
+.sections::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.32);
+  background-clip: padding-box;
+}
+
+/* Cards */
+.card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+
+  /* ✅ חשוב: שלא “יידחסו” בתוך flex ולכן לא יבטלו גלילה */
+  flex: 0 0 auto;
+}
+
+/* Header של קטגוריה בתור כפתור לחיץ */
+.cardHeaderBtn {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+
+  text-align: inherit;
+}
+.cardHeaderBtn:hover {
+  background: rgba(255,255,255,0.04);
+}
+
+/* אייקון/חץ בכותרת */
+.chev {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.06);
+  display: grid;
+  place-items: center;
+  opacity: 0.9;
+
+  transition: transform 0.18s ease;
+}
+.chevOpen {
+  transform: rotate(180deg);
+}
+
+.cardTitle {
+  flex: 1;
+  text-align: center;
+  font-weight: 800;
+}
+
+.cardIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.06);
+}
+
+/* גוף הקטגוריה */
+.cardBody {
+  padding: 10px 12px 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* פתיחה/סגירה של גוף הקטגוריה */
+.bodyClosed {
+  display: none;
+}
+.bodyOpen {
+  display: flex;
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.checkText {
+  flex: 1;
+  text-align: right;
+  font-size: 14px;
+  opacity: 0.95;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+}

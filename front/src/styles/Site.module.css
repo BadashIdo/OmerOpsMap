@@ -1,0 +1,89 @@
+.popup {
+  direction: rtl;
+  text-align: right;
+  min-width: 260px;
+  max-width: 320px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.title {
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.pill {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.06);
+  border: 1px solid rgba(0,0,0,0.08);
+  white-space: nowrap;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;   
+  margin: 12px 0 14px;
+}
+
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 13px;
+}
+
+.label {
+  width: 70px;
+  flex: 0 0 70px;
+  opacity: 0.65;
+  text-align: right;
+}
+
+
+.value {
+  flex: 1;
+  font-weight: 600;
+  min-width: 0;    
+  overflow-wrap: anywhere; 
+}
+
+.popup .smallBtn {
+  width: 100%;
+  border: 1px solid rgba(0,0,0,0.14);
+  background: #fff;
+  border-radius: 12px;
+  padding: 9px 12px;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 13px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.popup .smallBtn:hover {
+  background: rgba(0,0,0,0.03);
+}
+
+
+
+.descBox {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.08);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+
