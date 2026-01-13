@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import "../styles/App.css";
 import appStyles from "../styles/App.module.css";
 import controlsStyles from "../styles/MapControls.module.css";
@@ -56,8 +56,14 @@ function AppContent() {
   // Pending requests count for admin badge
   const [pendingCount, setPendingCount] = useState(0);
 
+  // Add notification helper
+  const addNotification = useCallback((message, type = "info") => {
+    const id = Date.now();
+    setNotifications((prev) => [...prev, { id, message, type }]);
+  }, []);
+
   // WebSocket for real-time updates
-  useWebSocket((message) => {
+  const handleWebSocketMessage = useCallback((message) => {
     console.log("WebSocket message:", message);
 
     if (message.type === "data_changed") {
@@ -92,13 +98,9 @@ function AppContent() {
         setPendingCount((prev) => Math.max(0, prev - 1));
       }
     }
-  });
+  }, [addNotification, isAdmin]);
 
-  // Add notification helper
-  const addNotification = (message, type = "info") => {
-    const id = Date.now();
-    setNotifications((prev) => [...prev, { id, message, type }]);
-  };
+  useWebSocket(handleWebSocketMessage);
 
   const removeNotification = (id) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
