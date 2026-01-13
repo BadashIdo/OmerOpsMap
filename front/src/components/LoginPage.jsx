@@ -9,6 +9,7 @@ export default function LoginPage({
   password: externalPassword,
   setPassword: externalSetPassword,
   localError: externalLocalError,
+  setLocalError: externalSetLocalError,
   error: externalError,
   isLoading: externalIsLoading,
   handleAdminLogin: externalHandleAdminLogin,
@@ -18,7 +19,7 @@ export default function LoginPage({
   const [internalShowLoginForm, setInternalShowLoginForm] = useState(false);
   const [internalUsername, setInternalUsername] = useState("");
   const [internalPassword, setInternalPassword] = useState("");
-  
+
   const showLoginForm = externalShowLoginForm ?? internalShowLoginForm;
   const setShowLoginForm = externalSetShowLoginForm ?? setInternalShowLoginForm;
   const username = externalUsername ?? internalUsername;
@@ -26,10 +27,11 @@ export default function LoginPage({
   const password = externalPassword ?? internalPassword;
   const setPassword = externalSetPassword ?? setInternalPassword;
   const localError = externalLocalError ?? "";
+  const setLocalError = externalSetLocalError ?? (() => { });
   const error = externalError ?? "";
   const isLoading = externalIsLoading ?? true;
-  const handleAdminLogin = externalHandleAdminLogin ?? (() => {});
-  const handleGuestEntry = externalHandleGuestEntry ?? (() => {});
+  const handleAdminLogin = externalHandleAdminLogin ?? (() => { });
+  const handleGuestEntry = externalHandleGuestEntry ?? (() => { });
 
   if (isLoading && !externalHandleAdminLogin) {
     return (
@@ -66,7 +68,10 @@ export default function LoginPage({
 
             <button
               className={`${styles.btn} ${styles.adminBtn}`}
-              onClick={() => setShowLoginForm(true)}
+              onClick={() => {
+                setShowLoginForm(true);
+                setLocalError("");
+              }}
             >
               <span className={styles.btnIcon}>🔐</span>
               <span className={styles.btnText}>כניסה כמנהל</span>

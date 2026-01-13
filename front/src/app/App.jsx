@@ -380,7 +380,24 @@ function AppContent() {
       map.flyTo(targetLatLng, 17, { animate: true, duration: 0.8, noMoveStart: true });
 
       setTimeout(() => {
-        const marker = markerRefs.current[p.id];
+        // Construct the key based on the item type (added during search) or try both
+        let markerKey = p.id;
+
+        // If type is known (from search results), use it
+        if (p.type === 'permanent') {
+          markerKey = `permanent-${p.id}`;
+        } else if (p.type === 'temporary') {
+          markerKey = `temporary-${p.id}`;
+        } else {
+          // If type is unknown, try to find it
+          if (markerRefs.current[`permanent-${p.id}`]) {
+            markerKey = `permanent-${p.id}`;
+          } else if (markerRefs.current[`temporary-${p.id}`]) {
+            markerKey = `temporary-${p.id}`;
+          }
+        }
+
+        const marker = markerRefs.current[markerKey];
         if (marker) marker.openPopup();
       }, 1200);
     }
@@ -684,6 +701,7 @@ export default function App() {
 
 function AppWithAuth() {
   const { admin, isLoading } = useAuth();
+  const [showLoginForm, setShowLoginForm] = useState(false);
 
   // Check sessionStorage for guest entry on initial render
   const [hasEnteredAsGuest, setHasEnteredAsGuest] = useState(() => {
@@ -701,15 +719,20 @@ function AppWithAuth() {
 
   // Show login if no admin and not entered as guest
   if (!admin && !hasEnteredAsGuest) {
-    return <LoginPageWrapper onGuestEntry={handleGuestEntry} />;
+    return (
+      <LoginPageWrapper
+        onGuestEntry={handleGuestEntry}
+        showLoginForm={showLoginForm}
+        setShowLoginForm={setShowLoginForm}
+      />
+    );
   }
 
   return <AppContent />;
 }
 
-function LoginPageWrapper({ onGuestEntry }) {
-  const { login, enterAsGuest, isLoading, error } = useAuth();
-  const [showLoginForm, setShowLoginForm] = useState(false);
+function LoginPageWrapper({ onGuestEntry, showLoginForm, setShowLoginForm }) {
+  const { login, enterAsGuest, isLoading, error, setError } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [localError, setLocalError] = useState("");
@@ -717,6 +740,7 @@ function LoginPageWrapper({ onGuestEntry }) {
   const handleAdminLogin = async (e) => {
     e.preventDefault();
     setLocalError("");
+    setError(null); // Clear previous global errors
 
     if (!username.trim()) {
       setLocalError("נא להזין שם משתמש");
@@ -730,12 +754,19 @@ function LoginPageWrapper({ onGuestEntry }) {
     const success = await login(username.trim(), password);
     if (!success) {
       setLocalError(error || "שגיאה בהתחברות");
+      // Note: We do NOT reset showLoginForm here, so the user stays on the form!
     }
   };
 
   const handleGuestEntry = () => {
     enterAsGuest();
     onGuestEntry();
+  };
+
+  // Wrapper to clear both local and global errors
+  const clearErrors = (val) => {
+    setLocalError(val);
+    if (!val) setError(null);
   };
 
   return (
@@ -747,6 +778,7 @@ function LoginPageWrapper({ onGuestEntry }) {
       password={password}
       setPassword={setPassword}
       localError={localError}
+      setLocalError={clearErrors}
       error={error}
       isLoading={isLoading}
       handleAdminLogin={handleAdminLogin}

@@ -2,12 +2,13 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.45);
+  background: rgba(0, 0, 0, 0.45);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
   z-index: 1090;
 }
+
 .overlayVisible {
   opacity: 1;
   pointer-events: auto;
@@ -27,14 +28,16 @@
   z-index: 1100;
   transform: translateX(calc(100% + 20px));
   transition: transform 0.25s ease;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   padding-bottom: env(safe-area-inset-bottom);
+  font-family: Arial, sans-serif;
 }
+
 .open {
   transform: translateX(0);
 }
@@ -58,14 +61,15 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  flex: 0 0 auto; /* חשוב: לא להצטמצם */
+  flex: 0 0 auto;
+  /* חשוב: לא להצטמצם */
 }
 
 .langPill {
   padding: 8px 10px;
   border-radius: 12px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 12px;
   white-space: nowrap;
 }
@@ -74,10 +78,12 @@
   flex: 1;
   text-align: center;
 }
+
 .brandTitle {
   font-weight: 800;
   font-size: 18px;
 }
+
 .brandSub {
   margin-top: 3px;
   font-size: 12px;
@@ -88,8 +94,8 @@
   width: 38px;
   height: 38px;
   border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.06);
   color: #e6eaf2;
   cursor: pointer;
 }
@@ -99,22 +105,24 @@
   margin: 0 14px 12px;
   padding: 12px;
   border-radius: 16px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   gap: 10px;
-  flex: 0 0 auto; /* חשוב: לא להצטמצם */
+  flex: 0 0 auto;
+  /* חשוב: לא להצטמצם */
 }
 
 .toggleFake {
   width: 52px;
   height: 28px;
   border-radius: 999px;
-  background: rgba(0,0,0,0.25);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   position: relative;
 }
+
 .toggleFake::after {
   content: "";
   position: absolute;
@@ -123,7 +131,7 @@
   width: 22px;
   height: 22px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.9);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .emergencyTitle {
@@ -214,25 +222,28 @@
 
   /* Firefox */
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.22) rgba(255,255,255,0.06);
+  scrollbar-color: rgba(255, 255, 255, 0.22) rgba(255, 255, 255, 0.06);
 }
 
 /* Chrome / Edge / Safari */
 .sections::-webkit-scrollbar {
   width: 6px;
 }
+
 .sections::-webkit-scrollbar-track {
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 999px;
 }
+
 .sections::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.22);
+  background: rgba(255, 255, 255, 0.22);
   border-radius: 999px;
-  border: 2px solid rgba(0,0,0,0);
+  border: 2px solid rgba(0, 0, 0, 0);
   background-clip: padding-box;
 }
+
 .sections::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.32);
+  background: rgba(255, 255, 255, 0.32);
   background-clip: padding-box;
 }
 
@@ -262,8 +273,9 @@
 
   text-align: inherit;
 }
+
 .cardHeaderBtn:hover {
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 /* אייקון/חץ בכותרת */
@@ -271,14 +283,15 @@
   width: 34px;
   height: 34px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.06);
   display: grid;
   place-items: center;
   opacity: 0.9;
 
   transition: transform 0.18s ease;
 }
+
 .chevOpen {
   transform: rotate(180deg);
 }
@@ -286,7 +299,7 @@
 .cardTitle {
   flex: 1;
   text-align: center;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .cardIcon {
@@ -295,13 +308,13 @@
   border-radius: 12px;
   display: grid;
   place-items: center;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 /* גוף הקטגוריה */
 .cardBody {
   padding: 10px 12px 12px;
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -311,6 +324,7 @@
 .bodyClosed {
   display: none;
 }
+
 .bodyOpen {
   display: flex;
 }
@@ -321,8 +335,8 @@
   gap: 10px;
   padding: 10px 12px;
   border-radius: 14px;
-  background: rgba(0,0,0,0.18);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .checkText {
