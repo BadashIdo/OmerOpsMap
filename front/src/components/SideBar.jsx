@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import styles from "../styles/SideBar.module.css";
 import { getCategoryIcon } from "../lib/categoryIcons";
+import { getCategoryConfig } from "../lib/leafletIcons";
 
 export default function SideBar({
   isOpen,
@@ -53,7 +54,7 @@ export default function SideBar({
         </div>
 
         {/* Exit to selection page */}
-        <button 
+        <button
           className={styles.exitBtn}
           onClick={() => {
             if (confirm("האם לצאת ולחזור לבחירת משתמש?\n(אורח / מנהל)")) {
@@ -92,17 +93,34 @@ export default function SideBar({
 
                 {/* גוף הקטגוריה נסגר/נפתח */}
                 <div className={`${styles.cardBody} ${isCatOpen ? styles.bodyOpen : styles.bodyClosed}`}>
-                  {subCategories.map((sub) => (
-                    <label key={sub} className={styles.checkRow}>
-                      <span className={styles.checkText}>{sub}</span>
-                      <input
-                        type="checkbox"
-                        className={styles.checkbox}
-                        checked={activeFilters.includes(sub)}
-                        onChange={() => toggleFilter(sub)}
-                      />
-                    </label>
-                  ))}
+                  {subCategories.map((sub) => {
+                    const { color } = getCategoryConfig(sub);
+                    return (
+                      <label key={sub} className={styles.checkRow}>
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                          <span className={styles.checkText}>{sub}</span>
+                          <span
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              backgroundColor: color,
+                              borderRadius: "50%",
+                              marginRight: "8px",
+                              marginLeft: "4px",
+                              display: "inline-block",
+                            }}
+                          />
+                        </div>
+                        <input
+                          type="checkbox"
+                          className={styles.checkbox}
+                          checked={activeFilters.includes(sub)}
+                          onChange={() => toggleFilter(sub)}
+                          style={{ accentColor: color }}
+                        />
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             );
