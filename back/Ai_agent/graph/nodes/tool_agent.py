@@ -67,25 +67,6 @@ async def tool_agent(state: GraphState) -> GraphState:
     )
 
     # 3️⃣ Generate final answer with context
-    # Format location for display
-    if user_lat and user_lng:
-        # Approximate city based on coordinates
-        if 31.2 <= user_lat <= 31.3 and 34.8 <= user_lng <= 34.9:
-            city_hint = "עומר"
-        elif 32.0 <= user_lat <= 32.2 and 34.7 <= user_lng <= 34.9:
-            city_hint = "תל אביב (מרכז)"
-        elif 31.7 <= user_lat <= 32.0 and 34.6 <= user_lng <= 34.8:
-            city_hint = "אזור השרון"
-        elif 32.7 <= user_lat <= 33.0 and 35.0 <= user_lng <= 35.3:
-            city_hint = "אזור חיפה"
-        elif 31.7 <= user_lat <= 31.9 and 35.1 <= user_lng <= 35.3:
-            city_hint = "אזור ירושלים"
-        else:
-            city_hint = "ישראל"
-        location_display = f"קו רוחב {user_lat:.4f}, קו אורך {user_lng:.4f} (באזור {city_hint})"
-    else:
-        location_display = "לא זמין - משתמש במיקום ברירת מחדל (מרכז עומר)"
-    
     messages = final_prompt.format_messages(
         context_window=context_window if context_window else "(אין היסטוריה קודמת)",
         query=query, 
