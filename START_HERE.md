@@ -170,7 +170,7 @@ omeropsmap_postgres       Up X minutes        0.0.0.0:5432->5432/tcp
 ### 5.1 העתק את קובץ ה-Excel ל-Container
 
 ```powershell
-docker cp front/public/sites.xlsx omeropsmap_data_server:/app/sites.xlsx
+docker cp front/public/Omer_GIS_Reorganized_Final.xlsx omeropsmap_data_server:/app/Omer_GIS_Reorganized_Final.xlsx
 ```
 
 ### 5.2 הרץ את סקריפט הטעינה
