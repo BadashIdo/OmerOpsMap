@@ -6,7 +6,7 @@ from graph.chains.tool_router import router_chain
 
 def decide_tools(query: str) -> dict:
     # default fallback 
-    fallback = {"use_web": False, "use_math": False}
+    fallback = {"use_web": False, "use_math": False, "use_nearby_sites": False}
 
     try:
         decision = router_chain.invoke({"query": query})
@@ -14,6 +14,7 @@ def decide_tools(query: str) -> dict:
         return {
             "use_web": bool(getattr(decision, "use_web", False)),
             "use_math": bool(getattr(decision, "use_math", False)),
+            "use_nearby_sites": bool(getattr(decision, "use_nearby_sites", False)),
         }
     except Exception:
         return fallback

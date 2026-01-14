@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "nearby-sites"
+version = "0.1.0"
+description = "MCP server for finding nearby sites in Omer"
+authors = ["Yehonatan Yamin"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+fastmcp = "*"
+httpx = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
