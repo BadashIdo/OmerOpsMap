@@ -18,16 +18,17 @@ const AI_AGENT_URL = import.meta.env.VITE_AI_AGENT_URL || 'http://localhost:8000
  * @param {string} sessionId - Session identifier (optional)
  * @returns {Promise<Object>} AI response
  */
-export async function sendChatMessage(message, sessionId = null) {
+export async function sendChatMessage(query, contextWindow = '', selfLocation = null) {
   try {
-    const response = await fetch(`${AI_AGENT_URL}/chat`, {
+    const response = await fetch(`${AI_AGENT_URL}/ask`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        message,
-        session_id: sessionId || generateSessionId(),
+        query: query,
+        context_window: contextWindow,
+        self_location: selfLocation
       }),
     });
 
@@ -38,7 +39,7 @@ export async function sendChatMessage(message, sessionId = null) {
     const data = await response.json();
     return {
       success: true,
-      response: data.response || data.message,
+      response: data.final_answer || data.message,
       timestamp: new Date(),
     };
   } catch (error) {

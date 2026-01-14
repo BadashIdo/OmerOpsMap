@@ -14,7 +14,14 @@ from graph.prompts.prompt_moderate import MODERATION_SYSTEM_PROMPT
 
 
 # LLM
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+from configuration.loader import get_llm_config
+
+# Load configuration
+mod_config = get_llm_config("moderation_llm")
+llm = ChatOpenAI(
+    model=mod_config["model_name"],
+    temperature=mod_config["temperature"]
+)
 
 
 class ModerationDecision(BaseModel):

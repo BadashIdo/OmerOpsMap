@@ -414,6 +414,9 @@ function AppContent() {
       }
       setIsTracking(false);
       setUserLocation(null);
+      // Clear sessionStorage when tracking stops
+      sessionStorage.removeItem('user_location');
+      sessionStorage.setItem('location_tracking', 'false');
     } else {
       // התחלת מעקב
       if (!navigator.geolocation) {
@@ -437,6 +440,10 @@ function AppContent() {
           const newLocation = { lat: latitude, lng: longitude };
 
           setUserLocation(newLocation);
+
+          // Save to sessionStorage for ChatBot and other components
+          sessionStorage.setItem('user_location', `${latitude},${longitude}`);
+          sessionStorage.setItem('location_tracking', 'true');
 
           // אם זה העדכון הראשון, נעבור למיקום
           if (!isTracking && map) {
