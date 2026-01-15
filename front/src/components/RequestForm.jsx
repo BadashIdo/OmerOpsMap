@@ -1,28 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { submitRequest } from "../api/dataService";
 import styles from "../styles/RequestForm.module.css";
+import SearchableDropdown from "./SearchableDropdown";
 
-const REQUEST_TYPES = [
-  { value: "hazard", label: "מפגע / סכנה", icon: "⚠️" },
-  { value: "roadwork", label: "עבודות / חסימה", icon: "🚧" },
-  { value: "event", label: "אירוע ציבורי", icon: "🎉" },
-  { value: "new_site", label: "אתר חדש", icon: "📍" },
-  { value: "correction", label: "תיקון לאתר קיים", icon: "✏️" },
-  { value: "other", label: "אחר", icon: "📝" },
-];
-
-const CATEGORIES = [
-  "חינוך",
-  "בריאות",
-  "ספורט",
-  "תרבות",
-  "מסחר",
-  "דת",
-  "שירותים עירוניים",
-  "תחבורה",
-  "פנאי",
-  "אחר",
-];
+// Note: We keep request_type for now for backward compatibility
+// In the future, we might remove it completely
+const DEFAULT_REQUEST_TYPE = "new_site";
 
 const PRIORITIES = [
   { value: "low", label: "נמוכה", color: "#4CAF50" },
@@ -31,13 +14,14 @@ const PRIORITIES = [
   { value: "critical", label: "קריטית", color: "#F44336" },
 ];
 
-export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
+export default function RequestForm({ isOpen, onClose, location, categoriesStructure = {}, onSuccess }) {
   const [formData, setFormData] = useState({
-    request_type: "hazard",
+    request_type: DEFAULT_REQUEST_TYPE,
     is_temporary: true,
     name: "",
     description: "",
     category: "",
+    sub_category: "",
     start_date: "",
     end_date: "",
     priority: "medium",
@@ -48,8 +32,6 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
-
-  if (!isOpen) return null;
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -76,6 +58,12 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
     // Validation
     if (!formData.name.trim()) {
       newErrors.name = "נא להזין שם/כותרת";
+    }
+    if (!formData.category) {
+      newErrors.category = "חובה לבחור קטגוריה";
+    }
+    if (!formData.sub_category) {
+      newErrors.sub_category = "חובה לבחור תת-קטגוריה";
     }
     if (!formData.submitter_name.trim()) {
       newErrors.submitter_name = "נא להזין את שמך";
@@ -123,11 +111,12 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
 
   const handleClose = () => {
     setFormData({
-      request_type: "hazard",
+      request_type: DEFAULT_REQUEST_TYPE,
       is_temporary: true,
       name: "",
       description: "",
       category: "",
+      sub_category: "",
       start_date: "",
       end_date: "",
       priority: "medium",
@@ -139,6 +128,34 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
     setSuccess(false);
     onClose();
   };
+
+  // Get all main categories
+  const allCategories = useMemo(() => {
+    return Object.keys(categoriesStructure).filter(cat =>
+      cat !== "רובעים" && cat !== "אירועים זמניים"
+    );
+  }, [categoriesStructure]);
+
+  // Get subcategories for selected category, or all if no category selected
+  const availableSubCategories = useMemo(() => {
+    if (!formData.category) {
+      // If no category selected, show all subcategories from all categories
+      const allSubs = [];
+      Object.entries(categoriesStructure).forEach(([cat, subs]) => {
+        if (cat !== "רובעים" && cat !== "אירועים זמניים") {
+          if (Array.isArray(subs)) {
+            allSubs.push(...subs);
+          }
+        }
+      });
+      return [...new Set(allSubs)]; // Remove duplicates
+    }
+
+    // If category selected, show only its subcategories
+    return categoriesStructure[formData.category] || [];
+  }, [formData.category, categoriesStructure]);
+
+  if (!isOpen) return null;
 
   if (success) {
     return (
@@ -166,28 +183,47 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
           </button>
         </div>
 
-        <form className={styles.form} onSubmit={handleSubmit}>
+        <form id="requestForm" className={styles.form} onSubmit={handleSubmit}>
           {errors.general && <div className={styles.error}>{errors.general}</div>}
 
-          {/* Request Type */}
+          {/* Category - Main Category */}
           <div className={styles.field}>
-            <label className={styles.label}>סוג הבקשה</label>
-            <div className={styles.typeGrid}>
-              {REQUEST_TYPES.map((type) => (
-                <button
-                  key={type.value}
-                  type="button"
-                  className={`${styles.typeBtn} ${formData.request_type === type.value ? styles.selected : ""
-                    }`}
-                  onClick={() =>
-                    setFormData((prev) => ({ ...prev, request_type: type.value }))
-                  }
-                >
-                  <span className={styles.typeIcon}>{type.icon}</span>
-                  <span className={styles.typeLabel}>{type.label}</span>
-                </button>
-              ))}
-            </div>
+            <label className={styles.label}>קטגוריה *</label>
+            <SearchableDropdown
+              options={allCategories}
+              value={formData.category}
+              onChange={(value) => {
+                setFormData(prev => ({ ...prev, category: value, sub_category: "" }));
+                // Clear error when selecting
+                if (errors.category) {
+                  setErrors(prev => ({ ...prev, category: "" }));
+                }
+              }}
+              placeholder="בחר קטגוריה..."
+              required
+              error={!!errors.category}
+            />
+            {errors.category && <div className={styles.fieldError} style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>{errors.category}</div>}
+          </div>
+
+          {/* Subcategory */}
+          <div className={styles.field}>
+            <label className={styles.label}>תת-קטגוריה *</label>
+            <SearchableDropdown
+              options={availableSubCategories}
+              value={formData.sub_category}
+              onChange={(value) => {
+                setFormData(prev => ({ ...prev, sub_category: value }));
+                // Clear error when selecting
+                if (errors.sub_category) {
+                  setErrors(prev => ({ ...prev, sub_category: "" }));
+                }
+              }}
+              placeholder={formData.category ? "בחר תת-קטגוריה..." : "בחר קטגוריה תחילה או בחר מכל התתי-קטגוריות"}
+              required
+              error={!!errors.sub_category}
+            />
+            {errors.sub_category && <div className={styles.fieldError} style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>{errors.sub_category}</div>}
           </div>
 
           {/* Is Temporary */}
@@ -228,24 +264,6 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
               className={styles.textarea}
               rows={3}
             />
-          </div>
-
-          {/* Category */}
-          <div className={styles.field}>
-            <label className={styles.label}>קטגוריה</label>
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              className={styles.select}
-            >
-              <option value="">בחר קטגוריה</option>
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
           </div>
 
           {/* Dates for temporary */}
@@ -355,18 +373,19 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
               מיקום נבחר: {location?.lat?.toFixed(5)}, {location?.lng?.toFixed(5)}
             </span>
           </div>
+        </form>
 
-          {/* Submit Button */}
+        <div className={styles.footer}>
           <button
             type="submit"
+            form="requestForm"
             className={styles.submitBtn}
             disabled={isSubmitting}
           >
             {isSubmitting ? "שולח..." : "שלח בקשה 📤"}
           </button>
-        </form>
+        </div>
       </div>
     </>
   );
 }
-

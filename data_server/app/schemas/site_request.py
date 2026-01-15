@@ -9,8 +9,8 @@ class SiteRequestBase(BaseModel):
     is_temporary: bool = True
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
-    category: Optional[str] = Field(None, max_length=100)
-    sub_category: Optional[str] = Field(None, max_length=100)
+    category: str = Field(..., min_length=1, max_length=100)
+    sub_category: str = Field(..., min_length=1, max_length=100)
     lat: float = Field(..., ge=-90, le=90)
     lng: float = Field(..., ge=-180, le=180)
     start_date: Optional[datetime] = None

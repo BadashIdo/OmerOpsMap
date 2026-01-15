@@ -16,12 +16,14 @@
   width: 95%;
   max-width: 550px;
   max-height: 90vh;
-  overflow-y: auto;
   background: white;
   border-radius: 16px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   z-index: 9999;
   direction: rtl;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .header {
@@ -62,6 +64,8 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .error {
@@ -237,27 +241,40 @@
   color: #666;
 }
 
+.footer {
+  padding: 20px 24px;
+  background: white;
+  border-top: 1px solid #f0f0f0;
+  z-index: 2;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+  margin-top: auto;
+}
+
 .locationIcon {
   font-size: 18px;
 }
 
-/* Submit Button */
+/* Submit Button - Fixed at Bottom of Form */
 .submitBtn {
   padding: 16px;
+  margin: 0;
   background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
-  margin-top: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  letter-spacing: 0.5px;
 }
 
 .submitBtn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+  box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+  filter: brightness(1.05);
 }
 
 .submitBtn:disabled {
@@ -313,4 +330,3 @@
     flex: 0 0 calc(50% - 5px);
   }
 }
-

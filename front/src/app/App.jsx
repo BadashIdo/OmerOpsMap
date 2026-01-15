@@ -553,6 +553,7 @@ function AppContent() {
             setRequestLocation(null);
           }}
           location={requestLocation}
+          categoriesStructure={categoriesStructure}
           onSuccess={() => {
             addNotification("הבקשה נשלחה בהצלחה!", "success");
           }}
