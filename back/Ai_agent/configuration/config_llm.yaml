@@ -1,6 +1,43 @@
+# ============================================
+# LLM Configuration - Central configuration file
+# Change models here to affect the entire system
+# ============================================
 
+# Main agent LLM - generates final answers
+# Used in: graph/nodes/tool_agent.py
+main_llm:
+  model_name: "gpt-4o-mini"
+  temperature: 0
 
-# grapg/chains/moderation.py ---------------------------------------------
+# Tool router LLM - decides which tools to use
+# Used in: graph/chains/tool_router.py
+tool_router_llm:
+  model_name: "gpt-4o-mini"
+  temperature: 0
+
+# Category selector LLM - selects categories for nearby sites
+# Used in: graph/chains/tool_router.py (category_chain)
+category_selector_llm:
+  model_name: "gpt-4o-mini"
+  temperature: 0
+
+# Moderation LLM - checks for inappropriate content
+# Used in: graph/chains/moderation.py
 moderation_llm:
   model_name: "gpt-4o-mini"
   temperature: 0
+
+# ============================================
+# Available text-to-text models:
+# - gpt-5.2 (top quality, best reasoning & coding)
+# - gpt-5.1 (excellent quality, strong instruction-following)
+# - gpt-5 mini (good quality, cheaper than full GPT-5)
+# - gpt-5 nano (fastest/cheapest in GPT-5 family)
+# - gpt-4.1 (advanced quality, better than GPT-4o)
+# - gpt-4.1 mini (compact, balanced)
+# - gpt-4.1 nano (very fast/cheap)
+# - gpt-4o (general high quality)
+# - gpt-4o-mini (fast, cheap, good for most tasks)
+# - gpt-4-turbo (good balance)
+# - gpt-3.5-turbo (fastest, cheapest)
+# ============================================

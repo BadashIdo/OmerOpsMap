@@ -46,7 +46,7 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
     submitter_email: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
 
   if (!isOpen) return null;
@@ -57,27 +57,38 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+
+    // Clear error for this field when user types
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
+    // Special handling for contact info - clear error if either is filled
+    if ((name === 'submitter_phone' || name === 'submitter_email') && errors.contact) {
+      setErrors(prev => ({ ...prev, contact: "" }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setErrors({});
+    const newErrors = {};
 
     // Validation
     if (!formData.name.trim()) {
-      setError("נא להזין שם/כותרת");
-      return;
+      newErrors.name = "נא להזין שם/כותרת";
     }
     if (!formData.submitter_name.trim()) {
-      setError("נא להזין את שמך");
-      return;
+      newErrors.submitter_name = "נא להזין את שמך";
     }
     if (!formData.submitter_phone && !formData.submitter_email) {
-      setError("נא להזין טלפון או אימייל ליצירת קשר");
-      return;
+      newErrors.contact = "נא להזין טלפון או אימייל ליצירת קשר";
     }
     if (formData.is_temporary && !formData.end_date) {
-      setError("נא להזין תאריך סיום לאירוע זמני");
+      newErrors.end_date = "נא להזין תאריך סיום לאירוע זמני";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -94,7 +105,7 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
 
       await submitRequest(requestData);
       setSuccess(true);
-      
+
       if (onSuccess) {
         onSuccess();
       }
@@ -104,7 +115,7 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
         handleClose();
       }, 2000);
     } catch (err) {
-      setError(err.message);
+      setErrors({ general: err.message });
     } finally {
       setIsSubmitting(false);
     }
@@ -124,7 +135,7 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
       submitter_phone: "",
       submitter_email: "",
     });
-    setError("");
+    setErrors({});
     setSuccess(false);
     onClose();
   };
@@ -156,7 +167,7 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit}>
-          {error && <div className={styles.error}>{error}</div>}
+          {errors.general && <div className={styles.error}>{errors.general}</div>}
 
           {/* Request Type */}
           <div className={styles.field}>
@@ -166,9 +177,8 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
                 <button
                   key={type.value}
                   type="button"
-                  className={`${styles.typeBtn} ${
-                    formData.request_type === type.value ? styles.selected : ""
-                  }`}
+                  className={`${styles.typeBtn} ${formData.request_type === type.value ? styles.selected : ""
+                    }`}
                   onClick={() =>
                     setFormData((prev) => ({ ...prev, request_type: type.value }))
                   }
@@ -202,8 +212,9 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
               value={formData.name}
               onChange={handleChange}
               placeholder="לדוגמה: בור בכביש ברחוב הדקל"
-              className={styles.input}
+              className={`${styles.input} ${errors.name ? styles.inputError : ''}`}
             />
+            {errors.name && <div className={styles.fieldError} style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>{errors.name}</div>}
           </div>
 
           {/* Description */}
@@ -257,9 +268,10 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
                   name="end_date"
                   value={formData.end_date}
                   onChange={handleChange}
-                  className={styles.input}
+                  className={`${styles.input} ${errors.end_date ? styles.inputError : ''}`}
                   required
                 />
+                {errors.end_date && <div className={styles.fieldError} style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>{errors.end_date}</div>}
               </div>
             </div>
           )}
@@ -272,9 +284,8 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
                 <button
                   key={p.value}
                   type="button"
-                  className={`${styles.priorityBtn} ${
-                    formData.priority === p.value ? styles.selected : ""
-                  }`}
+                  className={`${styles.priorityBtn} ${formData.priority === p.value ? styles.selected : ""
+                    }`}
                   style={{
                     borderColor: formData.priority === p.value ? p.color : "#e0e0e0",
                     backgroundColor:
@@ -303,8 +314,9 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
               value={formData.submitter_name}
               onChange={handleChange}
               placeholder="השם שלך"
-              className={styles.input}
+              className={`${styles.input} ${errors.submitter_name ? styles.inputError : ''}`}
             />
+            {errors.submitter_name && <div className={styles.fieldError} style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>{errors.submitter_name}</div>}
           </div>
 
           {/* Contact Info */}
@@ -317,7 +329,7 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
                 value={formData.submitter_phone}
                 onChange={handleChange}
                 placeholder="050-1234567"
-                className={styles.input}
+                className={`${styles.input} ${errors.contact ? styles.inputError : ''}`}
                 dir="ltr"
               />
             </div>
@@ -329,11 +341,12 @@ export default function RequestForm({ isOpen, onClose, location, onSuccess }) {
                 value={formData.submitter_email}
                 onChange={handleChange}
                 placeholder="email@example.com"
-                className={styles.input}
+                className={`${styles.input} ${errors.contact ? styles.inputError : ''}`}
                 dir="ltr"
               />
             </div>
           </div>
+          {errors.contact && <div className={styles.fieldError} style={{ color: 'red', fontSize: '12px', marginTop: '4px', textAlign: 'center', width: '100%' }}>{errors.contact}</div>}
 
           {/* Location Display */}
           <div className={styles.locationBox}>

@@ -19,7 +19,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const storedToken = sessionStorage.getItem(TOKEN_KEY);
     const storedAdmin = sessionStorage.getItem(ADMIN_KEY);
-    
+
     if (storedToken && storedAdmin) {
       setToken(storedToken);
       try {
@@ -80,11 +80,11 @@ export function AuthProvider({ children }) {
       }
 
       const data = await response.json();
-      
+
       // Store in state
       setToken(data.access_token);
       setAdmin(data.admin);
-      
+
       // Store in sessionStorage (clears when browser closes)
       sessionStorage.setItem(TOKEN_KEY, data.access_token);
       sessionStorage.setItem(ADMIN_KEY, JSON.stringify(data.admin));
@@ -130,6 +130,7 @@ export function AuthProvider({ children }) {
     isAdmin: !!admin,
     isLoading,
     error,
+    setError, // Expose setError to allow clearing errors
     login,
     logout,
     enterAsGuest,

@@ -316,7 +316,7 @@ Examples:
   python import_excel_to_db.py --mode replace
   
   # With custom Excel file
-  python import_excel_to_db.py --file /path/to/sites.xlsx
+  python import_excel_to_db.py --file /path/to/Omer_GIS_Reorganized_Final.xlsx
   
   # With log file
   python import_excel_to_db.py --log-file import_2026-01-11.log

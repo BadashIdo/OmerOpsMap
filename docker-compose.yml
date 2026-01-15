@@ -78,6 +78,32 @@ services:
       - data_server
     restart: unless-stopped
 
+  # ==========================================
+  # AI Agent & MCP Servers
+  # ==========================================
+  ai_agent:
+    build: ./back/Ai_agent
+    container_name: omeropsmap_ai_agent
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NEARBY_SITES_MCP_URL=http://mcp_nearby_sites:3335/mcp
+    depends_on:
+      - mcp_nearby_sites
+    restart: unless-stopped
+
+  mcp_nearby_sites:
+    build: ./back/MCP_servers/nearby_sites
+    container_name: omeropsmap_mcp_nearby_sites
+    ports:
+      - "3335:3335"
+    environment:
+      - DATA_SERVER_URL=http://data_server:8001
+    depends_on:
+      - data_server
+    restart: unless-stopped
+
 volumes:
   postgres_data:
 

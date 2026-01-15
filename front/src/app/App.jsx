@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import "../styles/App.css";
 import appStyles from "../styles/App.module.css";
 import controlsStyles from "../styles/MapControls.module.css";
@@ -24,10 +24,10 @@ const DISTRICTS = ["רובע א'", "רובע ב'", "רובע ג'", "רובע ד'
 
 function AppContent() {
   const { isAdmin, isLoading: authLoading } = useAuth();
-  
+
   // Data refresh trigger for WebSocket updates
   const [dataRefreshTrigger, setDataRefreshTrigger] = useState(0);
-  
+
   // Load sites from API
   const { points, loadError } = useSites(dataRefreshTrigger);
   const { temporarySites } = useTemporarySites(dataRefreshTrigger);
@@ -45,25 +45,31 @@ function AppContent() {
   const [isTempPanelOpen, setIsTempPanelOpen] = useState(false);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  
+
   // Request form state
   const [requestFormOpen, setRequestFormOpen] = useState(false);
   const [requestLocation, setRequestLocation] = useState(null);
-  
+
   // Notifications
   const [notifications, setNotifications] = useState([]);
-  
+
   // Pending requests count for admin badge
   const [pendingCount, setPendingCount] = useState(0);
 
+  // Add notification helper
+  const addNotification = useCallback((message, type = "info") => {
+    const id = Date.now();
+    setNotifications((prev) => [...prev, { id, message, type }]);
+  }, []);
+
   // WebSocket for real-time updates
-  useWebSocket((message) => {
+  const handleWebSocketMessage = useCallback((message) => {
     console.log("WebSocket message:", message);
-    
+
     if (message.type === "data_changed") {
       // Refresh data when changes occur
       setDataRefreshTrigger((prev) => prev + 1);
-      
+
       // Show notification
       const actionText = {
         create: "נוסף",
@@ -71,13 +77,13 @@ function AppContent() {
         delete: "נמחק",
         expired: "פג תוקפו"
       }[message.action] || "שונה";
-      
+
       const typeText = message.data_type === "temporary" ? "אירוע זמני" : "אתר";
       const name = message.data?.name || "";
-      
+
       addNotification(`${typeText} ${actionText}: ${name}`, message.action === "delete" || message.action === "expired" ? "warning" : "update");
     }
-    
+
     // Handle new request notification for admins
     if (message.type === "data_changed" && message.data_type === "request" && message.action === "new") {
       if (isAdmin) {
@@ -85,25 +91,21 @@ function AppContent() {
         setPendingCount((prev) => prev + 1);
       }
     }
-    
+
     // Handle request approved/rejected
     if (message.type === "data_changed" && message.data_type === "request") {
       if (message.action === "approved" || message.action === "rejected") {
         setPendingCount((prev) => Math.max(0, prev - 1));
       }
     }
-  });
+  }, [addNotification, isAdmin]);
 
-  // Add notification helper
-  const addNotification = (message, type = "info") => {
-    const id = Date.now();
-    setNotifications((prev) => [...prev, { id, message, type }]);
-  };
+  useWebSocket(handleWebSocketMessage);
 
   const removeNotification = (id) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
-  
+
   // Handle long press on map
   const handleMapLongPress = (location) => {
     setRequestLocation(location);
@@ -117,7 +119,7 @@ function AppContent() {
     const R = 6371; // רדיוס כדור הארץ בק"מ
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLng = (lng2 - lng1) * Math.PI / 180;
-    const a = 
+    const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
       Math.sin(dLng / 2) * Math.sin(dLng / 2);
@@ -130,9 +132,9 @@ function AppContent() {
    */
   const findClosestDistrict = (targetLat, targetLng, allPoints) => {
     // נקודות עם district תקין (לא ריק ולא "-")
-    const pointsWithDistrict = allPoints.filter(p => 
-      p.district && 
-      p.district !== "-" && 
+    const pointsWithDistrict = allPoints.filter(p =>
+      p.district &&
+      p.district !== "-" &&
       p.district !== "" &&
       p.lat && p.lng
     );
@@ -156,11 +158,11 @@ function AppContent() {
   // תיקון אוטומטי של נקודות עם district = "-"
   const pointsWithFixedDistricts = useMemo(() => {
     const pointsNeedingFix = points.filter(p => !p.district || p.district === "-" || p.district.trim() === "");
-    
+
     if (pointsNeedingFix.length === 0) return points;
 
     console.log(`🔧 Found ${pointsNeedingFix.length} points with missing district, fixing...`);
-    
+
     const fixedPoints = points.map(p => {
       if (!p.district || p.district === "-" || p.district.trim() === "") {
         const closestDistrict = findClosestDistrict(p.lat, p.lng, points);
@@ -178,7 +180,7 @@ function AppContent() {
   // כל תתי-הקטגוריות (מתוך points!)
   const allSubCategories = useMemo(() => {
     const subCats = [...new Set(pointsWithFixedDistricts.map((p) => p.subCategory))].filter(Boolean);
-    
+
     // Debug: Check how many points have empty subCategory
     const pointsWithEmptySubCat = points.filter(p => !p.subCategory || p.subCategory.trim() === '');
     if (pointsWithEmptySubCat.length > 0) {
@@ -190,10 +192,10 @@ function AppContent() {
         subCategory: p.subCategory || '(empty)'
       })));
     }
-    
+
     return subCats;
   }, [pointsWithFixedDistricts]);
-  
+
   // All temporary event categories
   const allTempCategories = useMemo(
     () => [...new Set(temporarySites.map((t) => t.category))].filter(Boolean),
@@ -224,7 +226,7 @@ function AppContent() {
 
     // הוספת קטגוריית רובעים ידנית
     struct["רובעים"] = DISTRICTS;
-    
+
     // Add temporary events category
     if (allTempCategories.length > 0) {
       struct["אירועים זמניים"] = allTempCategories;
@@ -245,36 +247,36 @@ function AppContent() {
     const filtered = pointsWithFixedDistricts.filter((p) => {
       // בדיקת רובע (אם יש רובעים פעילים)
       const districtMatch = activeDistricts.length === 0 || activeDistricts.includes(p.district);
-      
+
       // בדיקת תת-קטגוריה:
       // - אם אין תתי-קטגוריות פעילות → כל הנקודות עוברות
       // - אם יש תתי-קטגוריות פעילות:
       //   * אם לנקודה יש subCategory תקין → היא עוברת רק אם הוא פעיל
       //   * אם לנקודה אין subCategory (ריק/null) → היא עוברת (תמיד)
-      const subCategoryMatch = activeSubCategories.length === 0 || 
-        !p.subCategory || 
+      const subCategoryMatch = activeSubCategories.length === 0 ||
+        !p.subCategory ||
         activeSubCategories.includes(p.subCategory);
-      
+
       // האתר צריך לעמוד בשני התנאים (AND לוגי)
       return districtMatch && subCategoryMatch;
     });
-    
+
     // Debug logging
     console.log(`🔍 Filtering: ${pointsWithFixedDistricts.length} total points, ${filtered.length} after filter`);
     console.log(`   Active districts: ${activeDistricts.length}, Active subCategories: ${activeSubCategories.length}`);
     if (pointsWithFixedDistricts.length !== filtered.length) {
       const filteredOut = pointsWithFixedDistricts.length - filtered.length;
       console.log(`   ⚠️ Filtered out ${filteredOut} points`);
-      
+
       // Show which points were filtered out
       const filteredOutPoints = pointsWithFixedDistricts.filter((p) => {
         const districtMatch = activeDistricts.length === 0 || activeDistricts.includes(p.district);
-        const subCategoryMatch = activeSubCategories.length === 0 || 
-          !p.subCategory || 
+        const subCategoryMatch = activeSubCategories.length === 0 ||
+          !p.subCategory ||
           activeSubCategories.includes(p.subCategory);
         return !(districtMatch && subCategoryMatch);
       });
-      
+
       if (filteredOutPoints.length > 0) {
         console.log(`   Filtered out points (${filteredOutPoints.length} total):`);
         // Show all filtered out points as a table for easier viewing
@@ -284,33 +286,33 @@ function AppContent() {
           District: p.district || '(empty)',
           SubCategory: p.subCategory || '(empty)',
           Category: p.category || '(empty)',
-          Reason: !activeDistricts.includes(p.district) ? 'District not active' : 
-                  (!p.subCategory || !activeSubCategories.includes(p.subCategory)) ? 'SubCategory not active' : 'Unknown'
+          Reason: !activeDistricts.includes(p.district) ? 'District not active' :
+            (!p.subCategory || !activeSubCategories.includes(p.subCategory)) ? 'SubCategory not active' : 'Unknown'
         })));
       }
     } else {
       console.log(`   ✅ All points are visible!`);
     }
-    
+
     return filtered;
   }, [pointsWithFixedDistricts, activeFilters, allTempCategories]);
-  
+
   // Filter temporary sites
   const filteredTemporarySites = useMemo(() => {
     if (activeFilters.length === 0) return temporarySites;
-    
+
     const activeTempCategories = activeFilters.filter((f) => allTempCategories.includes(f));
-    
+
     // If "אירועים זמניים" is not active, hide all temporary sites
     if (!activeFilters.includes("אירועים זמניים")) {
       return [];
     }
-    
+
     // If no specific temp categories selected, show all
     if (activeTempCategories.length === 0) {
       return temporarySites;
     }
-    
+
     return temporarySites.filter((t) => activeTempCategories.includes(t.category));
   }, [temporarySites, activeFilters, allTempCategories]);
 
@@ -334,7 +336,7 @@ function AppContent() {
         return { item: p, score, type: "permanent" };
       })
       .filter((x) => x.score > 0);
-    
+
     // Search in temporary sites
     const scoredTemporary = filteredTemporarySites
       .map((t) => {
@@ -351,7 +353,7 @@ function AppContent() {
         return { item: t, score, type: "temporary" };
       })
       .filter((x) => x.score > 0);
-    
+
     // Combine and sort all results
     const allScored = [...scoredPermanent, ...scoredTemporary]
       .sort((a, b) => b.score - a.score);
@@ -376,11 +378,28 @@ function AppContent() {
       // חישוב offset כדי שה-popup יופיע למטה
       const targetPoint = map.project([p.lat, p.lng], 17);
       const targetLatLng = map.unproject([targetPoint.x, targetPoint.y - 200], 17);
-      
-      map.flyTo(targetLatLng, 17, { animate: true, duration: 1.5, noMoveStart: true });
+
+      map.flyTo(targetLatLng, 17, { animate: true, duration: 0.8, noMoveStart: true });
 
       setTimeout(() => {
-        const marker = markerRefs.current[p.id];
+        // Construct the key based on the item type (added during search) or try both
+        let markerKey = p.id;
+
+        // If type is known (from search results), use it
+        if (p.type === 'permanent') {
+          markerKey = `permanent-${p.id}`;
+        } else if (p.type === 'temporary') {
+          markerKey = `temporary-${p.id}`;
+        } else {
+          // If type is unknown, try to find it
+          if (markerRefs.current[`permanent-${p.id}`]) {
+            markerKey = `permanent-${p.id}`;
+          } else if (markerRefs.current[`temporary-${p.id}`]) {
+            markerKey = `temporary-${p.id}`;
+          }
+        }
+
+        const marker = markerRefs.current[markerKey];
         if (marker) marker.openPopup();
       }, 1200);
     }
@@ -395,6 +414,9 @@ function AppContent() {
       }
       setIsTracking(false);
       setUserLocation(null);
+      // Clear sessionStorage when tracking stops
+      sessionStorage.removeItem('user_location');
+      sessionStorage.setItem('location_tracking', 'false');
     } else {
       // התחלת מעקב
       if (!navigator.geolocation) {
@@ -403,7 +425,7 @@ function AppContent() {
       }
 
       const map = mapRef.current;
-      
+
       // אפשרויות למעקב
       const options = {
         enableHighAccuracy: true,
@@ -416,14 +438,18 @@ function AppContent() {
         (position) => {
           const { latitude, longitude } = position.coords;
           const newLocation = { lat: latitude, lng: longitude };
-          
+
           setUserLocation(newLocation);
-          
+
+          // Save to sessionStorage for ChatBot and other components
+          sessionStorage.setItem('user_location', `${latitude},${longitude}`);
+          sessionStorage.setItem('location_tracking', 'true');
+
           // אם זה העדכון הראשון, נעבור למיקום
           if (!isTracking && map) {
-            map.flyTo([latitude, longitude], 16, { animate: true, duration: 1 });
+            map.flyTo([latitude, longitude], 16, { animate: true, duration: 0.8 });
           }
-          
+
           setIsTracking(true);
         },
         (error) => {
@@ -450,168 +476,135 @@ function AppContent() {
     return null; // LoginPage handles loading state
   }
 
-return (
-  <div className={appStyles.shell}>
-    <div className={appStyles.mapLayer}>
-      {loadError && (
-        <div
-          style={{
-            position: "absolute",
-            top: 10,
-            left: 10,
-            zIndex: 9999,
-            background: "white",
-            padding: 10,
-            borderRadius: 8,
-          }}
-        >
-          שגיאה בטעינת נתונים: {loadError}
-        </div>
-      )}
-
-
-
-      <SideBar
-        isOpen={isSidebarOpen}
-        onOpen={() => setIsSidebarOpen(true)}
-        onClose={() => setIsSidebarOpen(false)}
-        categoriesStructure={categoriesStructure}
-        activeFilters={activeFilters}
-        toggleFilter={toggleFilter}
-      />
-
-      <SearchBar
-        query={query}
-        setQuery={(v) => {
-          setQuery(v);
-          setShowResults(true);
-        }}
-        clear={() => {
-          setQuery("");
-          setShowResults(false);
-        }}
-        showResults={showResults}
-        setShowResults={setShowResults}
-        results={results}
-        onPick={goToPoint}
-      />
-
-      {/* Temporary Events Panel */}
-      <TemporaryEventsPanel
-        isOpen={isTempPanelOpen}
-        onClose={() => setIsTempPanelOpen(false)}
-        events={temporarySites}
-        onEventClick={(event) => {
-          // Navigate to event on map
-          const map = mapRef.current;
-          if (map) {
-            map.flyTo([event.lat, event.lng], 17, { animate: true, duration: 1.5 });
-          }
-        }}
-      />
-      
-      {/* Admin Panel */}
-      {isAdmin && (
-        <AdminPanel
-          isOpen={isAdminPanelOpen}
-          onClose={() => setIsAdminPanelOpen(false)}
-          onDataChange={() => setDataRefreshTrigger((prev) => prev + 1)}
-        />
-      )}
-      
-      {/* Request Form */}
-      <RequestForm
-        isOpen={requestFormOpen}
-        onClose={() => {
-          setRequestFormOpen(false);
-          setRequestLocation(null);
-        }}
-        location={requestLocation}
-        onSuccess={() => {
-          addNotification("הבקשה נשלחה בהצלחה!", "success");
-        }}
-      />
-      
-      {/* Notifications */}
-      <div style={{ position: "fixed", top: 80, right: 20, zIndex: 10000 }}>
-        {notifications.map((notif) => (
-          <div key={notif.id} style={{ marginBottom: 10 }}>
-            <NotificationToast
-              message={notif.message}
-              type={notif.type}
-              onClose={() => removeNotification(notif.id)}
-            />
+  return (
+    <div className={appStyles.shell}>
+      <div className={appStyles.mapLayer}>
+        {loadError && (
+          <div
+            style={{
+              position: "absolute",
+              top: 10,
+              left: 10,
+              zIndex: 9999,
+              background: "white",
+              padding: 10,
+              borderRadius: 8,
+            }}
+          >
+            שגיאה בטעינת נתונים: {loadError}
           </div>
-        ))}
-      </div>
-      
-      {/* AI ChatBot - Bottom Left */}
-      <ChatBot isOpen={isChatOpen} setIsOpen={setIsChatOpen} />
+        )}
 
-      <div
-        className={`${controlsStyles.controls} ${
-          isSidebarOpen ? controlsStyles.hidden : ""
-        }`}
-      >
-        {/* מרכז עומר */}
-        <button
-          className={controlsStyles.btn}
-          onClick={() => mapRef.current?.flyTo(OMER_CENTER, 15)}
-          title="מרכז עומר"
-        >
-          🏠
-        </button>
 
-        {/* מיקום עצמי */}
-        <button
-          className={`${controlsStyles.btn} ${isTracking ? controlsStyles.tracking : ""}`}
-          onClick={handleLocate}
-          title={isTracking ? "עצור מעקב" : "התחל מעקב מיקום"}
-        >
-          {isTracking ? "📍" : "🎯"}
-        </button>
-        
-        {/* אירועים זמניים */}
-        <button
-          className={controlsStyles.btn}
-          onClick={() => setIsTempPanelOpen(true)}
-          title="אירועים זמניים"
-          style={{ position: "relative" }}
-        >
-          ⚡
-          {temporarySites.length > 0 && (
-            <span
-              style={{
-                position: "absolute",
-                top: -5,
-                right: -5,
-                background: "#f44336",
-                color: "white",
-                borderRadius: "50%",
-                width: 20,
-                height: 20,
-                fontSize: 11,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: "bold",
-              }}
-            >
-              {temporarySites.length}
-            </span>
-          )}
-        </button>
-        
-        {/* Admin Panel Button - Only for admins */}
+
+        <SideBar
+          isOpen={isSidebarOpen}
+          onOpen={() => setIsSidebarOpen(true)}
+          onClose={() => setIsSidebarOpen(false)}
+          categoriesStructure={categoriesStructure}
+          activeFilters={activeFilters}
+          toggleFilter={toggleFilter}
+        />
+
+        <SearchBar
+          query={query}
+          setQuery={(v) => {
+            setQuery(v);
+            setShowResults(true);
+          }}
+          clear={() => {
+            setQuery("");
+            setShowResults(false);
+          }}
+          showResults={showResults}
+          setShowResults={setShowResults}
+          results={results}
+          onPick={goToPoint}
+        />
+
+        {/* Temporary Events Panel */}
+        <TemporaryEventsPanel
+          isOpen={isTempPanelOpen}
+          onClose={() => setIsTempPanelOpen(false)}
+          events={temporarySites}
+          onEventClick={(event) => {
+            // Navigate to event on map
+            const map = mapRef.current;
+            if (map) {
+              map.flyTo([event.lat, event.lng], 17, { animate: true, duration: 0.8 });
+            }
+          }}
+        />
+
+        {/* Admin Panel */}
         {isAdmin && (
+          <AdminPanel
+            isOpen={isAdminPanelOpen}
+            onClose={() => setIsAdminPanelOpen(false)}
+            onDataChange={() => setDataRefreshTrigger((prev) => prev + 1)}
+          />
+        )}
+
+        {/* Request Form */}
+        <RequestForm
+          isOpen={requestFormOpen}
+          onClose={() => {
+            setRequestFormOpen(false);
+            setRequestLocation(null);
+          }}
+          location={requestLocation}
+          onSuccess={() => {
+            addNotification("הבקשה נשלחה בהצלחה!", "success");
+          }}
+        />
+
+        {/* Notifications */}
+        <div style={{ position: "fixed", top: 80, right: 20, zIndex: 10000 }}>
+          {notifications.map((notif) => (
+            <div key={notif.id} style={{ marginBottom: 10 }}>
+              <NotificationToast
+                message={notif.message}
+                type={notif.type}
+                onClose={() => removeNotification(notif.id)}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* AI ChatBot - Bottom Left */}
+        <ChatBot isOpen={isChatOpen} setIsOpen={setIsChatOpen} />
+
+        <div
+          className={`${controlsStyles.controls} ${isSidebarOpen ? controlsStyles.hidden : ""
+            }`}
+        >
+          {/* מרכז עומר */}
           <button
             className={controlsStyles.btn}
-            onClick={() => setIsAdminPanelOpen(true)}
-            title="ניהול מערכת"
-            style={{ position: "relative", background: "linear-gradient(135deg, #1a2a6c 0%, #2a5298 100%)", color: "white" }}
+            onClick={() => mapRef.current?.flyTo(OMER_CENTER, 15)}
+            title="מרכז עומר"
           >
-            🔧
-            {pendingCount > 0 && (
+            🏠
+          </button>
+
+          {/* מיקום עצמי */}
+          <button
+            className={`${controlsStyles.btn} ${isTracking ? controlsStyles.tracking : ""}`}
+            onClick={handleLocate}
+            title={isTracking ? "עצור מעקב" : "התחל מעקב מיקום"}
+          >
+            {isTracking ? "📍" : "🎯"}
+          </button>
+
+          {/* אירועים זמניים */}
+          <button
+            className={controlsStyles.btn}
+            onClick={() => setIsTempPanelOpen(true)}
+            title="אירועים זמניים"
+            style={{ position: "relative" }}
+          >
+            ⚡
+            {temporarySites.length > 0 && (
               <span
                 style={{
                   position: "absolute",
@@ -629,48 +622,80 @@ return (
                   fontWeight: "bold",
                 }}
               >
-                {pendingCount}
+                {temporarySites.length}
               </span>
             )}
           </button>
-        )}
 
-        {/* המבורגר */}
-        <button
-          className={controlsStyles.btn}
-          onClick={() => setIsSidebarOpen(true)}
-          title="תפריט"
-        >
-          ☰
-        </button>
-        
-        {/* יציאה / שינוי משתמש */}
-        <button
-          className={`${controlsStyles.btn} ${controlsStyles.exitBtn}`}
-          onClick={() => {
-            if (confirm("האם לצאת ולחזור לבחירת משתמש?\n(אורח / מנהל)")) {
-              sessionStorage.clear();
-              window.location.reload();
-            }
-          }}
-          title="יציאה ושינוי משתמש"
-        >
-          <span style={{ fontSize: '20px' }}>⎋</span>
-        </button>
+          {/* Admin Panel Button - Only for admins */}
+          {isAdmin && (
+            <button
+              className={controlsStyles.btn}
+              onClick={() => setIsAdminPanelOpen(true)}
+              title="ניהול מערכת"
+              style={{ position: "relative", background: "linear-gradient(135deg, #1a2a6c 0%, #2a5298 100%)", color: "white" }}
+            >
+              🔧
+              {pendingCount > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: -5,
+                    right: -5,
+                    background: "#f44336",
+                    color: "white",
+                    borderRadius: "50%",
+                    width: 20,
+                    height: 20,
+                    fontSize: 11,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {pendingCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* המבורגר */}
+          <button
+            className={controlsStyles.btn}
+            onClick={() => setIsSidebarOpen(true)}
+            title="תפריט"
+          >
+            ☰
+          </button>
+
+          {/* יציאה / שינוי משתמש */}
+          <button
+            className={`${controlsStyles.btn} ${controlsStyles.exitBtn}`}
+            onClick={() => {
+              if (confirm("האם לצאת ולחזור לבחירת משתמש?\n(אורח / מנהל)")) {
+                sessionStorage.clear();
+                window.location.reload();
+              }
+            }}
+            title="יציאה ושינוי משתמש"
+          >
+            <span style={{ fontSize: '20px' }}>⎋</span>
+          </button>
+        </div>
+
+        <MapView
+          center={OMER_CENTER}
+          mapRef={mapRef}
+          markerRefs={markerRefs}
+          userLocation={userLocation}
+          points={filteredPoints}
+          temporarySites={filteredTemporarySites}
+          onMarkerClick={goToPoint}
+          onLongPress={handleMapLongPress}
+        />
       </div>
-
-      <MapView
-        center={OMER_CENTER}
-        mapRef={mapRef}
-        markerRefs={markerRefs}
-        userLocation={userLocation}
-        points={filteredPoints}
-        temporarySites={filteredTemporarySites}
-        onMarkerClick={goToPoint}
-        onLongPress={handleMapLongPress}
-      />
     </div>
-  </div>
   );
 }
 
@@ -685,32 +710,38 @@ export default function App() {
 
 function AppWithAuth() {
   const { admin, isLoading } = useAuth();
-  
+  const [showLoginForm, setShowLoginForm] = useState(false);
+
   // Check sessionStorage for guest entry on initial render
   const [hasEnteredAsGuest, setHasEnteredAsGuest] = useState(() => {
     return sessionStorage.getItem("omeropsmap_guest") === "true";
   });
-  
+
   const handleGuestEntry = () => {
     sessionStorage.setItem("omeropsmap_guest", "true");
     setHasEnteredAsGuest(true);
   };
-  
+
   if (isLoading) {
     return <LoginPage />;
   }
-  
+
   // Show login if no admin and not entered as guest
   if (!admin && !hasEnteredAsGuest) {
-    return <LoginPageWrapper onGuestEntry={handleGuestEntry} />;
+    return (
+      <LoginPageWrapper
+        onGuestEntry={handleGuestEntry}
+        showLoginForm={showLoginForm}
+        setShowLoginForm={setShowLoginForm}
+      />
+    );
   }
-  
+
   return <AppContent />;
 }
 
-function LoginPageWrapper({ onGuestEntry }) {
-  const { login, enterAsGuest, isLoading, error } = useAuth();
-  const [showLoginForm, setShowLoginForm] = useState(false);
+function LoginPageWrapper({ onGuestEntry, showLoginForm, setShowLoginForm }) {
+  const { login, enterAsGuest, isLoading, error, setError } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [localError, setLocalError] = useState("");
@@ -718,6 +749,7 @@ function LoginPageWrapper({ onGuestEntry }) {
   const handleAdminLogin = async (e) => {
     e.preventDefault();
     setLocalError("");
+    setError(null); // Clear previous global errors
 
     if (!username.trim()) {
       setLocalError("נא להזין שם משתמש");
@@ -731,6 +763,7 @@ function LoginPageWrapper({ onGuestEntry }) {
     const success = await login(username.trim(), password);
     if (!success) {
       setLocalError(error || "שגיאה בהתחברות");
+      // Note: We do NOT reset showLoginForm here, so the user stays on the form!
     }
   };
 
@@ -739,8 +772,14 @@ function LoginPageWrapper({ onGuestEntry }) {
     onGuestEntry();
   };
 
+  // Wrapper to clear both local and global errors
+  const clearErrors = (val) => {
+    setLocalError(val);
+    if (!val) setError(null);
+  };
+
   return (
-    <LoginPage 
+    <LoginPage
       showLoginForm={showLoginForm}
       setShowLoginForm={setShowLoginForm}
       username={username}
@@ -748,6 +787,7 @@ function LoginPageWrapper({ onGuestEntry }) {
       password={password}
       setPassword={setPassword}
       localError={localError}
+      setLocalError={clearErrors}
       error={error}
       isLoading={isLoading}
       handleAdminLogin={handleAdminLogin}

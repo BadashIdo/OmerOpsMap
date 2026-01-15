@@ -28,6 +28,11 @@ SECRET_KEY=your-super-secret-key-change-this-in-production-12345
 #
 ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
 
+# ============================================
+# AI Agent Configuration
+# ============================================
+OPENAI_API_KEY=sk-your-openai-key-here
+TAVILY_API_KEY=tvly-your-tavily-key-here
 # Initial Admin
 # -------------
 # Admin ייווצר אוטומטית בהפעלה הראשונה

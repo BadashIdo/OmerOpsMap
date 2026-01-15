@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { sendChatMessage } from '../api/chatService';
 import styles from '../styles/ChatBot.module.css';
 
 /**
@@ -43,46 +44,68 @@ const ChatBot = ({ isOpen, setIsOpen }) => {
   }, [isOpen]);
 
   /**
+   * Build context window from message history
+   * format:
+   * [User]: ...
+   * [AI]: ...
+   */
+  const buildContextWindow = (currentMessages) => {
+    return currentMessages
+      .map(msg => {
+        const role = msg.sender === 'user' ? '[User]' : '[AI]';
+        return `${role}: ${msg.text}`;
+      })
+      .join('\n');
+  };
+
+  /**
+   * Get user location from sessionStorage (only if tracking is enabled)
+   */
+  const getUserLocation = () => {
+    const isTracking = sessionStorage.getItem('location_tracking') === 'true';
+    if (!isTracking) return null;
+    return sessionStorage.getItem('user_location') || null;
+  };
+
+  /**
    * Send message to AI Agent
-   * TODO: Replace with actual API call to http://localhost:8000/chat or WebSocket
    */
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
+    const userText = inputText.trim();
     const userMessage = {
       id: Date.now(),
-      text: inputText.trim(),
+      text: userText,
       sender: 'user',
       timestamp: new Date(),
     };
+
+    // Build context BEFORE adding the new message (as requested)
+    const contextWindow = buildContextWindow(messages);
 
     setMessages((prev) => [...prev, userMessage]);
     setInputText('');
     setIsLoading(true);
 
     try {
-      // TODO: Replace this mock response with actual AI Agent API call
-      // Example:
-      // const response = await fetch('http://localhost:8000/chat', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ message: userMessage.text, session_id: 'user_session' }),
-      // });
-      // const data = await response.json();
-      // const botResponse = data.response;
+      // Get location from sessionStorage
+      const location = getUserLocation();
 
-      // Mock response for now (remove when integrating)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      const botResponse = 'תודה על ההודעה! השירות יחובר בקרוב. 🤖';
+      // Call API
+      const result = await sendChatMessage(userText, contextWindow, location);
 
-      const botMessage = {
-        id: Date.now() + 1,
-        text: botResponse,
-        sender: 'bot',
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, botMessage]);
+      if (result.success) {
+        const botMessage = {
+          id: Date.now() + 1,
+          text: result.response,
+          sender: 'bot',
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, botMessage]);
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
       console.error('Error sending message to AI Agent:', error);
       const errorMessage = {
@@ -153,9 +176,8 @@ const ChatBot = ({ isOpen, setIsOpen }) => {
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`${styles.message} ${
-                  msg.sender === 'user' ? styles.userMessage : styles.botMessage
-                }`}
+                className={`${styles.message} ${msg.sender === 'user' ? styles.userMessage : styles.botMessage
+                  }`}
               >
                 <div className={styles.messageContent}>
                   <p>{msg.text}</p>

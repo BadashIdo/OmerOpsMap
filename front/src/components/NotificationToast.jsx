@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import styles from "../styles/NotificationToast.module.css";
 
 /**
@@ -7,16 +7,23 @@ import styles from "../styles/NotificationToast.module.css";
 export default function NotificationToast({ message, type = "info", duration = 5000, onClose }) {
   const [visible, setVisible] = useState(true);
 
+  // Use a ref for onClose to avoid resetting the timer on every render if onClose changes
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     if (duration > 0) {
       const timer = setTimeout(() => {
         setVisible(false);
-        setTimeout(() => onClose?.(), 300); // Wait for animation
+        setTimeout(() => onCloseRef.current?.(), 300); // Wait for animation
       }, duration);
 
       return () => clearTimeout(timer);
     }
-  }, [duration, onClose]);
+  }, [duration]); // Removed onClose form dependency to prevent timer resets
 
   if (!visible) return null;
 
