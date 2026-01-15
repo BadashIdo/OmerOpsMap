@@ -7,14 +7,14 @@ export default function DataImportTab({ authHeader }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  
+
   // Preview state
   const [previewData, setPreviewData] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
-  
+
   // Import mode
   const [importMode, setImportMode] = useState("merge"); // 'merge' or 'replace'
-  
+
   // API URL from environment
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
 
@@ -32,7 +32,7 @@ export default function DataImportTab({ authHeader }) {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFile(e.dataTransfer.files[0]);
     }
@@ -50,7 +50,7 @@ export default function DataImportTab({ authHeader }) {
       setError("נא להעלות קובץ Excel (.xlsx או .xls)");
       return;
     }
-    
+
     setFile(selectedFile);
     setError("");
     setSuccessMessage("");
@@ -66,7 +66,7 @@ export default function DataImportTab({ authHeader }) {
 
     setIsLoading(true);
     setError("");
-    
+
     const formData = new FormData();
     formData.append("file", file);
 
@@ -133,7 +133,7 @@ export default function DataImportTab({ authHeader }) {
       }
 
       const data = await response.json();
-      
+
       // Build success message
       let message = `✅ יבוא הושלם בהצלחה!\n\n`;
       message += `📊 סטטוס:\n`;
@@ -145,17 +145,17 @@ export default function DataImportTab({ authHeader }) {
         message += `• אתרים שדולגו (כפולים): ${data.sites_skipped}\n`;
       }
       message += `• סה"כ אתרים במערכת: ${data.total_in_db}`;
-      
+
       setSuccessMessage(message);
       setShowPreview(false);
       setPreviewData(null);
       setFile(null);
-      
+
       // Refresh page after 2 seconds
       setTimeout(() => {
         window.location.reload();
       }, 2000);
-      
+
     } catch (err) {
       setError(err.message || "שגיאה ביבוא הנתונים");
       console.error(err);
@@ -163,6 +163,7 @@ export default function DataImportTab({ authHeader }) {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div className={styles.tabContent}>
@@ -278,7 +279,7 @@ export default function DataImportTab({ authHeader }) {
       {showPreview && previewData && (
         <div style={{ padding: "20px", backgroundColor: "#f5f5f5", borderRadius: "8px", marginTop: "20px" }}>
           <h3 style={{ marginBottom: "15px" }}>📊 תצוגה מקדימה</h3>
-          
+
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px", marginBottom: "20px" }}>
             <div style={{ padding: "15px", backgroundColor: "white", borderRadius: "5px" }}>
               <div style={{ fontSize: "24px", fontWeight: "bold", color: "#1976d2" }}>
@@ -286,21 +287,21 @@ export default function DataImportTab({ authHeader }) {
               </div>
               <div style={{ fontSize: "14px", color: "#666" }}>אתרים תקינים בקובץ</div>
             </div>
-            
+
             <div style={{ padding: "15px", backgroundColor: "white", borderRadius: "5px" }}>
               <div style={{ fontSize: "24px", fontWeight: "bold", color: "#f57c00" }}>
                 {previewData.errors.length}
               </div>
               <div style={{ fontSize: "14px", color: "#666" }}>שורות עם שגיאות</div>
             </div>
-            
+
             <div style={{ padding: "15px", backgroundColor: "white", borderRadius: "5px" }}>
               <div style={{ fontSize: "24px", fontWeight: "bold", color: "#388e3c" }}>
                 {previewData.new_sites.length}
               </div>
               <div style={{ fontSize: "14px", color: "#666" }}>אתרים חדשים</div>
             </div>
-            
+
             <div style={{ padding: "15px", backgroundColor: "white", borderRadius: "5px" }}>
               <div style={{ fontSize: "24px", fontWeight: "bold", color: "#d32f2f" }}>
                 {previewData.duplicate_sites.length}

@@ -5,6 +5,7 @@ import RequestsTab from "./admin/RequestsTab";
 import PermanentSitesTab from "./admin/PermanentSitesTab";
 import TemporarySitesTab from "./admin/TemporarySitesTab";
 import DataImportTab from "./admin/DataImportTab";
+import DataExportTab from "./admin/DataExportTab";
 import styles from "../styles/AdminPanel.module.css";
 
 const TABS = [
@@ -12,6 +13,7 @@ const TABS = [
   { id: "permanent", label: "אתרים קבועים", icon: "📍" },
   { id: "temporary", label: "אירועים זמניים", icon: "⚡" },
   { id: "import", label: "יבוא נתונים", icon: "📤" },
+  { id: "export", label: "ייצוא נתונים", icon: "📥" },
 ];
 
 export default function AdminPanel({ isOpen, onClose, onDataChange }) {
@@ -106,6 +108,11 @@ export default function AdminPanel({ isOpen, onClose, onDataChange }) {
           )}
           {activeTab === "import" && (
             <DataImportTab
+              authHeader={getAuthHeader()}
+            />
+          )}
+          {activeTab === "export" && (
+            <DataExportTab
               authHeader={getAuthHeader()}
             />
           )}
