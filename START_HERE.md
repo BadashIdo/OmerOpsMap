@@ -386,7 +386,7 @@ docker exec omeropsmap_postgres psql -U omeropsmap -d omeropsmap -c "SELECT user
 # מחיקת הכל והתחלה מחדש
 docker-compose down -v
 docker-compose up -d --build
-docker cp front/public/sites.xlsx omeropsmap_data_server:/app/sites.xlsx
+docker cp front/public/Omer_GIS_Reorganized_Final.xlsx omeropsmap_data_server:/app/Omer_GIS_Reorganized_Final.xlsx
 docker exec omeropsmap_data_server python scripts/import_excel_to_db.py
 ```
 
