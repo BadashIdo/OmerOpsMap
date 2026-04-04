@@ -326,7 +326,7 @@ docker exec omeropsmap_data_server python scripts/import_excel_to_db.py
 
 ### 4. שגיאת CORS
 
-וודא שאתה גולש ל-`http://localhost:5173` ולא `http://127.0.0.1:5173`.
+וודא שאתה גולש ל-`http://localhost:5173` ולא `http://your_ip:5173`.
 
 ### 5. הנתונים לא נשמרים אחרי restart
 
