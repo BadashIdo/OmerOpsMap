@@ -347,7 +347,14 @@ export async function updatePermanentSiteAuth(siteId, siteData, authHeader) {
   });
   
   if (!response.ok) {
-    throw new Error('שגיאה בעדכון האתר');
+    let detail = "שגיאה בעדכון האתר";
+    try {
+      const error = await response.json();
+      detail = error?.detail || detail;
+    } catch {
+      // ignore json parse errors and keep fallback text
+    }
+    throw new Error(detail);
   }
   return response.json();
 }

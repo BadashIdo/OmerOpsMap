@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { fetchPermanentSites, deletePermanentSiteAuth } from "../../api/dataService";
 import SiteEditModal from "./SiteEditModal";
 import styles from "../../styles/AdminTab.module.css";
@@ -11,6 +11,20 @@ export default function PermanentSitesTab({ authHeader, onDataChange }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSite, setSelectedSite] = useState(null);
   const [isAddMode, setIsAddMode] = useState(false);
+
+  const categoriesStructure = useMemo(() => {
+    const struct = {};
+    sites.forEach((site) => {
+      const mainCategory = site.category || "ללא קטגוריה";
+      const subCategory = site.sub_category;
+      if (!struct[mainCategory]) struct[mainCategory] = new Set();
+      if (subCategory) struct[mainCategory].add(subCategory);
+    });
+
+    return Object.fromEntries(
+      Object.entries(struct).map(([k, v]) => [k, Array.from(v)])
+    );
+  }, [sites]);
 
   useEffect(() => {
     loadSites();
@@ -161,6 +175,7 @@ export default function PermanentSitesTab({ authHeader, onDataChange }) {
           site={selectedSite}
           siteType="permanent"
           authHeader={authHeader}
+          categoriesStructure={categoriesStructure}
           onClose={() => {
             setSelectedSite(null);
             setIsAddMode(false);

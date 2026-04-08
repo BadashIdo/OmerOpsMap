@@ -15,7 +15,6 @@ from app.schemas.site_request import (
 from app.models.site_request import RequestStatus
 from app.auth.jwt import get_current_admin
 from app.models.admin import Admin
-from app.api.websocket import notify_data_changed
 
 router = APIRouter(prefix="/api/requests", tags=["requests"])
 
@@ -24,30 +23,16 @@ router = APIRouter(prefix="/api/requests", tags=["requests"])
 
 @router.post("", response_model=SiteRequestResponse, status_code=status.HTTP_201_CREATED)
 async def submit_request(
-    request_data: SiteRequestCreate,
-    db: AsyncSession = Depends(get_db)
+    _: SiteRequestCreate,
+    __: AsyncSession = Depends(get_db)
 ):
     """
-    Submit a new site request (public - anyone can submit)
+    Public request submission is disabled.
     """
-    # Validate that at least phone or email is provided
-    if not request_data.submitter_phone and not request_data.submitter_email:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="נדרש למלא טלפון או אימייל"
-        )
-    
-    repo = SiteRequestsRepository(db)
-    request = await repo.create(request_data)
-    
-    # Notify admins of new request
-    await notify_data_changed("request", "new", {
-        "id": request.id,
-        "name": request.name,
-        "type": request.request_type.value
-    })
-    
-    return request
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="אפשרות הגשת בקשות כבויה כרגע"
+    )
 
 
 @router.get("/status/{request_id}", response_model=SiteRequestPublicResponse)

@@ -6,7 +6,7 @@ function has(v) {
   return v !== null && v !== undefined && String(v).trim() !== "";
 }
 
-export default function SitePopup({ site }) {
+export default function SitePopup({ site, isAdmin = false, onEdit }) {
   const [showMore, setShowMore] = useState(false);
 
   const address =
@@ -89,6 +89,17 @@ export default function SitePopup({ site }) {
 
       {/* ניווט */}
       <SiteActions lat={site.lat} lng={site.lng} />
+
+      {isAdmin && typeof onEdit === "function" && (
+        <button
+          type="button"
+          className={styles.smallBtn}
+          onClick={() => onEdit(site)}
+          style={{ marginTop: 8 }}
+        >
+          ✏️ עריכה
+        </button>
+      )}
     </div>
   );
 }

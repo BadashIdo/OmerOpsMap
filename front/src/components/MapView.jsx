@@ -49,14 +49,42 @@ function MapLongPressHandler({ onLongPress }) {
   return null;
 }
 
+function MapClickPicker({ isEnabled, onPickLocationClick }) {
+  useMapEvents({
+    click: (e) => {
+      if (!isEnabled || !onPickLocationClick) return;
+      onPickLocationClick({
+        lat: e.latlng.lat,
+        lng: e.latlng.lng,
+      });
+    },
+  });
 
-export default function MapView({ center, mapRef, markerRefs, userLocation, points, temporarySites = [], onMarkerClick, onLongPress }) {
+  return null;
+}
+
+
+export default function MapView({
+  center,
+  mapRef,
+  markerRefs,
+  userLocation,
+  points,
+  temporarySites = [],
+  onMarkerClick,
+  onLongPress,
+  isAdmin = false,
+  onEditPermanentSite,
+  isPickingLocation = false,
+  onPickLocationClick,
+}) {
   return (
     <MapContainer center={center} zoom={15} zoomControl={false} style={{ height: "100%", width: "100%" }} ref={mapRef}>
       <TileLayer attribution="© OpenStreetMap" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       
       {/* Long press handler for adding new requests */}
       {onLongPress && <MapLongPressHandler onLongPress={onLongPress} />}
+      <MapClickPicker isEnabled={isPickingLocation} onPickLocationClick={onPickLocationClick} />
 
       {userLocation && (
         <Marker position={userLocation} icon={userIcon}>
@@ -88,7 +116,7 @@ export default function MapView({ center, mapRef, markerRefs, userLocation, poin
           }}
         >
         <Popup>
-            <SitePopup site={p} />
+            <SitePopup site={p} isAdmin={isAdmin} onEdit={onEditPermanentSite} />
         </Popup>
         </Marker>
       ))}

@@ -63,7 +63,7 @@ export default function LoginPage({
             >
               <span className={styles.btnIcon}>👤</span>
               <span className={styles.btnText}>כניסה כאורח</span>
-              <span className={styles.btnDesc}>צפייה במפה ודיווח על אירועים</span>
+              <span className={styles.btnDesc}>צפייה במפה</span>
             </button>
 
             <button

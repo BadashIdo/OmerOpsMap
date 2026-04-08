@@ -25,6 +25,11 @@ export default function NotificationToast({ message, type = "info", duration = 5
     }
   }, [duration]); // Removed onClose form dependency to prevent timer resets
 
+  const handleClose = () => {
+    setVisible(false);
+    setTimeout(() => onCloseRef.current?.(), 300); // Keep animation timing consistent
+  };
+
   if (!visible) return null;
 
   const icons = {
@@ -39,7 +44,7 @@ export default function NotificationToast({ message, type = "info", duration = 5
     <div className={`${styles.toast} ${styles[type]} ${visible ? styles.show : ""}`}>
       <div className={styles.icon}>{icons[type] || icons.info}</div>
       <div className={styles.message}>{message}</div>
-      <button className={styles.close} onClick={() => setVisible(false)}>
+      <button className={styles.close} onClick={handleClose}>
         ×
       </button>
     </div>

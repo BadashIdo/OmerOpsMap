@@ -15,15 +15,15 @@ import TemporaryEventsPanel from "../components/TemporaryEventsPanel";
 import NotificationToast from "../components/NotificationToast";
 import LoginPage from "../components/LoginPage";
 import AdminPanel from "../components/AdminPanel";
-import RequestForm from "../components/RequestForm";
 import ChatBot from "../components/ChatBot";
+import SiteEditModal from "../components/admin/SiteEditModal";
 
 
 const OMER_CENTER = [31.2632, 34.8419];
 const DISTRICTS = ["רובע א'", "רובע ב'", "רובע ג'", "רובע ד'", "פארק תעשיות"];
 
 function AppContent() {
-  const { isAdmin, isLoading: authLoading } = useAuth();
+  const { isAdmin, isLoading: authLoading, getAuthHeader } = useAuth();
 
   // Data refresh trigger for WebSocket updates
   const [dataRefreshTrigger, setDataRefreshTrigger] = useState(0);
@@ -45,21 +45,36 @@ function AppContent() {
   const [isTempPanelOpen, setIsTempPanelOpen] = useState(false);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
-
-  // Request form state
-  const [requestFormOpen, setRequestFormOpen] = useState(false);
-  const [requestLocation, setRequestLocation] = useState(null);
+  const [siteToEdit, setSiteToEdit] = useState(null);
+  const [isPickingLocation, setIsPickingLocation] = useState(false);
 
   // Notifications
   const [notifications, setNotifications] = useState([]);
+  const recentNotificationsRef = useRef(new Map());
 
   // Pending requests count for admin badge
   const [pendingCount, setPendingCount] = useState(0);
 
   // Add notification helper
   const addNotification = useCallback((message, type = "info") => {
-    const id = Date.now();
+    const dedupeKey = `${type}:${message}`;
+    const now = Date.now();
+    const lastSeenAt = recentNotificationsRef.current.get(dedupeKey) || 0;
+
+    // Prevent repeated identical toasts from WebSocket bursts.
+    if (now - lastSeenAt < 5000) {
+      return;
+    }
+    recentNotificationsRef.current.set(dedupeKey, now);
+
+    const id = `${now}-${Math.random().toString(36).slice(2, 8)}`;
     setNotifications((prev) => [...prev, { id, message, type }]);
+
+    // Safety auto-dismiss at app level (5s), even if toast-level timer fails.
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      recentNotificationsRef.current.delete(dedupeKey);
+    }, 5000);
   }, []);
 
   // WebSocket for real-time updates
@@ -104,12 +119,6 @@ function AppContent() {
 
   const removeNotification = (id) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
-  };
-
-  // Handle long press on map
-  const handleMapLongPress = (location) => {
-    setRequestLocation(location);
-    setRequestFormOpen(true);
   };
 
   /**
@@ -545,19 +554,48 @@ function AppContent() {
           />
         )}
 
-        {/* Request Form */}
-        <RequestForm
-          isOpen={requestFormOpen}
-          onClose={() => {
-            setRequestFormOpen(false);
-            setRequestLocation(null);
-          }}
-          location={requestLocation}
-          categoriesStructure={categoriesStructure}
-          onSuccess={() => {
-            addNotification("הבקשה נשלחה בהצלחה!", "success");
-          }}
-        />
+        {isAdmin && siteToEdit && !isPickingLocation && (
+          <SiteEditModal
+            site={siteToEdit}
+            siteType="permanent"
+            authHeader={getAuthHeader()}
+            categoriesStructure={categoriesStructure}
+            onClose={() => setSiteToEdit(null)}
+            onSave={() => {
+              setSiteToEdit(null);
+              setDataRefreshTrigger((prev) => prev + 1);
+              addNotification("האתר עודכן בהצלחה", "success");
+            }}
+            onPickLocation={(draftFormData) => {
+              // Keep original site id while moving to map-pick mode
+              setSiteToEdit((prev) => ({
+                ...(prev || {}),
+                ...draftFormData,
+              }));
+              setIsPickingLocation(true);
+              addNotification("מצב בחירת מיקום: גרור את המפה ולחץ על נקודה", "info");
+            }}
+          />
+        )}
+
+        {isAdmin && isPickingLocation && (
+          <div
+            style={{
+              position: "fixed",
+              top: 20,
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 11000,
+              background: "white",
+              padding: "10px 14px",
+              borderRadius: 10,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              fontWeight: 600,
+            }}
+          >
+            📍 לחץ על נקודה במפה לבחירת Lat/Lng
+          </div>
+        )}
 
         {/* Notifications */}
         <div style={{ position: "fixed", top: 80, right: 20, zIndex: 10000 }}>
@@ -693,7 +731,37 @@ function AppContent() {
           points={filteredPoints}
           temporarySites={filteredTemporarySites}
           onMarkerClick={goToPoint}
-          onLongPress={handleMapLongPress}
+          isAdmin={isAdmin}
+          onEditPermanentSite={(site) =>
+            setSiteToEdit({
+              id: site.id,
+              name: site.name || "",
+              category: site.category || "",
+              sub_category: site.subCategory || "",
+              type: site.type || "",
+              district: site.district || "",
+              street: site.street || "",
+              house_number: site.houseNumber || "",
+              contact_name: site.contactName || "",
+              phone: site.phone || "",
+              description: site.description || "",
+              lat: site.lat,
+              lng: site.lng,
+            })
+          }
+          isPickingLocation={isPickingLocation}
+          onPickLocationClick={(location) => {
+            setSiteToEdit((prev) => ({
+              ...(prev || {}),
+              lat: location.lat,
+              lng: location.lng,
+            }));
+            setIsPickingLocation(false);
+            addNotification(
+              `מיקום עודכן: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`,
+              "success"
+            );
+          }}
         />
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   createPermanentSiteAuth,
   updatePermanentSiteAuth,
@@ -6,19 +6,6 @@ import {
   updateTemporarySiteAuth,
 } from "../../api/dataService";
 import styles from "../../styles/SiteEditModal.module.css";
-
-const CATEGORIES = [
-  "חינוך",
-  "בריאות",
-  "ספורט",
-  "תרבות",
-  "מסחר",
-  "דת",
-  "שירותים עירוניים",
-  "תחבורה",
-  "פנאי",
-  "אחר",
-];
 
 const PRIORITIES = [
   { value: "low", label: "נמוכה" },
@@ -33,7 +20,15 @@ const STATUSES = [
   { value: "cancelled", label: "בוטל" },
 ];
 
-export default function SiteEditModal({ site, siteType, authHeader, onClose, onSave }) {
+export default function SiteEditModal({
+  site,
+  siteType,
+  authHeader,
+  onClose,
+  onSave,
+  onPickLocation,
+  categoriesStructure = {},
+}) {
   const isNew = !site;
   
   const getInitialFormData = () => {
@@ -42,6 +37,10 @@ export default function SiteEditModal({ site, siteType, authHeader, onClose, onS
         name: site?.name || "",
         category: site?.category || "",
         sub_category: site?.sub_category || "",
+        type: site?.type || "",
+        district: site?.district || "",
+        street: site?.street || "",
+        house_number: site?.house_number || "",
         description: site?.description || "",
         lat: site?.lat || 31.25,
         lng: site?.lng || 34.79,
@@ -69,8 +68,53 @@ export default function SiteEditModal({ site, siteType, authHeader, onClose, onS
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const categoryOptions = useMemo(() => {
+    if (siteType !== "permanent") return [];
+    return Object.keys(categoriesStructure || {}).filter(
+      (cat) => cat && cat !== "רובעים" && cat !== "אירועים זמניים"
+    );
+  }, [categoriesStructure, siteType]);
+
+  const allSubCategoryEntries = useMemo(() => {
+    if (siteType !== "permanent") return [];
+    return categoryOptions.flatMap((category) =>
+      (categoriesStructure?.[category] || [])
+        .filter(Boolean)
+        .map((sub) => ({ sub, category }))
+    );
+  }, [categoriesStructure, categoryOptions, siteType]);
+
+  const subCategoryOptions = useMemo(() => {
+    if (siteType !== "permanent") return [];
+    if (formData.category) {
+      return (categoriesStructure?.[formData.category] || []).filter(Boolean);
+    }
+    return [...new Set(allSubCategoryEntries.map((entry) => entry.sub))];
+  }, [categoriesStructure, formData.category, allSubCategoryEntries, siteType]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if (siteType === "permanent" && name === "category") {
+      const allowedSubCategories = (categoriesStructure?.[value] || []).filter(Boolean);
+      setFormData((prev) => ({
+        ...prev,
+        category: value,
+        sub_category: allowedSubCategories.includes(prev.sub_category) ? prev.sub_category : "",
+      }));
+      return;
+    }
+
+    if (siteType === "permanent" && name === "sub_category") {
+      const entry = allSubCategoryEntries.find((item) => item.sub === value);
+      setFormData((prev) => ({
+        ...prev,
+        sub_category: value,
+        category: entry?.category || prev.category,
+      }));
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: name === "lat" || name === "lng" ? parseFloat(value) || 0 : value,
@@ -85,6 +129,25 @@ export default function SiteEditModal({ site, siteType, authHeader, onClose, onS
     if (!formData.name.trim()) {
       setError("נא להזין שם");
       return;
+    }
+
+    if (siteType === "permanent") {
+      const invalidCategory =
+        !formData.category ||
+        formData.category === "בחר קטגוריה";
+      const invalidSubCategory =
+        !formData.sub_category ||
+        formData.sub_category === "בחר תת-קטגוריה";
+
+      if (invalidCategory) {
+        setError("קטגוריה היא שדה חובה");
+        return;
+      }
+
+      if (invalidSubCategory) {
+        setError("תת-קטגוריה היא שדה חובה");
+        return;
+      }
     }
 
     if (siteType === "temporary" && !formData.end_date) {
@@ -178,7 +241,7 @@ export default function SiteEditModal({ site, siteType, authHeader, onClose, onS
               <label>קטגוריה</label>
               <select name="category" value={formData.category} onChange={handleChange}>
                 <option value="">בחר קטגוריה</option>
-                {CATEGORIES.map((cat) => (
+                {categoryOptions.map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
@@ -187,16 +250,69 @@ export default function SiteEditModal({ site, siteType, authHeader, onClose, onS
             {siteType === "permanent" && (
               <div className={styles.field}>
                 <label>תת-קטגוריה</label>
-                <input
-                  type="text"
+                <select
                   name="sub_category"
                   value={formData.sub_category}
                   onChange={handleChange}
-                  placeholder="תת-קטגוריה"
-                />
+                >
+                  <option value="">בחר תת-קטגוריה</option>
+                  {subCategoryOptions.map((sub) => (
+                    <option key={sub} value={sub}>{sub}</option>
+                  ))}
+                </select>
               </div>
             )}
           </div>
+
+          {siteType === "permanent" && (
+            <>
+              <div className={styles.row}>
+                <div className={styles.field}>
+                  <label>סוג אתר</label>
+                  <input
+                    type="text"
+                    name="type"
+                    value={formData.type}
+                    onChange={handleChange}
+                    placeholder="סוג"
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label>רובע</label>
+                  <input
+                    type="text"
+                    name="district"
+                    value={formData.district}
+                    onChange={handleChange}
+                    placeholder="רובע"
+                  />
+                </div>
+              </div>
+
+              <div className={styles.row}>
+                <div className={styles.field}>
+                  <label>רחוב</label>
+                  <input
+                    type="text"
+                    name="street"
+                    value={formData.street}
+                    onChange={handleChange}
+                    placeholder="רחוב"
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label>מספר בית</label>
+                  <input
+                    type="text"
+                    name="house_number"
+                    value={formData.house_number}
+                    onChange={handleChange}
+                    placeholder="מספר"
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
           {siteType === "temporary" && (
             <>
@@ -266,6 +382,19 @@ export default function SiteEditModal({ site, siteType, authHeader, onClose, onS
               />
             </div>
           </div>
+
+          {siteType === "permanent" && typeof onPickLocation === "function" && (
+            <div className={styles.field}>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={() => onPickLocation(formData)}
+                style={{ width: "100%" }}
+              >
+                📍 בחירת מיקום מהמפה
+              </button>
+            </div>
+          )}
 
           <div className={styles.divider}>פרטי קשר</div>
 
