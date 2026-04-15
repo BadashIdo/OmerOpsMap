@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { submitRequest } from "../api/dataService";
+import { submitRequest } from "../api/requestsApi";
 import styles from "../styles/RequestForm.module.css";
 import SearchableDropdown from "./SearchableDropdown";
 

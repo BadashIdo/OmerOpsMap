@@ -4,7 +4,7 @@ import {
   updatePermanentSiteAuth,
   createTemporarySiteAuth,
   updateTemporarySiteAuth,
-} from "../../api/dataService";
+} from "../../api/sitesApi";
 import styles from "../../styles/SiteEditModal.module.css";
 
 const CATEGORIES = [

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { fetchTemporarySites, deleteTemporarySiteAuth } from "../../api/dataService";
+import { fetchTemporarySites, deleteTemporarySiteAuth } from "../../api/sitesApi";
 import SiteEditModal from "./SiteEditModal";
 import styles from "../../styles/AdminTab.module.css";
 

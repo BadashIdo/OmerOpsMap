@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchTemporarySites } from "../api/dataService";
+import { fetchTemporarySites } from "../api/sitesApi";
 
 export function useTemporarySites(shouldRefresh) {
   const [temporarySites, setTemporarySites] = useState([]);

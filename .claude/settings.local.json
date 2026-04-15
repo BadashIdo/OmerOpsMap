@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls /c/Users/idoba/Desktop/OmerOpsMap/*.md)",
+      "Bash(ls /c/Users/idoba/Desktop/OmerOpsMap/front/.env*)",
+      "Bash(docker exec:*)",
+      "Bash(docker restart:*)"
+    ]
+  }
+}

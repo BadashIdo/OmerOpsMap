@@ -1,8 +1,23 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "../styles/SideBar.module.css";
 import { getCategoryIcon } from "../lib/categoryIcons";
 import { getCategoryConfig } from "../lib/leafletIcons";
 
+/**
+ * SideBar — slide-in panel for filtering map sites by category and district.
+ *
+ * Renders a collapsible list of main categories, each containing its
+ * sub-categories as toggleable checkboxes. The active filter state lives
+ * in the parent (MapPage) via useFilters — this component only displays
+ * and controls it.
+ *
+ * Props:
+ *  isOpen             — whether the sidebar is currently visible
+ *  onClose            — called when the user closes the sidebar
+ *  categoriesStructure — { "Main Category" → ["Sub A", …] } from useFilters
+ *  activeFilters      — array of currently enabled filter values
+ *  toggleFilter       — (item: string) => void
+ */
 export default function SideBar({
   isOpen,
   onClose,
@@ -10,13 +25,13 @@ export default function SideBar({
   activeFilters,
   toggleFilter,
 }) {
-  // פתוח/סגור לכל קטגוריה (UI בלבד)
+  // Per-category accordion open/closed state (UI only, not filter state)
   const [openCats, setOpenCats] = useState({});
 
-  // ברירת מחדל: לפתוח את הקטגוריה הראשונה (אפשר לשנות)
-  useMemo(() => {
+  // Open the first category by default when data first loads
+  useEffect(() => {
     const keys = Object.keys(categoriesStructure || {});
-    if (keys.length && Object.keys(openCats).length === 0) {
+    if (keys.length > 0 && Object.keys(openCats).length === 0) {
       setOpenCats({ [keys[0]]: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

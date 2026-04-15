@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { getPendingRequestsCount } from "../api/dataService";
+import { getPendingRequestsCount } from "../api/requestsApi";
 import RequestsTab from "./admin/RequestsTab";
 import PermanentSitesTab from "./admin/PermanentSitesTab";
 import TemporarySitesTab from "./admin/TemporarySitesTab";

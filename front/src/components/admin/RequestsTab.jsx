@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getPendingRequests } from "../../api/dataService";
+import { getPendingRequests } from "../../api/requestsApi";
 import RequestReviewModal from "./RequestReviewModal";
 import styles from "../../styles/AdminTab.module.css";
 

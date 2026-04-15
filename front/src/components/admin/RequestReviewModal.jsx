@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { updateRequest, approveRequest, rejectRequest } from "../../api/dataService";
+import { updateRequest, approveRequest, rejectRequest } from "../../api/requestsApi";
 import styles from "../../styles/RequestReviewModal.module.css";
 
 const REQUEST_TYPE_INFO = {

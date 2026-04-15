@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { getWebSocketUrl } from "../api/dataService";
+import { getWebSocketUrl } from "../api/sitesApi";
 
 /**
  * WebSocket hook for real-time updates
