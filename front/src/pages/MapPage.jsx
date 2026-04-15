@@ -133,17 +133,16 @@ export default function MapPage() {
     const map = mapRef.current;
     if (!map) return;
 
-    // Never zoom out — if already zoomed in past 17, keep current zoom
-    const targetZoom = Math.max(map.getZoom(), 17);
+    // Always zoom to 18 so the marker is never inside a cluster when we open the popup
+    const targetZoom = 18;
 
-    // Offset the target so the popup appears above center rather than behind the controls
+    // Same offset as handleMarkerClick — pin at screen center, popup opens above it
     const projected = map.project([p.lat, p.lng], targetZoom);
-    const targetLatLng = map.unproject([projected.x, projected.y - 200], targetZoom);
-    map.flyTo(targetLatLng, targetZoom, { animate: true, duration: 0.8, noMoveStart: true });
+    const centered = map.unproject([projected.x, projected.y - 150], targetZoom);
+    map.flyTo(centered, targetZoom, { animate: true, duration: 0.8, noMoveStart: true });
 
-    // Open popup after the fly animation completes (~1.2 s)
+    // Open popup after the fly animation completes
     setTimeout(() => {
-      // Resolve marker key — search results carry a _type hint; fall back to probing both
       let markerKey = `permanent-${p.id}`;
       if (p._type === "temporary") {
         markerKey = `temporary-${p.id}`;
@@ -151,7 +150,7 @@ export default function MapPage() {
         markerKey = `temporary-${p.id}`;
       }
       markerRefs.current[markerKey]?.openPopup();
-    }, 1200);
+    }, 900);
   }, [mapRef, markerRefs, setQuery, setShowResults]);
 
   /** Long-press on the map opens the RequestForm at the pressed location. */

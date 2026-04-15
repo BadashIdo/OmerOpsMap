@@ -109,7 +109,7 @@ export default function MapView({ mapRef, markerRefs, userLocation, points, temp
       )}
 
       {/* Permanent Sites — clustered, memoized so markers only re-render when data changes */}
-      <MarkerClusterGroup chunkedLoading disableClusteringAtZoom={19} maxClusterRadius={50} iconCreateFunction={createClusterIcon}>
+      <MarkerClusterGroup chunkedLoading disableClusteringAtZoom={18} maxClusterRadius={50} iconCreateFunction={createClusterIcon}>
         {useMemo(() => points.map((p) => (
           <Marker
             key={`permanent-${p.id}`}
@@ -131,7 +131,7 @@ export default function MapView({ mapRef, markerRefs, userLocation, points, temp
       </MarkerClusterGroup>
 
       {/* Temporary Sites — clustered separately */}
-      <MarkerClusterGroup chunkedLoading disableClusteringAtZoom={19} maxClusterRadius={50} iconCreateFunction={createClusterIcon}>
+      <MarkerClusterGroup chunkedLoading disableClusteringAtZoom={18} maxClusterRadius={50} iconCreateFunction={createClusterIcon}>
         {useMemo(() => temporarySites.map((t) => (
           <Marker
             key={`temporary-${t.id}`}
