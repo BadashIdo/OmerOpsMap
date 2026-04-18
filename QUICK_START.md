@@ -133,6 +133,20 @@ http://YOUR_IP:5173
 
 ---
 
+## Step 8: Database Management (Adminer)
+
+A built-in database management UI (Adminer) is available to view and edit tables directly.
+
+1. Open: `http://localhost:8080` (or `http://YOUR_IP:8080` from another device)
+2. Log in with the following details:
+   - **System:** PostgreSQL
+   - **Server:** postgres
+   - **Username:** omeropsmap
+   - **Password:** omeropsmap_dev_pass
+   - **Database:** omeropsmap
+
+---
+
 ## Useful Commands
 
 ### View Logs
