@@ -24,7 +24,8 @@
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
 import { useRef, useCallback, useMemo } from "react";
 import MarkerClusterGroup from "react-leaflet-cluster";
-import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import L from "leaflet";
 import { userIcon, getCategoryIcon } from "../lib/leafletIcons";
 import { getTemporaryIcon } from "../lib/temporaryIcons";

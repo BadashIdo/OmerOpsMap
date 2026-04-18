@@ -282,7 +282,7 @@ export default function MapPage() {
           points={filteredPoints}
           temporarySites={filteredTemporarySites}
           onMarkerClick={handleMarkerClick}
-          onLongPress={handleMapLongPress}
+          onLongPress={isAdmin ? handleMapLongPress : undefined}
         />
       </div>
     </div>
