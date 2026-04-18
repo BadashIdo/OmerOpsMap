@@ -1,7 +1,11 @@
 import { useMemo, useState } from "react";
 import styles from "../styles/SideBar.module.css";
-import { getCategoryIcon } from "../lib/categoryIcons";
 import { getCategoryConfig } from "../lib/leafletIcons";
+import {
+  emojiPickerGroups,
+  loadSidebarEmojiIcons,
+  saveSidebarEmojiIcons,
+} from "../lib/sidebarEmojiIcons";
 
 export default function SideBar({
   isOpen,
@@ -9,9 +13,12 @@ export default function SideBar({
   categoriesStructure,
   activeFilters,
   toggleFilter,
+  isAdmin = false,
 }) {
   // פתוח/סגור לכל קטגוריה (UI בלבד)
   const [openCats, setOpenCats] = useState({});
+  const [isIconEditMode, setIsIconEditMode] = useState(false);
+  const [categoryIcons, setCategoryIcons] = useState(() => loadSidebarEmojiIcons());
 
   // ברירת מחדל: לפתוח את הקטגוריה הראשונה (אפשר לשנות)
   useMemo(() => {
@@ -24,6 +31,12 @@ export default function SideBar({
 
   const toggleCat = (mainCategory) => {
     setOpenCats((prev) => ({ ...prev, [mainCategory]: !prev[mainCategory] }));
+  };
+
+  const updateCategoryIcon = (categoryName, emoji) => {
+    const next = { ...categoryIcons, [categoryName]: emoji };
+    setCategoryIcons(next);
+    saveSidebarEmojiIcons(next);
   };
 
   return (
@@ -72,8 +85,21 @@ export default function SideBar({
 
         {/* Content */}
         <div className={styles.sections}>
+          {isAdmin && (
+            <div className={styles.editIconsCard}>
+              <button
+                type="button"
+                className={styles.editIconsBtn}
+                onClick={() => setIsIconEditMode((prev) => !prev)}
+              >
+                {isIconEditMode ? "✅ סיום עריכת סמלים" : "✏️ עריכת סמלי קטגוריות"}
+              </button>
+            </div>
+          )}
+
           {Object.entries(categoriesStructure).map(([mainCategory, subCategories]) => {
             const isCatOpen = !!openCats[mainCategory];
+            const displayIcon = categoryIcons[mainCategory] || "📁";
 
             return (
               <div key={mainCategory} className={styles.card}>
@@ -86,10 +112,26 @@ export default function SideBar({
                 >
                   <div className={`${styles.chev} ${isCatOpen ? styles.chevOpen : ""}`}>˅</div>
                   <div className={styles.cardTitle}>{mainCategory}</div>
-                  <span className={`material-symbols-outlined ${styles.cardIcon}`}>
-                    {getCategoryIcon(mainCategory)}
-                  </span>
+                  <span className={styles.cardIcon}>{displayIcon}</span>
                 </button>
+
+                {isAdmin && isIconEditMode && (
+                  <div className={styles.emojiEditor}>
+                    <div className={styles.emojiEditorTitle}>בחר אימוג׳י לקטגוריה</div>
+                    <div className={styles.emojiGrid}>
+                      {emojiPickerGroups.flatMap((group) => group.emojis).map((emoji) => (
+                        <button
+                          key={`${mainCategory}-${emoji}`}
+                          type="button"
+                          className={styles.emojiBtn}
+                          onClick={() => updateCategoryIcon(mainCategory, emoji)}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* גוף הקטגוריה נסגר/נפתח */}
                 <div className={`${styles.cardBody} ${isCatOpen ? styles.bodyOpen : styles.bodyClosed}`}>

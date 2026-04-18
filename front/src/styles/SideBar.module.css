@@ -350,3 +350,49 @@
   width: 18px;
   height: 18px;
 }
+
+.editIconsCard {
+  margin-bottom: 8px;
+}
+
+.editIconsBtn {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.emojiEditor {
+  margin: 0 12px 10px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 12px;
+}
+
+.emojiEditorTitle {
+  font-size: 12px;
+  opacity: 0.9;
+  margin-bottom: 8px;
+}
+
+.emojiGrid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 6px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.emojiBtn {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 6px;
+  font-size: 16px;
+}

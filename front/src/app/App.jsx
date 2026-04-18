@@ -513,6 +513,7 @@ function AppContent() {
           categoriesStructure={categoriesStructure}
           activeFilters={activeFilters}
           toggleFilter={toggleFilter}
+          isAdmin={isAdmin}
         />
 
         <SearchBar
