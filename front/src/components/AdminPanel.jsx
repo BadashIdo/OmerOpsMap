@@ -16,7 +16,7 @@ const TABS = [
   { id: "export", label: "ייצוא נתונים", icon: "📥" },
 ];
 
-export default function AdminPanel({ isOpen, onClose, onDataChange }) {
+export default function AdminPanel({ isOpen, onClose, onDataChange, categoriesStructure }) {
   const { admin, logout, getAuthHeader } = useAuth();
   const [activeTab, setActiveTab] = useState("requests");
   const [pendingCount, setPendingCount] = useState(0);
@@ -98,6 +98,7 @@ export default function AdminPanel({ isOpen, onClose, onDataChange }) {
             <PermanentSitesTab
               authHeader={getAuthHeader()}
               onDataChange={handleDataChange}
+              categoriesStructure={categoriesStructure}
             />
           )}
           {activeTab === "temporary" && (

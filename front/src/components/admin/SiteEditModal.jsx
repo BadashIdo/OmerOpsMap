@@ -1,24 +1,16 @@
-import { useState } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   createPermanentSiteAuth,
   updatePermanentSiteAuth,
   createTemporarySiteAuth,
   updateTemporarySiteAuth,
 } from "../../api/sitesApi";
+import LocationPickerMap from "./LocationPickerMap";
+import { DISTRICTS } from "../../lib/constants";
 import styles from "../../styles/SiteEditModal.module.css";
 
-const CATEGORIES = [
-  "חינוך",
-  "בריאות",
-  "ספורט",
-  "תרבות",
-  "מסחר",
-  "דת",
-  "שירותים עירוניים",
-  "תחבורה",
-  "פנאי",
-  "אחר",
-];
+// Excluded top-level keys that are not real site categories
+const EXCLUDED_STRUCTURE_KEYS = ["רובעים", "אירועים זמניים"];
 
 const PRIORITIES = [
   { value: "low", label: "נמוכה" },
@@ -33,20 +25,24 @@ const STATUSES = [
   { value: "cancelled", label: "בוטל" },
 ];
 
-export default function SiteEditModal({ site, siteType, authHeader, onClose, onSave }) {
+export default function SiteEditModal({ site, siteType, authHeader, categoriesStructure, onClose, onSave }) {
   const isNew = !site;
-  
+
   const getInitialFormData = () => {
     if (siteType === "permanent") {
       return {
         name: site?.name || "",
         category: site?.category || "",
-        sub_category: site?.sub_category || "",
+        sub_category: site?.subCategory || site?.sub_category || "",
+        type: site?.type || "",
+        district: site?.district || "",
+        street: site?.street || "",
+        house_number: site?.houseNumber || site?.house_number || "",
         description: site?.description || "",
         lat: site?.lat || 31.25,
         lng: site?.lng || 34.79,
         phone: site?.phone || "",
-        contact_name: site?.contact_name || "",
+        contact_name: site?.contactName || site?.contact_name || "",
       };
     } else {
       return {
@@ -60,7 +56,7 @@ export default function SiteEditModal({ site, siteType, authHeader, onClose, onS
         priority: site?.priority || "medium",
         status: site?.status || "active",
         phone: site?.phone || "",
-        contact_name: site?.contact_name || "",
+        contact_name: site?.contactName || site?.contact_name || "",
       };
     }
   };
@@ -68,27 +64,97 @@ export default function SiteEditModal({ site, siteType, authHeader, onClose, onS
   const [formData, setFormData] = useState(getInitialFormData());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [scrollTrigger, setScrollTrigger] = useState(0);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const modalRef = useRef(null);
+
+  // Scroll to top every time a validation error fires (even if same message)
+  useEffect(() => {
+    if (scrollTrigger > 0) {
+      modalRef.current?.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }, [scrollTrigger]);
+
+  // ── Derived category/sub-category structures ─────────────────────────────
+  // Filter out non-site keys (districts, temp events) from the live structure
+  const siteCategories = useMemo(() => {
+    if (!categoriesStructure) return [];
+    return Object.keys(categoriesStructure).filter(
+      (k) => !EXCLUDED_STRUCTURE_KEYS.includes(k)
+    );
+  }, [categoriesStructure]);
+
+  // Sub-categories available for the currently selected category.
+  // If no category is selected yet, show ALL sub-categories so the user
+  // can pick sub first and have the category auto-filled.
+  const availableSubCategories = useMemo(() => {
+    if (!categoriesStructure) return [];
+    if (formData.category) {
+      return categoriesStructure[formData.category] || [];
+    }
+    // No category selected → flatten all sub-categories from all real categories
+    return Object.entries(categoriesStructure)
+      .filter(([cat]) => !EXCLUDED_STRUCTURE_KEYS.includes(cat))
+      .flatMap(([, subs]) => subs);
+  }, [categoriesStructure, formData.category]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === "lat" || name === "lng" ? parseFloat(value) || 0 : value,
-    }));
+
+    setFormData((prev) => {
+      const next = {
+        ...prev,
+        [name]: name === "lat" || name === "lng" ? parseFloat(value) || 0 : value,
+      };
+
+      // When category changes, clear sub_category if it no longer belongs
+      if (name === "category" && categoriesStructure) {
+        const subs = categoriesStructure[value] || [];
+        if (!subs.includes(prev.sub_category)) {
+          next.sub_category = "";
+        }
+      }
+
+      // When sub_category is chosen, auto-fill parent category
+      if (name === "sub_category" && value && categoriesStructure) {
+        const parentCat = Object.entries(categoriesStructure).find(
+          ([cat, subs]) =>
+            !EXCLUDED_STRUCTURE_KEYS.includes(cat) && subs.includes(value)
+        )?.[0];
+        if (parentCat) next.category = parentCat;
+      }
+
+      return next;
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    // Validation
-    if (!formData.name.trim()) {
-      setError("נא להזין שם");
-      return;
+    // Validation — required fields per site type
+    if (siteType === "permanent") {
+      const missing = [];
+      if (!formData.name.trim())         missing.push("שם");
+      if (!formData.category)            missing.push("קטגוריה");
+      if (!formData.sub_category)        missing.push("תת-קטגוריה");
+      if (!formData.district.trim())     missing.push("שכונה/רובע");
+      if (!formData.lat)                 missing.push("קו רוחב (Lat)");
+      if (!formData.lng)                 missing.push("קו אורך (Lng)");
+
+      if (missing.length > 0) {
+        setError(`שדות חובה חסרים: ${missing.join(", ")}`);
+        setScrollTrigger((n) => n + 1);
+        return;
+      }
     }
 
     if (siteType === "temporary" && !formData.end_date) {
       setError("נא להזין תאריך סיום");
+      return;
+    }
+    if (siteType === "temporary" && !formData.name.trim()) {
+      setError("נא להזין שם");
       return;
     }
 
@@ -96,7 +162,7 @@ export default function SiteEditModal({ site, siteType, authHeader, onClose, onS
 
     try {
       const payload = { ...formData };
-      
+
       // Convert dates to ISO format for temporary sites
       if (siteType === "temporary") {
         if (payload.start_date) {
@@ -131,6 +197,19 @@ export default function SiteEditModal({ site, siteType, authHeader, onClose, onS
 
   return (
     <>
+      {/* Location picker — renders fullscreen over everything */}
+      {showLocationPicker && (
+        <LocationPickerMap
+          initialLat={formData.lat}
+          initialLng={formData.lng}
+          onConfirm={({ lat, lng }) => {
+            setFormData((prev) => ({ ...prev, lat, lng }));
+            setShowLocationPicker(false);
+          }}
+          onCancel={() => setShowLocationPicker(false)}
+        />
+      )}
+
       <div className={styles.overlay} onClick={onClose} />
       <div className={styles.modal}>
         <div className={styles.header}>
@@ -140,15 +219,15 @@ export default function SiteEditModal({ site, siteType, authHeader, onClose, onS
                 ? "➕ הוספת אתר חדש"
                 : "➕ הוספת אירוע חדש"
               : siteType === "permanent"
-              ? "✏️ עריכת אתר"
-              : "✏️ עריכת אירוע"}
+                ? "✏️ עריכת אתר"
+                : "✏️ עריכת אירוע"}
           </h2>
           <button className={styles.closeBtn} onClick={onClose}>
             ×
           </button>
         </div>
 
-        <form className={styles.form} onSubmit={handleSubmit}>
+        <form className={styles.form} ref={modalRef} onSubmit={handleSubmit}>
           {error && <div className={styles.error}>{error}</div>}
 
           <div className={styles.field}>
@@ -175,10 +254,10 @@ export default function SiteEditModal({ site, siteType, authHeader, onClose, onS
 
           <div className={styles.row}>
             <div className={styles.field}>
-              <label>קטגוריה</label>
+              <label>קטגוריה *</label>
               <select name="category" value={formData.category} onChange={handleChange}>
                 <option value="">בחר קטגוריה</option>
-                {CATEGORIES.map((cat) => (
+                {(siteCategories.length > 0 ? siteCategories : []).map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
@@ -186,17 +265,70 @@ export default function SiteEditModal({ site, siteType, authHeader, onClose, onS
 
             {siteType === "permanent" && (
               <div className={styles.field}>
-                <label>תת-קטגוריה</label>
-                <input
-                  type="text"
-                  name="sub_category"
-                  value={formData.sub_category}
-                  onChange={handleChange}
-                  placeholder="תת-קטגוריה"
-                />
+                <label>תת-קטגוריה *</label>
+                <select name="sub_category" value={formData.sub_category} onChange={handleChange}>
+                  <option value="">
+                    {formData.category
+                      ? availableSubCategories.length > 0
+                        ? "בחר תת-קטגוריה"
+                        : "אין תת-קטגוריות"
+                      : "בחר קטגוריה "}
+                  </option>
+                  {availableSubCategories.map((sub) => (
+                    <option key={sub} value={sub}>{sub}</option>
+                  ))}
+                </select>
               </div>
             )}
           </div>
+
+          {siteType === "permanent" && (
+            <>
+              <div className={styles.row}>
+                <div className={styles.field}>
+                  <label>סוג</label>
+                  <input
+                    type="text"
+                    name="type"
+                    value={formData.type}
+                    onChange={handleChange}
+                    placeholder="סוג (לדוגמה: בי''ס יסודי)"
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label>שכונה/רובע *</label>
+                  <select name="district" value={formData.district} onChange={handleChange}>
+                    <option value="">בחר שכונה/רובע</option>
+                    {DISTRICTS.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className={styles.row}>
+                <div className={styles.field}>
+                  <label>רחוב</label>
+                  <input
+                    type="text"
+                    name="street"
+                    value={formData.street}
+                    onChange={handleChange}
+                    placeholder="שם רחוב"
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label>מספר בית</label>
+                  <input
+                    type="text"
+                    name="house_number"
+                    value={formData.house_number}
+                    onChange={handleChange}
+                    placeholder="מספר"
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
           {siteType === "temporary" && (
             <>
@@ -244,7 +376,7 @@ export default function SiteEditModal({ site, siteType, authHeader, onClose, onS
 
           <div className={styles.row}>
             <div className={styles.field}>
-              <label>קו רוחב (Lat)</label>
+              <label>קו רוחב (Lat) *</label>
               <input
                 type="number"
                 name="lat"
@@ -255,7 +387,7 @@ export default function SiteEditModal({ site, siteType, authHeader, onClose, onS
               />
             </div>
             <div className={styles.field}>
-              <label>קו אורך (Lng)</label>
+              <label>קו אורך (Lng) *</label>
               <input
                 type="number"
                 name="lng"
@@ -265,6 +397,29 @@ export default function SiteEditModal({ site, siteType, authHeader, onClose, onS
                 dir="ltr"
               />
             </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <button
+              type="button"
+              onClick={() => setShowLocationPicker(true)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "8px 18px",
+                background: "linear-gradient(135deg, #1565c0 0%, #1976d2 100%)",
+                color: "white",
+                border: "none",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontSize: 14,
+                fontWeight: 600,
+                boxShadow: "0 2px 8px rgba(21,101,192,0.3)",
+              }}
+            >
+              <span style={{ fontSize: 18 }}>📍</span>
+              בחר מיקום חדש
+            </button>
           </div>
 
           <div className={styles.divider}>פרטי קשר</div>

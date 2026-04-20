@@ -3,7 +3,7 @@ import { fetchPermanentSites, deletePermanentSiteAuth } from "../../api/sitesApi
 import SiteEditModal from "./SiteEditModal";
 import styles from "../../styles/AdminTab.module.css";
 
-export default function PermanentSitesTab({ authHeader, onDataChange }) {
+export default function PermanentSitesTab({ authHeader, onDataChange, categoriesStructure }) {
   const [sites, setSites] = useState([]);
   const [filteredSites, setFilteredSites] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -161,6 +161,7 @@ export default function PermanentSitesTab({ authHeader, onDataChange }) {
           site={selectedSite}
           siteType="permanent"
           authHeader={authHeader}
+          categoriesStructure={categoriesStructure}
           onClose={() => {
             setSelectedSite(null);
             setIsAddMode(false);

@@ -43,9 +43,10 @@ import AdminPanel from "../components/AdminPanel";
 import RequestForm from "../components/RequestForm";
 import TemporaryEventsPanel from "../components/TemporaryEventsPanel";
 import NotificationToast from "../components/NotificationToast";
+import SiteEditModal from "../components/admin/SiteEditModal";
 
 export default function MapPage() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, getAuthHeader } = useAuth();
 
   // Incrementing this triggers a re-fetch in useSites / useTemporarySites
   const [dataRefreshTrigger, setDataRefreshTrigger] = useState(0);
@@ -68,6 +69,11 @@ export default function MapPage() {
   // ── Request form ───────────────────────────────────────────────────────────
   const [requestFormOpen, setRequestFormOpen] = useState(false);
   const [requestLocation, setRequestLocation] = useState(null);
+
+  // ── Admin site management ──────────────────────────────────────────
+  const [siteEditModalOpen, setSiteEditModalOpen] = useState(false);
+  const [editingSite, setEditingSite] = useState(null);
+  const [editingSiteType, setEditingSiteType] = useState("permanent");
 
   // ── Business logic hooks ───────────────────────────────────────────────────
   const { notifications, addNotification, removeNotification, pendingCount, setPendingCount } =
@@ -153,11 +159,22 @@ export default function MapPage() {
     }, 900);
   }, [mapRef, markerRefs, setQuery, setShowResults]);
 
-  /** Long-press on the map opens the RequestForm at the pressed location. */
-  const handleMapLongPress = useCallback((location) => {
-    setRequestLocation(location);
-    setRequestFormOpen(true);
-  }, []);
+  /** Long-press on the map opens the SiteEditModal at the pressed location. */
+  const handleMapLongPress = useCallback(
+    (location) => {
+      if (isAdmin) {
+        // Admin long press opens modal to CREATE a new permanent site
+        setEditingSite({ lat: location.lat, lng: location.lng });
+        setEditingSiteType("permanent");
+        setSiteEditModalOpen(true);
+      } else {
+        // Regular user long press opens request form
+        setRequestLocation(location);
+        setRequestFormOpen(true);
+      }
+    },
+    [isAdmin]
+  );
 
   /**
    * Called when the user clicks a marker directly on the map.
@@ -165,7 +182,6 @@ export default function MapPage() {
    * (goToPoint is reserved for search results where we need to fly + open popup.)
    */
   const handleMarkerClick = useCallback((p) => {
-    setQuery(p.name);
     setShowResults(false);
     const map = mapRef.current;
     if (!map) return;
@@ -233,6 +249,7 @@ export default function MapPage() {
             isOpen={isAdminPanelOpen}
             onClose={() => setIsAdminPanelOpen(false)}
             onDataChange={refreshData}
+            categoriesStructure={categoriesStructure}
           />
         )}
 
@@ -243,6 +260,22 @@ export default function MapPage() {
           categoriesStructure={categoriesStructure}
           onSuccess={() => addNotification("הבקשה נשלחה בהצלחה!", "success")}
         />
+
+        {siteEditModalOpen && (
+          <SiteEditModal
+            site={editingSite}
+            siteType={editingSiteType}
+            authHeader={getAuthHeader()}
+            categoriesStructure={categoriesStructure}
+            onClose={() => { setSiteEditModalOpen(false); setEditingSite(null); }}
+            onSave={() => {
+              setSiteEditModalOpen(false);
+              setEditingSite(null);
+              refreshData();
+              addNotification(editingSite?.id ? "האתר עודכן בהצלחה!" : "האתר נוסף בהצלחה!", "success");
+            }}
+          />
+        )}
 
         {/* ── Map controls (floating button panel) ── */}
         <MapControls
@@ -282,7 +315,13 @@ export default function MapPage() {
           points={filteredPoints}
           temporarySites={filteredTemporarySites}
           onMarkerClick={handleMarkerClick}
-          onLongPress={isAdmin ? handleMapLongPress : undefined}
+          onLongPress={handleMapLongPress}
+          isAdmin={isAdmin}
+          onEditSite={(site, type) => {
+            setEditingSite(site);
+            setEditingSiteType(type);
+            setSiteEditModalOpen(true);
+          }}
         />
       </div>
     </div>

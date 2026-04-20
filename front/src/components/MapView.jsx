@@ -80,7 +80,7 @@ function MapLongPressHandler({ onLongPress }) {
   return null;
 }
 
-export default function MapView({ mapRef, markerRefs, userLocation, points, temporarySites = [], onMarkerClick, onLongPress }) {
+export default function MapView({ mapRef, markerRefs, userLocation, points, temporarySites = [], onMarkerClick, onLongPress, isAdmin, onEditSite }) {
   // Stable ref callback — not recreated on every render, prevents unnecessary updates while dragging
   const setMarkerRef = useCallback((el, key) => {
     markerRefs.current[key] = el;
@@ -125,7 +125,7 @@ export default function MapView({ mapRef, markerRefs, userLocation, points, temp
             }}
           >
             <Popup autoPan={false}>
-              <SitePopup site={p} />
+              <SitePopup site={p} isAdmin={isAdmin} onEdit={(site) => onEditSite?.(site, "permanent")} />
             </Popup>
           </Marker>
         )), [points, onMarkerClick, setMarkerRef])}
@@ -146,7 +146,7 @@ export default function MapView({ mapRef, markerRefs, userLocation, points, temp
             }}
           >
             <Popup autoPan={false}>
-              <TemporarySitePopup site={t} />
+              <TemporarySitePopup site={t} isAdmin={isAdmin} onEdit={(site) => onEditSite?.(site, "temporary")} />
             </Popup>
           </Marker>
         )), [temporarySites, setMarkerRef])}
