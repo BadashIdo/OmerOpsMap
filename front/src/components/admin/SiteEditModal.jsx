@@ -4,6 +4,8 @@ import {
   updatePermanentSiteAuth,
   createTemporarySiteAuth,
   updateTemporarySiteAuth,
+  deletePermanentSiteAuth,
+  deleteTemporarySiteAuth,
 } from "../../api/sitesApi";
 import LocationPickerMap from "./LocationPickerMap";
 import { DISTRICTS } from "../../lib/constants";
@@ -26,7 +28,7 @@ const STATUSES = [
 ];
 
 export default function SiteEditModal({ site, siteType, authHeader, categoriesStructure, onClose, onSave }) {
-  const isNew = !site;
+  const isNew = !site?.id;
 
   const getInitialFormData = () => {
     if (siteType === "permanent") {
@@ -66,6 +68,7 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
   const [error, setError] = useState("");
   const [scrollTrigger, setScrollTrigger] = useState(0);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const modalRef = useRef(null);
 
   // Scroll to top every time a validation error fires (even if same message)
@@ -195,6 +198,24 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
     }
   };
 
+  const handleDelete = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      if (siteType === "permanent") {
+        await deletePermanentSiteAuth(site.id, authHeader);
+      } else {
+        await deleteTemporarySiteAuth(site.id, authHeader);
+      }
+      onSave?.(true); // pass true to indicate it was a deletion
+    } catch (err) {
+      setError(err.message);
+      setShowDeleteConfirm(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <>
       {/* Location picker — renders fullscreen over everything */}
@@ -208,6 +229,47 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
           }}
           onCancel={() => setShowLocationPicker(false)}
         />
+      )}
+
+      {/* Delete confirmation overlay */}
+      {showDeleteConfirm && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 30000,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(0,0,0,0.6)"
+        }}>
+          <div style={{
+            background: "white", padding: 24, borderRadius: 12,
+            width: "90%", maxWidth: 320, textAlign: "center",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+            direction: "rtl"
+          }}>
+            <h3 style={{ margin: "0 0 16px 0", color: "#d32f2f" }}>⚠️ אישור מחיקה</h3>
+            <p style={{ margin: "0 0 24px 0", fontSize: 15 }}>האם אתה בטוח שברצונך למחוק {siteType === "permanent" ? "אתר" : "אירוע"} זה?</p>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isLoading}
+                style={{
+                  padding: "8px 20px", borderRadius: 6, border: "1px solid #ccc",
+                  background: "#f5f5f5", cursor: "pointer", fontWeight: "bold"
+                }}
+              >
+                לא, בטל
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isLoading}
+                style={{
+                  padding: "8px 20px", borderRadius: 6, border: "none",
+                  background: "#d32f2f", color: "white", cursor: "pointer", fontWeight: "bold"
+                }}
+              >
+                {isLoading ? "מוחק..." : "כן, מחק"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <div className={styles.overlay} onClick={onClose} />
@@ -448,13 +510,45 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
             </div>
           </div>
 
-          <div className={styles.actions}>
-            <button type="submit" className={styles.saveBtn} disabled={isLoading}>
+          <div className={styles.actions} style={{ display: "flex", gap: 12, width: "100%" }}>
+            <button 
+              type="submit" 
+              className={styles.saveBtn} 
+              disabled={isLoading}
+              style={{ flex: 1, padding: "14px 16px" }}
+            >
               {isLoading ? "שומר..." : isNew ? "הוסף" : "שמור"}
             </button>
-            <button type="button" className={styles.cancelBtn} onClick={onClose}>
+            <button 
+              type="button" 
+              className={styles.cancelBtn} 
+              onClick={onClose}
+              style={{ flex: 1, padding: "14px 16px", textAlign: "center" }}
+            >
               בטל
             </button>
+            {!isNew && (
+              <button 
+                type="button" 
+                onClick={() => setShowDeleteConfirm(true)}
+                style={{
+                  flex: 1,
+                  background: "#ffebee",
+                  color: "#d32f2f",
+                  border: "1px solid #ffcdd2",
+                  borderRadius: 8,
+                  padding: "14px 16px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                }}
+              >
+                🗑️ מחיקה
+              </button>
+            )}
           </div>
         </form>
       </div>

@@ -268,11 +268,15 @@ export default function MapPage() {
             authHeader={getAuthHeader()}
             categoriesStructure={categoriesStructure}
             onClose={() => { setSiteEditModalOpen(false); setEditingSite(null); }}
-            onSave={() => {
+            onSave={(isDeleted) => {
               setSiteEditModalOpen(false);
               setEditingSite(null);
               refreshData();
-              addNotification(editingSite?.id ? "האתר עודכן בהצלחה!" : "האתר נוסף בהצלחה!", "success");
+              if (isDeleted) {
+                addNotification("האתר נמחק בהצלחה!", "success");
+              } else {
+                addNotification(editingSite?.id ? "האתר עודכן בהצלחה!" : "האתר נוסף בהצלחה!", "success");
+              }
             }}
           />
         )}
