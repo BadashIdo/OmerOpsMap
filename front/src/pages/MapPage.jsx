@@ -40,7 +40,6 @@ import SideBar from "../components/SideBar";
 import SearchBar from "../components/SearchBar";
 import ChatBot from "../components/ChatBot";
 import AdminPanel from "../components/AdminPanel";
-import RequestForm from "../components/RequestForm";
 import TemporaryEventsPanel from "../components/TemporaryEventsPanel";
 import NotificationToast from "../components/NotificationToast";
 import SiteEditModal from "../components/admin/SiteEditModal";
@@ -66,17 +65,13 @@ export default function MapPage() {
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
-  // ── Request form ───────────────────────────────────────────────────────────
-  const [requestFormOpen, setRequestFormOpen] = useState(false);
-  const [requestLocation, setRequestLocation] = useState(null);
-
   // ── Admin site management ──────────────────────────────────────────
   const [siteEditModalOpen, setSiteEditModalOpen] = useState(false);
   const [editingSite, setEditingSite] = useState(null);
   const [editingSiteType, setEditingSiteType] = useState("permanent");
 
   // ── Business logic hooks ───────────────────────────────────────────────────
-  const { notifications, addNotification, removeNotification, pendingCount, setPendingCount } =
+  const { notifications, addNotification, removeNotification } =
     useNotifications();
 
   const { activeFilters, toggleFilter, categoriesStructure, filteredPoints, filteredTemporarySites } =
@@ -92,36 +87,25 @@ export default function MapPage() {
   // ── WebSocket message handler ──────────────────────────────────────────────
   const handleWebSocketMessage = useCallback(
     (message) => {
-      if (message.type !== "data_changed") return;
+      try {
+        if (message?.type !== "data_changed") return;
 
-      // Refresh the site/event lists whenever the server signals a change
-      refreshData();
+        refreshData();
 
-      const actionText =
-        { create: "נוסף", update: "עודכן", delete: "נמחק", expired: "פג תוקפו" }[
-          message.action
-        ] || "שונה";
-      const typeText = message.data_type === "temporary" ? "אירוע זמני" : "אתר";
-      const name = message.data?.name || "";
-      const isDestructive = message.action === "delete" || message.action === "expired";
+        const actionText =
+          { create: "נוסף", update: "עודכן", delete: "נמחק", expired: "פג תוקפו" }[
+            message.action
+          ] || "שונה";
+        const typeText = message.data_type === "temporary" ? "אירוע זמני" : "אתר";
+        const name = message.data?.name || "לא ידוע";
+        const isDestructive = message.action === "delete" || message.action === "expired";
 
-      addNotification(`${typeText} ${actionText}: ${name}`, isDestructive ? "warning" : "update");
-
-      // Admin-only: badge and notification for new requests
-      if (message.data_type === "request" && message.action === "new" && isAdmin) {
-        addNotification(`בקשה חדשה: ${name}`, "info");
-        setPendingCount((prev) => prev + 1);
-      }
-
-      // Decrement badge when a request is resolved
-      if (
-        message.data_type === "request" &&
-        (message.action === "approved" || message.action === "rejected")
-      ) {
-        setPendingCount((prev) => Math.max(0, prev - 1));
+        addNotification(`${typeText} ${actionText}: ${name}`, isDestructive ? "warning" : "update");
+      } catch (err) {
+        console.error("Error handling WebSocket message:", err);
       }
     },
-    [addNotification, isAdmin, setPendingCount]
+    [addNotification]
   );
 
   useWebSocket(handleWebSocketMessage);
@@ -159,18 +143,13 @@ export default function MapPage() {
     }, 900);
   }, [mapRef, markerRefs, setQuery, setShowResults]);
 
-  /** Long-press on the map opens the SiteEditModal at the pressed location. */
+  /** Long-press on the map: admin only — opens SiteEditModal to create a new permanent site. */
   const handleMapLongPress = useCallback(
     (location) => {
       if (isAdmin) {
-        // Admin long press opens modal to CREATE a new permanent site
         setEditingSite({ lat: location.lat, lng: location.lng });
         setEditingSiteType("permanent");
         setSiteEditModalOpen(true);
-      } else {
-        // Regular user long press opens request form
-        setRequestLocation(location);
-        setRequestFormOpen(true);
       }
     },
     [isAdmin]
@@ -190,7 +169,7 @@ export default function MapPage() {
     const projected = map.project([p.lat, p.lng], zoom);
     const centered = map.unproject([projected.x, projected.y - 150], zoom);
     map.panTo(centered);
-  }, [setQuery, setShowResults, mapRef]);
+  }, [setShowResults, mapRef]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -253,14 +232,6 @@ export default function MapPage() {
           />
         )}
 
-        <RequestForm
-          isOpen={requestFormOpen}
-          onClose={() => { setRequestFormOpen(false); setRequestLocation(null); }}
-          location={requestLocation}
-          categoriesStructure={categoriesStructure}
-          onSuccess={() => addNotification("הבקשה נשלחה בהצלחה!", "success")}
-        />
-
         {siteEditModalOpen && (
           <SiteEditModal
             site={editingSite}
@@ -289,7 +260,6 @@ export default function MapPage() {
           temporarySitesCount={temporarySites.length}
           onOpenTempPanel={() => setIsTempPanelOpen(true)}
           isAdmin={isAdmin}
-          pendingCount={pendingCount}
           onOpenAdmin={() => setIsAdminPanelOpen(true)}
           onOpenSidebar={() => setIsSidebarOpen(true)}
           isSidebarOpen={isSidebarOpen}

@@ -30,8 +30,8 @@ const STATUSES = [
 export default function SiteEditModal({ site, siteType, authHeader, categoriesStructure, onClose, onSave }) {
   const isNew = !site?.id;
 
-  const getInitialFormData = () => {
-    if (siteType === "permanent") {
+  const getInitialFormData = (type) => {
+    if (type === "permanent") {
       return {
         name: site?.name || "",
         category: site?.category || "",
@@ -50,6 +50,11 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
       return {
         name: site?.name || "",
         category: site?.category || "",
+        sub_category: site?.subCategory || site?.sub_category || "",
+        type: site?.type || "",
+        district: site?.district || "",
+        street: site?.street || "",
+        house_number: site?.houseNumber || site?.house_number || "",
         description: site?.description || "",
         lat: site?.lat || 31.25,
         lng: site?.lng || 34.79,
@@ -63,9 +68,17 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
     }
   };
 
-  const [formData, setFormData] = useState(getInitialFormData());
+  const [activeSiteType, setActiveSiteType] = useState(siteType);
+  const [formData, setFormData] = useState(() => getInitialFormData(siteType));
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const handleTypeToggle = (newType) => {
+    if (newType === activeSiteType) return;
+    setActiveSiteType(newType);
+    setFormData(getInitialFormData(newType));
+    setError("");
+  };
   const [scrollTrigger, setScrollTrigger] = useState(0);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -135,29 +148,19 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
     e.preventDefault();
     setError("");
 
-    // Validation — required fields per site type
-    if (siteType === "permanent") {
-      const missing = [];
-      if (!formData.name.trim())         missing.push("שם");
-      if (!formData.category)            missing.push("קטגוריה");
-      if (!formData.sub_category)        missing.push("תת-קטגוריה");
-      if (!formData.district.trim())     missing.push("שכונה/רובע");
-      if (!formData.lat)                 missing.push("קו רוחב (Lat)");
-      if (!formData.lng)                 missing.push("קו אורך (Lng)");
+    // Validation — shared required fields for both types
+    const missing = [];
+    if (!formData.name.trim())       missing.push("שם");
+    if (!formData.category)          missing.push("קטגוריה");
+    if (!formData.sub_category)      missing.push("תת-קטגוריה");
+    if (!formData.district.trim())   missing.push("שכונה/רובע");
+    if (!formData.lat)               missing.push("קו רוחב (Lat)");
+    if (!formData.lng)               missing.push("קו אורך (Lng)");
+    if (activeSiteType === "temporary" && !formData.end_date) missing.push("תאריך סיום");
 
-      if (missing.length > 0) {
-        setError(`שדות חובה חסרים: ${missing.join(", ")}`);
-        setScrollTrigger((n) => n + 1);
-        return;
-      }
-    }
-
-    if (siteType === "temporary" && !formData.end_date) {
-      setError("נא להזין תאריך סיום");
-      return;
-    }
-    if (siteType === "temporary" && !formData.name.trim()) {
-      setError("נא להזין שם");
+    if (missing.length > 0) {
+      setError(`שדות חובה חסרים: ${missing.join(", ")}`);
+      setScrollTrigger((n) => n + 1);
       return;
     }
 
@@ -166,17 +169,26 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
     try {
       const payload = { ...formData };
 
-      // Convert dates to ISO format for temporary sites
-      if (siteType === "temporary") {
+      // Convert and validate dates for temporary sites
+      if (activeSiteType === "temporary") {
         if (payload.start_date) {
-          payload.start_date = new Date(payload.start_date).toISOString();
+          const d = new Date(payload.start_date);
+          if (isNaN(d.getTime())) { setError("תאריך התחלה אינו תקין"); setIsLoading(false); return; }
+          payload.start_date = d.toISOString();
         }
         if (payload.end_date) {
-          payload.end_date = new Date(payload.end_date).toISOString();
+          const d = new Date(payload.end_date);
+          if (isNaN(d.getTime())) { setError("תאריך סיום אינו תקין"); setIsLoading(false); return; }
+          payload.end_date = d.toISOString();
+        }
+        if (payload.start_date && payload.end_date && payload.start_date >= payload.end_date) {
+          setError("תאריך הסיום חייב להיות אחרי תאריך ההתחלה");
+          setIsLoading(false);
+          return;
         }
       }
 
-      if (siteType === "permanent") {
+      if (activeSiteType === "permanent") {
         if (isNew) {
           await createPermanentSiteAuth(payload, authHeader);
         } else {
@@ -190,7 +202,7 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
         }
       }
 
-      onSave?.();
+      onSave?.(false);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -202,7 +214,7 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
     setIsLoading(true);
     setError("");
     try {
-      if (siteType === "permanent") {
+      if (activeSiteType === "permanent") {
         await deletePermanentSiteAuth(site.id, authHeader);
       } else {
         await deleteTemporarySiteAuth(site.id, authHeader);
@@ -245,7 +257,7 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
             direction: "rtl"
           }}>
             <h3 style={{ margin: "0 0 16px 0", color: "#d32f2f" }}>⚠️ אישור מחיקה</h3>
-            <p style={{ margin: "0 0 24px 0", fontSize: 15 }}>האם אתה בטוח שברצונך למחוק {siteType === "permanent" ? "אתר" : "אירוע"} זה?</p>
+            <p style={{ margin: "0 0 24px 0", fontSize: 15 }}>האם אתה בטוח שברצונך למחוק {activeSiteType === "permanent" ? "אתר" : "אירוע"} זה?</p>
             <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
               <button
                 onClick={() => setShowDeleteConfirm(false)}
@@ -277,10 +289,10 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
         <div className={styles.header}>
           <h2>
             {isNew
-              ? siteType === "permanent"
+              ? activeSiteType === "permanent"
                 ? "➕ הוספת אתר חדש"
                 : "➕ הוספת אירוע חדש"
-              : siteType === "permanent"
+              : activeSiteType === "permanent"
                 ? "✏️ עריכת אתר"
                 : "✏️ עריכת אירוע"}
           </h2>
@@ -288,6 +300,57 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
             ×
           </button>
         </div>
+
+        {/* Type toggle — only shown when creating a new entry */}
+        {isNew && (
+          <div style={{
+            display: "flex",
+            background: "#f0f0f0",
+            borderRadius: 10,
+            padding: 4,
+            margin: "0 16px 16px",
+            direction: "rtl",
+          }}>
+            <button
+              type="button"
+              onClick={() => handleTypeToggle("permanent")}
+              style={{
+                flex: 1,
+                padding: "8px 12px",
+                border: "none",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontWeight: 600,
+                fontSize: 14,
+                transition: "all 0.2s",
+                background: activeSiteType === "permanent" ? "white" : "transparent",
+                color: activeSiteType === "permanent" ? "#1565c0" : "#666",
+                boxShadow: activeSiteType === "permanent" ? "0 1px 4px rgba(0,0,0,0.15)" : "none",
+              }}
+            >
+              📍 אתר קבוע
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTypeToggle("temporary")}
+              style={{
+                flex: 1,
+                padding: "8px 12px",
+                border: "none",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontWeight: 600,
+                fontSize: 14,
+                transition: "all 0.2s",
+                background: activeSiteType === "temporary" ? "white" : "transparent",
+                color: activeSiteType === "temporary" ? "#e65100" : "#666",
+                boxShadow: activeSiteType === "temporary" ? "0 1px 4px rgba(0,0,0,0.15)" : "none",
+              }}
+            >
+              ⚡ אירוע זמני
+            </button>
+          </div>
+        )}
 
         <form className={styles.form} ref={modalRef} onSubmit={handleSubmit}>
           {error && <div className={styles.error}>{error}</div>}
@@ -325,8 +388,7 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
               </select>
             </div>
 
-            {siteType === "permanent" && (
-              <div className={styles.field}>
+            <div className={styles.field}>
                 <label>תת-קטגוריה *</label>
                 <select name="sub_category" value={formData.sub_category} onChange={handleChange}>
                   <option value="">
@@ -341,58 +403,53 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
                   ))}
                 </select>
               </div>
-            )}
           </div>
 
-          {siteType === "permanent" && (
-            <>
-              <div className={styles.row}>
-                <div className={styles.field}>
-                  <label>סוג</label>
-                  <input
-                    type="text"
-                    name="type"
-                    value={formData.type}
-                    onChange={handleChange}
-                    placeholder="סוג (לדוגמה: בי''ס יסודי)"
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label>שכונה/רובע *</label>
-                  <select name="district" value={formData.district} onChange={handleChange}>
-                    <option value="">בחר שכונה/רובע</option>
-                    {DISTRICTS.map((d) => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className={styles.row}>
-                <div className={styles.field}>
-                  <label>רחוב</label>
-                  <input
-                    type="text"
-                    name="street"
-                    value={formData.street}
-                    onChange={handleChange}
-                    placeholder="שם רחוב"
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label>מספר בית</label>
-                  <input
-                    type="text"
-                    name="house_number"
-                    value={formData.house_number}
-                    onChange={handleChange}
-                    placeholder="מספר"
-                  />
-                </div>
-              </div>
-            </>
-          )}
+          <div className={styles.row}>
+            <div className={styles.field}>
+              <label>סוג</label>
+              <input
+                type="text"
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+                placeholder="סוג (לדוגמה: בי''ס יסודי)"
+              />
+            </div>
+            <div className={styles.field}>
+              <label>שכונה/רובע *</label>
+              <select name="district" value={formData.district} onChange={handleChange}>
+                <option value="">בחר שכונה/רובע</option>
+                {DISTRICTS.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className={styles.row}>
+            <div className={styles.field}>
+              <label>רחוב</label>
+              <input
+                type="text"
+                name="street"
+                value={formData.street}
+                onChange={handleChange}
+                placeholder="שם רחוב"
+              />
+            </div>
+            <div className={styles.field}>
+              <label>מספר בית</label>
+              <input
+                type="text"
+                name="house_number"
+                value={formData.house_number}
+                onChange={handleChange}
+                placeholder="מספר"
+              />
+            </div>
+          </div>
 
-          {siteType === "temporary" && (
+          {activeSiteType === "temporary" && (
             <>
               <div className={styles.row}>
                 <div className={styles.field}>

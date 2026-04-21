@@ -1,9 +1,6 @@
 import { useState } from "react";
 import styles from "../../styles/Site.module.css";
-
-function has(v) {
-  return v !== null && v !== undefined && String(v).trim() !== "";
-}
+import { has } from "../../lib/siteUtils";
 
 export default function TemporarySitePopup({ site, isAdmin, onEdit }) {
   const [showMore, setShowMore] = useState(false);

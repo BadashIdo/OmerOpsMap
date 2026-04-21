@@ -1,7 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { getPendingRequestsCount } from "../api/requestsApi";
-import RequestsTab from "./admin/RequestsTab";
 import PermanentSitesTab from "./admin/PermanentSitesTab";
 import TemporarySitesTab from "./admin/TemporarySitesTab";
 import DataImportTab from "./admin/DataImportTab";
@@ -9,7 +7,6 @@ import DataExportTab from "./admin/DataExportTab";
 import styles from "../styles/AdminPanel.module.css";
 
 const TABS = [
-  { id: "requests", label: "בקשות", icon: "📋" },
   { id: "permanent", label: "אתרים קבועים", icon: "📍" },
   { id: "temporary", label: "אירועים זמניים", icon: "⚡" },
   { id: "import", label: "יבוא נתונים", icon: "📤" },
@@ -18,27 +15,9 @@ const TABS = [
 
 export default function AdminPanel({ isOpen, onClose, onDataChange, categoriesStructure }) {
   const { admin, logout, getAuthHeader } = useAuth();
-  const [activeTab, setActiveTab] = useState("requests");
-  const [pendingCount, setPendingCount] = useState(0);
-
-  // Load pending count
-  useEffect(() => {
-    if (isOpen) {
-      loadPendingCount();
-    }
-  }, [isOpen]);
-
-  const loadPendingCount = async () => {
-    try {
-      const data = await getPendingRequestsCount(getAuthHeader());
-      setPendingCount(data.pending_count);
-    } catch (err) {
-      console.error("Error loading pending count:", err);
-    }
-  };
+  const [activeTab, setActiveTab] = useState("permanent");
 
   const handleDataChange = () => {
-    loadPendingCount();
     if (onDataChange) {
       onDataChange();
     }
@@ -79,21 +58,12 @@ export default function AdminPanel({ isOpen, onClose, onDataChange, categoriesSt
             >
               <span className={styles.tabIcon}>{tab.icon}</span>
               <span className={styles.tabLabel}>{tab.label}</span>
-              {tab.id === "requests" && pendingCount > 0 && (
-                <span className={styles.badge}>{pendingCount}</span>
-              )}
             </button>
           ))}
         </div>
 
         {/* Content */}
         <div className={styles.content}>
-          {activeTab === "requests" && (
-            <RequestsTab
-              authHeader={getAuthHeader()}
-              onDataChange={handleDataChange}
-            />
-          )}
           {activeTab === "permanent" && (
             <PermanentSitesTab
               authHeader={getAuthHeader()}
@@ -105,6 +75,7 @@ export default function AdminPanel({ isOpen, onClose, onDataChange, categoriesSt
             <TemporarySitesTab
               authHeader={getAuthHeader()}
               onDataChange={handleDataChange}
+              categoriesStructure={categoriesStructure}
             />
           )}
           {activeTab === "import" && (

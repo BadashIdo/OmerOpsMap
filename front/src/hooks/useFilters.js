@@ -60,12 +60,19 @@ export function useFilters({ points, temporarySites }) {
     );
   }, [points, allTempCategories]);
 
-  // Initialized once on first data load — never resets user's filter choices afterward
-  const hasInitialized = useRef(false);
+  // Track which categories have been auto-enabled so new ones (arriving via WS) get added too
+  const seenCategories = useRef(new Set());
   useEffect(() => {
-    if (hasInitialized.current || allSubCategories.length === 0) return;
-    hasInitialized.current = true;
-    setActiveFilters([...allSubCategories, ...DISTRICTS, ...allTempCategories, "אירועים זמניים"]);
+    if (allSubCategories.length === 0) return;
+    const isFirst = seenCategories.current.size === 0;
+    const newSubs = allSubCategories.filter((c) => !seenCategories.current.has(c));
+    const newTemps = allTempCategories.filter((c) => !seenCategories.current.has(c));
+    [...newSubs, ...newTemps].forEach((c) => seenCategories.current.add(c));
+    if (isFirst) {
+      setActiveFilters([...allSubCategories, ...DISTRICTS, ...allTempCategories, "אירועים זמניים"]);
+    } else if (newSubs.length > 0 || newTemps.length > 0) {
+      setActiveFilters((prev) => [...new Set([...prev, ...newSubs, ...newTemps])]);
+    }
   }, [allSubCategories, allTempCategories]);
 
   /** Toggle a single filter item on or off. */

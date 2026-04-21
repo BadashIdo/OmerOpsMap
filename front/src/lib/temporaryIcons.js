@@ -43,20 +43,11 @@ function createTemporaryIcon(priority = "medium") {
   });
 }
 
-// Category-specific icons
-const categoryIcons = {
-  roadwork: "🚧",
-  alert: "⚠️",
-  event: "📅",
-  emergency: "🚨",
-  closure: "🚫",
-};
-
 export function getTemporaryIcon(priority) {
   return createTemporaryIcon(priority);
 }
 
-export function getCategoryEmoji(category) {
-  return categoryIcons[category?.toLowerCase()] || "📍";
+export function getCategoryEmoji() {
+  return "📍";
 }
 

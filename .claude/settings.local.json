@@ -4,7 +4,10 @@
       "Bash(git checkout *)",
       "Bash(git pull *)",
       "Bash(curl -s http://192.168.10.5:8001/api/permanent-sites)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(python3 -c ' *)",
+      "Bash(py --version)",
+      "Bash(python -c ' *)"
     ]
   }
 }

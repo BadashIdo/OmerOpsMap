@@ -19,7 +19,6 @@
  *  temporarySitesCount — total number of active temporary events (badge)
  *  onOpenTempPanel     — open the TemporaryEventsPanel
  *  isAdmin             — whether the current user is an admin
- *  pendingCount        — number of unreviewed requests (admin badge)
  *  onOpenAdmin         — open the AdminPanel
  *  onOpenSidebar       — open the SideBar filter menu
  *  isSidebarOpen       — hides the panel when true
@@ -35,7 +34,6 @@ export default function MapControls({
   temporarySitesCount,
   onOpenTempPanel,
   isAdmin,
-  pendingCount,
   onOpenAdmin,
   onOpenSidebar,
   isSidebarOpen,
@@ -80,22 +78,18 @@ export default function MapControls({
         )}
       </button>
 
-      {/* Admin panel — only visible to admins, shows pending-requests badge */}
+      {/* Admin panel — only visible to admins */}
       {isAdmin && (
         <button
           className={styles.btn}
           onClick={onOpenAdmin}
           title="ניהול מערכת"
           style={{
-            position: "relative",
             background: "linear-gradient(135deg, #1a2a6c 0%, #2a5298 100%)",
             color: "white",
           }}
         >
           🔧
-          {pendingCount > 0 && (
-            <span className={styles.badge}>{pendingCount}</span>
-          )}
         </button>
       )}
 

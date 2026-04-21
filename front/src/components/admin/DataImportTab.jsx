@@ -15,6 +15,9 @@ export default function DataImportTab({ authHeader }) {
   // Import mode
   const [importMode, setImportMode] = useState("merge"); // 'merge' or 'replace'
 
+  // Site type
+  const [siteType, setSiteType] = useState("permanent"); // 'permanent' or 'temporary'
+
   // API URL from environment
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
 
@@ -71,7 +74,7 @@ export default function DataImportTab({ authHeader }) {
     formData.append("file", file);
 
     try {
-      const response = await fetch(`${API_URL}/api/admin/import/preview`, {
+      const response = await fetch(`${API_URL}/api/admin/import/preview?site_type=${siteType}`, {
         method: "POST",
         headers: {
           ...authHeader,
@@ -103,7 +106,8 @@ export default function DataImportTab({ authHeader }) {
 
     // Confirmation for replace mode
     if (importMode === "replace") {
-      if (!confirm("⚠️ אתה עומד למחוק את כל האתרים הקיימים!\n\nהאם להמשיך?")) {
+      const typeLabel = siteType === "permanent" ? "האתרים הקבועים" : "האירועים הזמניים";
+      if (!confirm(`⚠️ אתה עומד למחוק את כל ${typeLabel} הקיימים!\n\nהאם להמשיך?`)) {
         return;
       }
     }
@@ -117,7 +121,7 @@ export default function DataImportTab({ authHeader }) {
 
     try {
       const response = await fetch(
-        `${API_URL}/api/admin/import/execute?mode=${importMode}`,
+        `${API_URL}/api/admin/import/execute?mode=${importMode}&site_type=${siteType}`,
         {
           method: "POST",
           headers: {
@@ -168,6 +172,46 @@ export default function DataImportTab({ authHeader }) {
   return (
     <div className={styles.tabContent}>
       <h2 style={{ marginBottom: "20px" }}>📤 יבוא נתונים מExcel</h2>
+
+      {/* Site Type Toggle */}
+      <div style={{ marginBottom: "20px" }}>
+        <label style={{ display: "block", marginBottom: "10px", fontWeight: "bold" }}>
+          בחר סוג נתונים:
+        </label>
+        <div style={{ display: "flex", gap: "0", borderRadius: "8px", overflow: "hidden", border: "1px solid #ccc", width: "fit-content" }}>
+          <button
+            onClick={() => { setSiteType("permanent"); setFile(null); setPreviewData(null); setShowPreview(false); setError(""); }}
+            style={{
+              padding: "10px 24px",
+              border: "none",
+              cursor: "pointer",
+              fontWeight: "600",
+              fontSize: "14px",
+              backgroundColor: siteType === "permanent" ? "#1565C0" : "#f5f5f5",
+              color: siteType === "permanent" ? "white" : "#555",
+              transition: "all 0.2s",
+            }}
+          >
+            📍 אתרים קבועים
+          </button>
+          <button
+            onClick={() => { setSiteType("temporary"); setFile(null); setPreviewData(null); setShowPreview(false); setError(""); }}
+            style={{
+              padding: "10px 24px",
+              border: "none",
+              borderRight: "1px solid #ccc",
+              cursor: "pointer",
+              fontWeight: "600",
+              fontSize: "14px",
+              backgroundColor: siteType === "temporary" ? "#E65100" : "#f5f5f5",
+              color: siteType === "temporary" ? "white" : "#555",
+              transition: "all 0.2s",
+            }}
+          >
+            ⚡ אירועים זמניים
+          </button>
+        </div>
+      </div>
 
       {/* Mode Selection */}
       <div style={{ marginBottom: "20px", padding: "15px", backgroundColor: "#f5f5f5", borderRadius: "8px" }}>
@@ -359,7 +403,7 @@ export default function DataImportTab({ authHeader }) {
       <div style={{ marginTop: "30px", padding: "15px", backgroundColor: "#e3f2fd", borderRadius: "5px" }}>
         <h4 style={{ marginBottom: "10px" }}>📝 הוראות:</h4>
         <ol style={{ marginRight: "20px", lineHeight: "1.8" }}>
-          <li>הכן קובץ Excel עם השדות הנדרשים (ראה <a href="/DATA_UPLOAD_GUIDE.md" target="_blank">מדריך</a>)</li>
+          <li>הכן קובץ Excel עם השדות הנדרשים</li>
           <li>בחר סוג יבוא: Merge (מומלץ) או Replace</li>
           <li>העלה את הקובץ (גרור ושחרר או בחר)</li>
           <li>לחץ על "תצוגה מקדימה" לראות מה ישתנה</li>

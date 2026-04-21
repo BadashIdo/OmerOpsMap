@@ -1,8 +1,5 @@
 import styles from "../../styles/SiteActions.module.css";
-
-function has(v) {
-  return v !== null && v !== undefined && String(v).trim() !== "";
-}
+import { has } from "../../lib/siteUtils";
 
 export default function SiteActions({ lat, lng }) {
   const ok = has(lat) && has(lng);

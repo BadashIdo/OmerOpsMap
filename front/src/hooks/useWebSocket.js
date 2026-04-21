@@ -12,6 +12,9 @@ export function useWebSocket(onMessage, enabled = true) {
   const wsRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
   const reconnectAttemptsRef = useRef(0);
+  // Keep latest onMessage in a ref so changing it never triggers a reconnect
+  const onMessageRef = useRef(onMessage);
+  useEffect(() => { onMessageRef.current = onMessage; }, [onMessage]);
 
   const connect = useCallback(() => {
     if (!enabled) return;
@@ -31,9 +34,7 @@ export function useWebSocket(onMessage, enabled = true) {
           const data = JSON.parse(event.data);
           console.log("WebSocket message:", data);
           setLastMessage(data);
-          if (onMessage) {
-            onMessage(data);
-          }
+          onMessageRef.current?.(data);
         } catch (err) {
           console.error("Error parsing WebSocket message:", err);
         }
@@ -61,7 +62,7 @@ export function useWebSocket(onMessage, enabled = true) {
     } catch (err) {
       console.error("Error creating WebSocket:", err);
     }
-  }, [enabled, onMessage]);
+  }, [enabled]);
 
   useEffect(() => {
     connect();

@@ -128,7 +128,7 @@ export default function MapView({ mapRef, markerRefs, userLocation, points, temp
               <SitePopup site={p} isAdmin={isAdmin} onEdit={(site) => onEditSite?.(site, "permanent")} />
             </Popup>
           </Marker>
-        )), [points, onMarkerClick, setMarkerRef])}
+        )), [points, onMarkerClick, setMarkerRef, isAdmin, onEditSite])}
       </MarkerClusterGroup>
 
       {/* Temporary Sites — clustered separately */}
@@ -149,7 +149,7 @@ export default function MapView({ mapRef, markerRefs, userLocation, points, temp
               <TemporarySitePopup site={t} isAdmin={isAdmin} onEdit={(site) => onEditSite?.(site, "temporary")} />
             </Popup>
           </Marker>
-        )), [temporarySites, setMarkerRef])}
+        )), [temporarySites, setMarkerRef, isAdmin, onEditSite])}
       </MarkerClusterGroup>
 
     </MapContainer>

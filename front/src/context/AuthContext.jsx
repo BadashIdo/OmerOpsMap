@@ -75,8 +75,12 @@ export function AuthProvider({ children }) {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || "שגיאה בהתחברות");
+        let message = "שגיאה בהתחברות";
+        try {
+          const data = await response.json();
+          if (data.detail) message = data.detail;
+        } catch {}
+        throw new Error(message);
       }
 
       const data = await response.json();

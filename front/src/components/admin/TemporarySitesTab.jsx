@@ -24,7 +24,7 @@ const STATUS_LABELS = {
   cancelled: "בוטל",
 };
 
-export default function TemporarySitesTab({ authHeader, onDataChange }) {
+export default function TemporarySitesTab({ authHeader, onDataChange, categoriesStructure }) {
   const [sites, setSites] = useState([]);
   const [filteredSites, setFilteredSites] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -229,6 +229,7 @@ export default function TemporarySitesTab({ authHeader, onDataChange }) {
           site={selectedSite}
           siteType="temporary"
           authHeader={authHeader}
+          categoriesStructure={categoriesStructure}
           onClose={() => {
             setSelectedSite(null);
             setIsAddMode(false);

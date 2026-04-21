@@ -75,9 +75,6 @@ export default function DataExportTab({ authHeader }) {
                 <ul style={{ lineHeight: "1.6", marginRight: "20px" }}>
                     <li>אתרים קבועים (Permanent Sites)</li>
                     <li>אירועים זמניים (Temporary Events)</li>
-                    <li>היסטוריית אירועים</li>
-                    <li>בקשות משתמשים</li>
-                    <li>סיכום מנהלי מערכת</li>
                 </ul>
 
                 <div style={{ marginTop: "20px", display: "flex", justifyContent: "center" }}>

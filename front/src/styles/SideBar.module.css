@@ -35,7 +35,7 @@
   flex-direction: column;
   overflow: hidden;
   padding-bottom: env(safe-area-inset-bottom);
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 .open {

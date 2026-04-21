@@ -1,10 +1,7 @@
 import { useState } from "react";
 import styles from "../../styles/Site.module.css";
 import SiteActions from "./SiteActions";
-
-function has(v) {
-  return v !== null && v !== undefined && String(v).trim() !== "";
-}
+import { has } from "../../lib/siteUtils";
 
 export default function SitePopup({ site, isAdmin, onEdit }) {
   const [showMore, setShowMore] = useState(false);
