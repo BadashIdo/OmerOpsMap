@@ -79,7 +79,7 @@ function MapLongPressHandler({ onLongPress }) {
   return null;
 }
 
-export default function MapView({ mapRef, markerRefs, userLocation, points, temporarySites = [], onMarkerClick, onLongPress, isAdmin, onEditSite }) {
+export default function MapView({ mapRef, markerRefs, clusterRef, userLocation, points, temporarySites = [], onMarkerClick, onLongPress, isAdmin, onEditSite }) {
   // Stable ref callback — not recreated on every render, prevents unnecessary updates while dragging
   const setMarkerRef = useCallback((el, key) => {
     markerRefs.current[key] = el;
@@ -114,7 +114,7 @@ export default function MapView({ mapRef, markerRefs, userLocation, points, temp
       )}
 
       {/* All Sites — clustered together, memoized separately so markers only re-render when their respective data changes */}
-      <MarkerClusterGroup chunkedLoading maxClusterRadius={(zoom) => (zoom >= 18 ? 0 : 50)} spiderfyOnMaxZoom={true} showCoverageOnHover={false} iconCreateFunction={createClusterIcon}>
+      <MarkerClusterGroup ref={clusterRef} chunkedLoading maxClusterRadius={50} spiderfyOnMaxZoom={true} showCoverageOnHover={false} iconCreateFunction={createClusterIcon}>
         {useMemo(() => points.map((p) => (
           <Marker
             key={`permanent-${p.id}`}

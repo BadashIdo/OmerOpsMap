@@ -57,6 +57,7 @@ export default function MapPage() {
   // ── Map refs (passed to Leaflet and marker registry) ──────────────────────
   const mapRef = useRef(null);
   const markerRefs = useRef({});
+  const clusterRef = useRef(null);
 
   // ── Panel visibility ───────────────────────────────────────────────────────
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -122,13 +123,15 @@ export default function MapPage() {
     const map = mapRef.current;
     if (!map) return;
 
-    // Always zoom to 18 so the marker is never inside a cluster when we open the popup
+    // Set target zoom to 18 (street level)
     const targetZoom = 18;
 
     // Same offset as handleMarkerClick — pin at screen center, popup opens above it
     const projected = map.project([p.lat, p.lng], targetZoom);
     const centered = map.unproject([projected.x, projected.y - 150], targetZoom);
-    map.flyTo(centered, targetZoom, { animate: true, duration: 0.8, noMoveStart: true });
+    
+    // Duration set to 2.5s for a very slow, smooth sweep
+    map.flyTo(centered, targetZoom, { animate: true, duration: 2.5, noMoveStart: true });
 
     // Open popup after the fly animation completes
     setTimeout(() => {
@@ -138,9 +141,29 @@ export default function MapPage() {
       } else if (!markerRefs.current[markerKey] && markerRefs.current[`temporary-${p.id}`]) {
         markerKey = `temporary-${p.id}`;
       }
-      markerRefs.current[markerKey]?.openPopup();
-    }, 900);
-  }, [mapRef, markerRefs, setQuery, setShowResults]);
+      
+      const marker = markerRefs.current[markerKey];
+      if (!marker) return;
+
+      const clusterGroup = clusterRef.current;
+      if (clusterGroup && clusterGroup.getVisibleParent) {
+        const parent = clusterGroup.getVisibleParent(marker);
+        if (parent && parent.spiderfy) {
+          // It's a cluster. Spiderfy it manually without changing the map's zoom!
+          parent.spiderfy();
+          // Small delay to let the spiderfy animation complete before opening the popup
+          setTimeout(() => {
+            marker.openPopup();
+          }, 300);
+        } else {
+          // It's already visible on the map
+          marker.openPopup();
+        }
+      } else {
+        marker.openPopup();
+      }
+    }, 2600);
+  }, [mapRef, markerRefs, clusterRef, setQuery, setShowResults]);
 
   /** Long-press on the map: admin only — opens SiteEditModal to create a new permanent site. */
   const handleMapLongPress = useCallback(
@@ -280,6 +303,7 @@ export default function MapPage() {
         <MapView
           mapRef={mapRef}
           markerRefs={markerRefs}
+          clusterRef={clusterRef}
           userLocation={userLocation}
           points={filteredPoints}
           temporarySites={showTemporarySites ? filteredTemporarySites : []}
