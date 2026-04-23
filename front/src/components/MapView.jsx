@@ -86,8 +86,13 @@ export default function MapView({ mapRef, markerRefs, userLocation, points, temp
   }, [markerRefs]);
 
   return (
-    <MapContainer center={OMER_CENTER} zoom={15} zoomControl={false} style={{ height: "100%", width: "100%" }} ref={mapRef}>
-      <TileLayer attribution="© OpenStreetMap" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+    <MapContainer center={OMER_CENTER} zoom={15} maxZoom={22} zoomControl={false} style={{ height: "100%", width: "100%" }} ref={mapRef}>
+      <TileLayer 
+        attribution="© OpenStreetMap" 
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
+        maxZoom={22} 
+        maxNativeZoom={19} 
+      />
 
       {/* Long press handler for adding new requests */}
       {onLongPress && <MapLongPressHandler onLongPress={onLongPress} />}
@@ -109,7 +114,7 @@ export default function MapView({ mapRef, markerRefs, userLocation, points, temp
       )}
 
       {/* All Sites — clustered together, memoized separately so markers only re-render when their respective data changes */}
-      <MarkerClusterGroup chunkedLoading disableClusteringAtZoom={18} maxClusterRadius={50} iconCreateFunction={createClusterIcon}>
+      <MarkerClusterGroup chunkedLoading maxClusterRadius={(zoom) => (zoom >= 18 ? 0 : 50)} spiderfyOnMaxZoom={true} showCoverageOnHover={false} iconCreateFunction={createClusterIcon}>
         {useMemo(() => points.map((p) => (
           <Marker
             key={`permanent-${p.id}`}

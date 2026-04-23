@@ -84,8 +84,8 @@ services:
       dockerfile: Dockerfile
       args:
         # בסביבת פרודקשן תצטרך לעדכן את הדומיין האמיתי שלך כאן
-        - VITE_API_URL=https://api.your-domain.com
-        - VITE_WS_URL=wss://api.your-domain.com/ws
+        - VITE_API_URL=https://api.omer.com
+        - VITE_WS_URL=wss://api.omer.com/ws
     container_name: omeropsmap_frontend
     # השירות הזה רץ על פורט 80 (מבוסס Nginx פנימי), ה-NPM יתחבר אליו לשם
     volumes:
