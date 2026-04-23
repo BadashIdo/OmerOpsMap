@@ -123,8 +123,8 @@ export default function MapPage() {
     const map = mapRef.current;
     if (!map) return;
 
-    // Set target zoom to 18 (street level)
-    const targetZoom = 18;
+    // Set target zoom to 21 (almost max zoom)
+    const targetZoom = 21;
 
     // Same offset as handleMarkerClick — pin at screen center, popup opens above it
     const projected = map.project([p.lat, p.lng], targetZoom);
