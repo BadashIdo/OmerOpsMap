@@ -1,0 +1,107 @@
+# ============================================
+# OmerOpsMap - PRODUCTION Docker Compose
+# ============================================
+# מריץ את כל המערכת בסביבת פרודקשן על שרת (VPS):
+#   docker-compose -f docker-compose.prod.yml up -d
+# ============================================
+
+services:
+  # ==========================================
+  # Nginx Proxy Manager (NPM) - SSL & Routing
+  # ==========================================
+  nginx-proxy:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: omeropsmap_nginx_proxy
+    ports:
+      - '80:80'      # HTTP traffic (Public)
+      - '443:443'    # HTTPS traffic (Public)
+      - '81:81'      # NPM Admin UI (Public - secure with strong password!)
+    volumes:
+      - ./nginx/data:/data
+      - ./nginx/letsencrypt:/etc/letsencrypt
+    networks:
+      - proxy-tier
+    restart: unless-stopped
+
+  # ==========================================
+  # PostgreSQL Database
+  # ==========================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: omeropsmap_postgres
+    environment:
+      POSTGRES_USER: omeropsmap
+      POSTGRES_PASSWORD: omeropsmap_prod_pass # CHANGE THIS
+      POSTGRES_DB: omeropsmap
+    # הסרנו את החשיפה של פורט 5432 החוצה (כדי שלא יהיה ניתן לפרוץ למסד הנתונים מרחוק)
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U omeropsmap"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - proxy-tier
+    restart: unless-stopped
+
+  # ==========================================
+  # Data Server (FastAPI Backend)
+  # ==========================================
+  data_server:
+    build: ./data_server
+    container_name: omeropsmap_data_server
+    # פורט 8001 לא נחשף החוצה. NPM ידבר איתו ברשת הפנימית
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://omeropsmap:omeropsmap_prod_pass@postgres:5432/omeropsmap
+      - SECRET_KEY=${SECRET_KEY:-generate-a-very-secure-secret-key}
+      - ALGORITHM=HS256
+      - JWT_EXPIRE_HOURS=24
+      - INITIAL_ADMIN_USERNAME=admin
+      - INITIAL_ADMIN_PASSWORD=123123 # פיילוט בלבד
+      - INITIAL_ADMIN_DISPLAY_NAME=מנהל
+      - INITIAL_ADMIN_EMAIL=${INITIAL_ADMIN_EMAIL:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./data_server/app:/app/app
+      - ./data_server/scripts:/app/scripts
+      - ./data_server/alembic:/app/alembic
+      - ./data_server/start.sh:/app/start.sh
+      - ./data_server/data:/app/data
+    command: bash /app/start.sh
+    networks:
+      - proxy-tier
+    restart: unless-stopped
+
+  # ==========================================
+  # Frontend (React + Vite)
+  # ==========================================
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+      args:
+        # בסביבת פרודקשן תצטרך לעדכן את הדומיין האמיתי שלך כאן
+        - VITE_API_URL=https://api.your-domain.com
+        - VITE_WS_URL=wss://api.your-domain.com/ws
+    container_name: omeropsmap_frontend
+    # השירות הזה רץ על פורט 80 (מבוסס Nginx פנימי), ה-NPM יתחבר אליו לשם
+    volumes:
+      - ./front/src:/app/src
+      - ./front/public:/app/public
+      - ./front/index.html:/app/index.html
+      - /app/node_modules
+    depends_on:
+      - data_server
+    networks:
+      - proxy-tier
+    restart: unless-stopped
+
+networks:
+  proxy-tier:
+    external: false
+
+volumes:
+  postgres_data:
