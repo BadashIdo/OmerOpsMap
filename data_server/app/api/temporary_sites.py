@@ -19,6 +19,14 @@ async def get_all_temporary_sites(db: AsyncSession = Depends(get_db)):
     return sites
 
 
+@router.get("/history", response_model=List[TemporarySiteResponse])
+async def get_temporary_sites_history(db: AsyncSession = Depends(get_db), _: bool = Depends(verify_admin)):
+    """Get all historical temporary sites (admin only)"""
+    repo = TemporarySitesRepository(db)
+    history = await repo.get_all_history()
+    return history
+
+
 @router.get("/{site_id}", response_model=TemporarySiteResponse)
 async def get_temporary_site(site_id: int, db: AsyncSession = Depends(get_db)):
     """Get a single temporary site by ID (public)"""

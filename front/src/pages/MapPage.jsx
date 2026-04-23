@@ -40,7 +40,6 @@ import SideBar from "../components/SideBar";
 import SearchBar from "../components/SearchBar";
 import ChatBot from "../components/ChatBot";
 import AdminPanel from "../components/AdminPanel";
-import TemporaryEventsPanel from "../components/TemporaryEventsPanel";
 import NotificationToast from "../components/NotificationToast";
 import SiteEditModal from "../components/admin/SiteEditModal";
 
@@ -61,9 +60,9 @@ export default function MapPage() {
 
   // ── Panel visibility ───────────────────────────────────────────────────────
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isTempPanelOpen, setIsTempPanelOpen] = useState(false);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [showTemporarySites, setShowTemporarySites] = useState(true);
 
   // ── Admin site management ──────────────────────────────────────────
   const [siteEditModalOpen, setSiteEditModalOpen] = useState(false);
@@ -74,7 +73,7 @@ export default function MapPage() {
   const { notifications, addNotification, removeNotification } =
     useNotifications();
 
-  const { activeFilters, toggleFilter, categoriesStructure, filteredPoints, filteredTemporarySites } =
+  const { activeFilters, toggleFilter, toggleGroup, categoriesStructure, filteredPoints, filteredTemporarySites } =
     useFilters({ points, temporarySites });
 
   const { query, setQuery, showResults, setShowResults, results } = useSearch({
@@ -202,6 +201,9 @@ export default function MapPage() {
           categoriesStructure={categoriesStructure}
           activeFilters={activeFilters}
           toggleFilter={toggleFilter}
+          toggleGroup={toggleGroup}
+          showTemporarySites={showTemporarySites}
+          setShowTemporarySites={setShowTemporarySites}
         />
 
         <SearchBar
@@ -214,21 +216,16 @@ export default function MapPage() {
           onPick={goToPoint}
         />
 
-        <TemporaryEventsPanel
-          isOpen={isTempPanelOpen}
-          onClose={() => setIsTempPanelOpen(false)}
-          events={temporarySites}
-          onEventClick={(event) => {
-            mapRef.current?.flyTo([event.lat, event.lng], 17, { animate: true, duration: 0.8 });
-          }}
-        />
-
         {isAdmin && (
           <AdminPanel
             isOpen={isAdminPanelOpen}
             onClose={() => setIsAdminPanelOpen(false)}
             onDataChange={refreshData}
             categoriesStructure={categoriesStructure}
+            onLocateSite={(site) => {
+              setIsAdminPanelOpen(false);
+              goToPoint(site);
+            }}
           />
         )}
 
@@ -257,8 +254,6 @@ export default function MapPage() {
           mapRef={mapRef}
           isTracking={isTracking}
           onLocate={handleLocate}
-          temporarySitesCount={temporarySites.length}
-          onOpenTempPanel={() => setIsTempPanelOpen(true)}
           isAdmin={isAdmin}
           onOpenAdmin={() => setIsAdminPanelOpen(true)}
           onOpenSidebar={() => setIsSidebarOpen(true)}
@@ -287,7 +282,7 @@ export default function MapPage() {
           markerRefs={markerRefs}
           userLocation={userLocation}
           points={filteredPoints}
-          temporarySites={filteredTemporarySites}
+          temporarySites={showTemporarySites ? filteredTemporarySites : []}
           onMarkerClick={handleMarkerClick}
           onLongPress={handleMapLongPress}
           isAdmin={isAdmin}

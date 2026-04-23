@@ -12,9 +12,6 @@ export default function DataImportTab({ authHeader }) {
   const [previewData, setPreviewData] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
 
-  // Import mode
-  const [importMode, setImportMode] = useState("merge"); // 'merge' or 'replace'
-
   // Site type
   const [siteType, setSiteType] = useState("permanent"); // 'permanent' or 'temporary'
 
@@ -104,14 +101,6 @@ export default function DataImportTab({ authHeader }) {
       return;
     }
 
-    // Confirmation for replace mode
-    if (importMode === "replace") {
-      const typeLabel = siteType === "permanent" ? "האתרים הקבועים" : "האירועים הזמניים";
-      if (!confirm(`⚠️ אתה עומד למחוק את כל ${typeLabel} הקיימים!\n\nהאם להמשיך?`)) {
-        return;
-      }
-    }
-
     setIsLoading(true);
     setError("");
     setSuccessMessage("");
@@ -121,7 +110,7 @@ export default function DataImportTab({ authHeader }) {
 
     try {
       const response = await fetch(
-        `${API_URL}/api/admin/import/execute?mode=${importMode}&site_type=${siteType}`,
+        `${API_URL}/api/admin/import/execute?site_type=${siteType}`,
         {
           method: "POST",
           headers: {
@@ -150,12 +139,8 @@ export default function DataImportTab({ authHeader }) {
       }
       message += `• סה"כ אתרים במערכת: ${data.total_in_db}`;
 
+      // Show success message briefly before refreshing
       setSuccessMessage(message);
-      setShowPreview(false);
-      setPreviewData(null);
-      setFile(null);
-
-      // Refresh page after 2 seconds
       setTimeout(() => {
         window.location.reload();
       }, 2000);
@@ -171,7 +156,7 @@ export default function DataImportTab({ authHeader }) {
 
   return (
     <div className={styles.tabContent}>
-      <h2 style={{ marginBottom: "20px" }}>📤 יבוא נתונים מExcel</h2>
+      <h2 style={{ marginBottom: "20px" }}>📥 יבוא נתונים מExcel</h2>
 
       {/* Site Type Toggle */}
       <div style={{ marginBottom: "20px" }}>
@@ -210,39 +195,6 @@ export default function DataImportTab({ authHeader }) {
           >
             ⚡ אירועים זמניים
           </button>
-        </div>
-      </div>
-
-      {/* Mode Selection */}
-      <div style={{ marginBottom: "20px", padding: "15px", backgroundColor: "#f5f5f5", borderRadius: "8px" }}>
-        <label style={{ display: "block", marginBottom: "10px", fontWeight: "bold" }}>
-          בחר סוג יבוא:
-        </label>
-        <div style={{ display: "flex", gap: "15px" }}>
-          <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
-            <input
-              type="radio"
-              value="merge"
-              checked={importMode === "merge"}
-              onChange={(e) => setImportMode(e.target.value)}
-              style={{ marginLeft: "8px" }}
-            />
-            <span>
-              <strong>Merge</strong> - הוספת אתרים חדשים בלבד (מומלץ)
-            </span>
-          </label>
-          <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
-            <input
-              type="radio"
-              value="replace"
-              checked={importMode === "replace"}
-              onChange={(e) => setImportMode(e.target.value)}
-              style={{ marginLeft: "8px" }}
-            />
-            <span>
-              <strong>Replace</strong> - מחיקת הכל ויבוא מחדש ⚠️
-            </span>
-          </label>
         </div>
       </div>
 
@@ -373,7 +325,7 @@ export default function DataImportTab({ authHeader }) {
 
           {previewData.duplicate_sites.length > 0 && (
             <div style={{ marginBottom: "15px" }}>
-              <strong>אתרים כפולים (יידלגו במצב Merge):</strong>
+              <strong>אתרים כפולים (יידלגו בייבוא):</strong>
               <div style={{ maxHeight: "150px", overflow: "auto", padding: "10px", backgroundColor: "white", borderRadius: "5px", marginTop: "5px" }}>
                 {previewData.duplicate_sites.map((name, idx) => (
                   <div key={idx} style={{ padding: "5px 0", borderBottom: "1px solid #eee" }}>
@@ -404,10 +356,9 @@ export default function DataImportTab({ authHeader }) {
         <h4 style={{ marginBottom: "10px" }}>📝 הוראות:</h4>
         <ol style={{ marginRight: "20px", lineHeight: "1.8" }}>
           <li>הכן קובץ Excel עם השדות הנדרשים</li>
-          <li>בחר סוג יבוא: Merge (מומלץ) או Replace</li>
           <li>העלה את הקובץ (גרור ושחרר או בחר)</li>
-          <li>לחץ על "תצוגה מקדימה" לראות מה ישתנה</li>
-          <li>לחץ על "יבא עכשיו" לבצע את היבוא</li>
+          <li>לחץ על "תצוגה מקדימה" לראות אילו אתרים חדשים יתווספו</li>
+          <li>לחץ על "יבא עכשיו" לבצע את היבוא (אתרים קיימים יידלגו)</li>
         </ol>
       </div>
     </div>

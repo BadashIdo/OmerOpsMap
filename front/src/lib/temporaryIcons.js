@@ -5,15 +5,8 @@ import L from "leaflet";
  */
 
 // Create colored divIcon for temporary events
-function createTemporaryIcon(priority = "medium") {
-  const colors = {
-    low: "#4CAF50",      // Green
-    medium: "#FF9800",   // Orange
-    high: "#FF5722",     // Deep Orange
-    critical: "#F44336", // Red
-  };
-
-  const color = colors[priority] || colors.medium;
+function createTemporaryIcon() {
+  const color = "#FF9800"; // Default Orange for all temp events
 
   return L.divIcon({
     className: "custom-temp-icon",
@@ -43,8 +36,8 @@ function createTemporaryIcon(priority = "medium") {
   });
 }
 
-export function getTemporaryIcon(priority) {
-  return createTemporaryIcon(priority);
+export function getTemporaryIcon() {
+  return createTemporaryIcon();
 }
 
 export function getCategoryEmoji() {

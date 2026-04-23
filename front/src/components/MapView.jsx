@@ -28,7 +28,6 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import L from "leaflet";
 import { userIcon, getCategoryIcon } from "../lib/leafletIcons";
-import { getTemporaryIcon } from "../lib/temporaryIcons";
 import { OMER_CENTER } from "../lib/constants";
 
 /** Blue cluster icon — same color regardless of count */
@@ -109,7 +108,7 @@ export default function MapView({ mapRef, markerRefs, userLocation, points, temp
         </Marker>
       )}
 
-      {/* Permanent Sites — clustered, memoized so markers only re-render when data changes */}
+      {/* All Sites — clustered together, memoized separately so markers only re-render when their respective data changes */}
       <MarkerClusterGroup chunkedLoading disableClusteringAtZoom={18} maxClusterRadius={50} iconCreateFunction={createClusterIcon}>
         {useMemo(() => points.map((p) => (
           <Marker
@@ -129,19 +128,17 @@ export default function MapView({ mapRef, markerRefs, userLocation, points, temp
             </Popup>
           </Marker>
         )), [points, onMarkerClick, setMarkerRef, isAdmin, onEditSite])}
-      </MarkerClusterGroup>
 
-      {/* Temporary Sites — clustered separately */}
-      <MarkerClusterGroup chunkedLoading disableClusteringAtZoom={18} maxClusterRadius={50} iconCreateFunction={createClusterIcon}>
         {useMemo(() => temporarySites.map((t) => (
           <Marker
             key={`temporary-${t.id}`}
             position={[t.lat, t.lng]}
-            icon={getTemporaryIcon(t.priority)}
+            icon={getCategoryIcon(t.sub_category)}
             ref={(el) => setMarkerRef(el, `temporary-${t.id}`)}
             eventHandlers={{
               click: (e) => {
                 L.DomEvent.stopPropagation(e);
+                onMarkerClick(t);
               },
             }}
           >

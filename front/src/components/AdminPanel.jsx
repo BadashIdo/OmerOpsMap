@@ -9,12 +9,12 @@ import styles from "../styles/AdminPanel.module.css";
 const TABS = [
   { id: "permanent", label: "אתרים קבועים", icon: "📍" },
   { id: "temporary", label: "אירועים זמניים", icon: "⚡" },
-  { id: "import", label: "יבוא נתונים", icon: "📤" },
-  { id: "export", label: "ייצוא נתונים", icon: "📥" },
+  { id: "import", label: "יבוא נתונים", icon: "📥" },
+  { id: "export", label: "ייצוא נתונים", icon: "📤" },
 ];
 
-export default function AdminPanel({ isOpen, onClose, onDataChange, categoriesStructure }) {
-  const { admin, logout, getAuthHeader } = useAuth();
+export default function AdminPanel({ isOpen, onClose, onDataChange, categoriesStructure, onLocateSite }) {
+  const { admin, getAuthHeader } = useAuth();
   const [activeTab, setActiveTab] = useState("permanent");
 
   const handleDataChange = () => {
@@ -38,9 +38,6 @@ export default function AdminPanel({ isOpen, onClose, onDataChange, categoriesSt
           <div className={styles.headerLeft}>
             <div className={styles.adminInfo}>
               <span className={styles.adminName}>{admin?.display_name || admin?.username}</span>
-              <button className={styles.logoutBtn} onClick={logout}>
-                יציאה
-              </button>
             </div>
             <button className={styles.closeBtn} onClick={onClose}>
               ×
@@ -69,6 +66,7 @@ export default function AdminPanel({ isOpen, onClose, onDataChange, categoriesSt
               authHeader={getAuthHeader()}
               onDataChange={handleDataChange}
               categoriesStructure={categoriesStructure}
+              onLocateSite={(site) => onLocateSite({ ...site, _type: "permanent" })}
             />
           )}
           {activeTab === "temporary" && (
@@ -76,6 +74,7 @@ export default function AdminPanel({ isOpen, onClose, onDataChange, categoriesSt
               authHeader={getAuthHeader()}
               onDataChange={handleDataChange}
               categoriesStructure={categoriesStructure}
+              onLocateSite={(site) => onLocateSite({ ...site, _type: "temporary" })}
             />
           )}
           {activeTab === "import" && (

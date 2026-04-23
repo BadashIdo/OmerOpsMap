@@ -63,7 +63,11 @@ curl -s https://ipv4.icanhazip.com
 
 ## Step 4: Update docker-compose.yml with Your IP
 
-Edit `docker-compose.yml` and update the frontend environment variables:
+> [!CAUTION]
+> **This step is mandatory before running `docker-compose up`.**
+> If you skip it or use the wrong IP, **the app will appear to work but sites won't load and admin login will fail** — the browser won't be able to reach the backend.
+
+Edit `docker-compose.yml` and find these two lines under the `frontend` service:
 
 ```yaml
 frontend:
@@ -72,7 +76,19 @@ frontend:
     - VITE_WS_URL=ws://YOUR_IP_HERE:8001/ws
 ```
 
-**Replace `YOUR_IP_HERE` with your actual IP** (e.g., `192.168.10.5`).
+**Replace `YOUR_IP_HERE` with the IP you got in Step 3** (e.g., `192.168.10.5`):
+
+```yaml
+    - VITE_API_URL=http://192.168.10.5:8001
+    - VITE_WS_URL=ws://192.168.10.5:8001/ws
+```
+
+> [!WARNING]
+> Your IP can change when you switch WiFi networks or restart your router.
+> If sites stop loading after a network change, re-run Step 3, update these two lines, and run:
+> ```bash
+> docker-compose up -d --force-recreate frontend
+> ```
 
 ---
 

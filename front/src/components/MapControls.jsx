@@ -31,8 +31,6 @@ export default function MapControls({
   mapRef,
   isTracking,
   onLocate,
-  temporarySitesCount,
-  onOpenTempPanel,
   isAdmin,
   onOpenAdmin,
   onOpenSidebar,
@@ -63,19 +61,6 @@ export default function MapControls({
         title={isTracking ? "עצור מעקב" : "התחל מעקב מיקום"}
       >
         {isTracking ? "📍" : "🎯"}
-      </button>
-
-      {/* Temporary events — shows live count badge */}
-      <button
-        className={styles.btn}
-        onClick={onOpenTempPanel}
-        title="אירועים זמניים"
-        style={{ position: "relative" }}
-      >
-        ⚡
-        {temporarySitesCount > 0 && (
-          <span className={styles.badge}>{temporarySitesCount}</span>
-        )}
       </button>
 
       {/* Admin panel — only visible to admins */}

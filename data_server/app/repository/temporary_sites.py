@@ -23,6 +23,13 @@ class TemporarySitesRepository:
         )
         return list(result.scalars().all())
 
+    async def get_all_history(self) -> List[TemporaryHistory]:
+        """Get all historical temporary sites"""
+        result = await self.session.execute(
+            select(TemporaryHistory).order_by(TemporaryHistory.end_date.desc())
+        )
+        return list(result.scalars().all())
+
     async def get_all(self) -> List[TemporarySite]:
         """Get all temporary sites (including expired)"""
         result = await self.session.execute(select(TemporarySite))
@@ -82,12 +89,16 @@ class TemporarySitesRepository:
             name=site.name,
             description=site.description,
             category=site.category,
+            sub_category=site.sub_category,
+            type=site.type,
+            district=site.district,
+            street=site.street,
+            house_number=site.house_number,
             lat=site.lat,
             lng=site.lng,
             start_date=site.start_date,
             end_date=site.end_date,
-            priority=site.priority,
-            status=site.status,
+            status=EventStatus.RESOLVED,
             contact_name=site.contact_name,
             phone=site.phone,
             created_at=site.created_at,

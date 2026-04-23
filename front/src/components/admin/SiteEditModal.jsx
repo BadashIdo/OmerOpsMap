@@ -14,18 +14,27 @@ import styles from "../../styles/SiteEditModal.module.css";
 // Excluded top-level keys that are not real site categories
 const EXCLUDED_STRUCTURE_KEYS = ["רובעים", "אירועים זמניים"];
 
-const PRIORITIES = [
-  { value: "low", label: "נמוכה" },
-  { value: "medium", label: "בינונית" },
-  { value: "high", label: "גבוהה" },
-  { value: "critical", label: "קריטית" },
-];
+// Helper: split an ISO / datetime-local string into { date, hour, minute } parts
+function splitDateTime(raw) {
+  if (!raw) return { date: "", hour: "", minute: "" };
+  const [date, time = ""] = raw.substring(0, 16).split("T");
+  const [h = "", m = ""] = time.split(":");
+  return { date, hour: h.substring(0, 2), minute: m.substring(0, 2) };
+}
 
-const STATUSES = [
-  { value: "active", label: "פעיל" },
-  { value: "scheduled", label: "מתוכנן" },
-  { value: "cancelled", label: "בוטל" },
-];
+// Helper: combine date + hour + minute into a datetime-local value
+function combineDateTime(date, hour, minute) {
+  if (!date) return "";
+  const h = hour || "00";
+  const m = minute || "00";
+  return `${date}T${h}:${m}`;
+}
+
+// Hour options 00–23
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
+
+// Minute options in 5-minute steps
+const MINUTE_OPTIONS = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0"));
 
 export default function SiteEditModal({ site, siteType, authHeader, categoriesStructure, onClose, onSave }) {
   const isNew = !site?.id;
@@ -47,6 +56,8 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
         contact_name: site?.contactName || site?.contact_name || "",
       };
     } else {
+      const startParts = splitDateTime(site?.start_date);
+      const endParts   = splitDateTime(site?.end_date);
       return {
         name: site?.name || "",
         category: site?.category || "",
@@ -58,10 +69,12 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
         description: site?.description || "",
         lat: site?.lat || 31.25,
         lng: site?.lng || 34.79,
-        start_date: site?.start_date ? site.start_date.substring(0, 16) : "",
-        end_date: site?.end_date ? site.end_date.substring(0, 16) : "",
-        priority: site?.priority || "medium",
-        status: site?.status || "active",
+        start_date_d: startParts.date,
+        start_date_h: startParts.hour,
+        start_date_m: startParts.minute,
+        end_date_d: endParts.date,
+        end_date_h: endParts.hour,
+        end_date_m: endParts.minute,
         phone: site?.phone || "",
         contact_name: site?.contactName || site?.contact_name || "",
       };
@@ -114,6 +127,34 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
       .flatMap(([, subs]) => subs);
   }, [categoriesStructure, formData.category]);
 
+  // When end date equals start date, only allow hours >= start hour
+  const endHourOptions = useMemo(() => {
+    if (
+      formData.end_date_d &&
+      formData.end_date_d === formData.start_date_d &&
+      formData.start_date_h
+    ) {
+      return HOUR_OPTIONS.filter((h) => h >= formData.start_date_h);
+    }
+    return HOUR_OPTIONS;
+  }, [formData.end_date_d, formData.start_date_d, formData.start_date_h]);
+
+  // When same day AND same hour, only allow minutes > start minute
+  const endMinuteOptions = useMemo(() => {
+    if (
+      formData.end_date_d === formData.start_date_d &&
+      formData.end_date_h === formData.start_date_h &&
+      formData.start_date_m
+    ) {
+      return MINUTE_OPTIONS.filter((m) => m > formData.start_date_m);
+    }
+    return MINUTE_OPTIONS;
+  }, [
+    formData.end_date_d, formData.start_date_d,
+    formData.end_date_h, formData.start_date_h,
+    formData.start_date_m,
+  ]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -140,6 +181,31 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
         if (parentCat) next.category = parentCat;
       }
 
+      // When start date/hour/minute changes, auto-reset end if it becomes invalid
+      if (name === "start_date_d" && next.end_date_d && next.end_date_d < value) {
+        next.end_date_d = "";
+        next.end_date_h = "";
+        next.end_date_m = "";
+      }
+      if (
+        (name === "start_date_h" || name === "start_date_d") &&
+        next.end_date_d === next.start_date_d &&
+        next.end_date_h &&
+        next.end_date_h < (name === "start_date_h" ? value : next.start_date_h)
+      ) {
+        next.end_date_h = "";
+        next.end_date_m = "";
+      }
+      if (
+        (name === "start_date_m" || name === "start_date_h") &&
+        next.end_date_d === next.start_date_d &&
+        next.end_date_h === next.start_date_h &&
+        next.end_date_m &&
+        next.end_date_m <= (name === "start_date_m" ? value : next.start_date_m)
+      ) {
+        next.end_date_m = "";
+      }
+
       return next;
     });
   };
@@ -148,15 +214,17 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
     e.preventDefault();
     setError("");
 
-    // Validation — shared required fields for both types
+    // Validation
     const missing = [];
-    if (!formData.name.trim())       missing.push("שם");
-    if (!formData.category)          missing.push("קטגוריה");
-    if (!formData.sub_category)      missing.push("תת-קטגוריה");
-    if (!formData.district.trim())   missing.push("שכונה/רובע");
-    if (!formData.lat)               missing.push("קו רוחב (Lat)");
-    if (!formData.lng)               missing.push("קו אורך (Lng)");
-    if (activeSiteType === "temporary" && !formData.end_date) missing.push("תאריך סיום");
+    if (!formData.name.trim()) missing.push("שם");
+    if (!formData.category)   missing.push("קטגוריה");
+    if (!formData.lat)        missing.push("קו רוחב (Lat)");
+    if (!formData.lng)        missing.push("קו אורך (Lng)");
+    if (!formData.sub_category)    missing.push("תת-קטגוריה");
+    if (!formData.district.trim()) missing.push("שכונה/רובע");
+    
+    // Temporary-only required fields
+    if (activeSiteType === "temporary" && !formData.end_date_d) missing.push("תאריך סיום");
 
     if (missing.length > 0) {
       setError(`שדות חובה חסרים: ${missing.join(", ")}`);
@@ -171,13 +239,21 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
 
       // Convert and validate dates for temporary sites
       if (activeSiteType === "temporary") {
-        if (payload.start_date) {
-          const d = new Date(payload.start_date);
+
+        // Combine split date+hour+minute back into ISO strings
+        const startCombined = combineDateTime(payload.start_date_d, payload.start_date_h, payload.start_date_m);
+        const endCombined   = combineDateTime(payload.end_date_d,   payload.end_date_h,   payload.end_date_m);
+
+        delete payload.start_date_d; delete payload.start_date_h; delete payload.start_date_m;
+        delete payload.end_date_d;   delete payload.end_date_h;   delete payload.end_date_m;
+
+        if (startCombined) {
+          const d = new Date(startCombined);
           if (isNaN(d.getTime())) { setError("תאריך התחלה אינו תקין"); setIsLoading(false); return; }
           payload.start_date = d.toISOString();
         }
-        if (payload.end_date) {
-          const d = new Date(payload.end_date);
+        if (endCombined) {
+          const d = new Date(endCombined);
           if (isNaN(d.getTime())) { setError("תאריך סיום אינו תקין"); setIsLoading(false); return; }
           payload.end_date = d.toISOString();
         }
@@ -389,20 +465,20 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
             </div>
 
             <div className={styles.field}>
-                <label>תת-קטגוריה *</label>
-                <select name="sub_category" value={formData.sub_category} onChange={handleChange}>
-                  <option value="">
-                    {formData.category
-                      ? availableSubCategories.length > 0
-                        ? "בחר תת-קטגוריה"
-                        : "אין תת-קטגוריות"
-                      : "בחר קטגוריה "}
-                  </option>
-                  {availableSubCategories.map((sub) => (
-                    <option key={sub} value={sub}>{sub}</option>
-                  ))}
-                </select>
-              </div>
+              <label>תת-קטגוריה *</label>
+              <select name="sub_category" value={formData.sub_category} onChange={handleChange}>
+                <option value="">
+                  {formData.category
+                    ? availableSubCategories.length > 0
+                      ? "בחר תת-קטגוריה"
+                      : "אין תת-קטגוריות"
+                    : "בחר קטגוריה "}
+                </option>
+                {availableSubCategories.map((sub) => (
+                  <option key={sub} value={sub}>{sub}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className={styles.row}>
@@ -451,41 +527,66 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
 
           {activeSiteType === "temporary" && (
             <>
-              <div className={styles.row}>
-                <div className={styles.field}>
+              {/* Start: date / minute / hour — all in one row, same height */}
+              <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+                <div className={styles.field} style={{ flex: 2, display: "flex", flexDirection: "column" }}>
                   <label>תאריך התחלה</label>
                   <input
-                    type="datetime-local"
-                    name="start_date"
-                    value={formData.start_date}
+                    type="date"
+                    name="start_date_d"
+                    value={formData.start_date_d}
                     onChange={handleChange}
+                    style={{ flex: 1 }}
                   />
                 </div>
-                <div className={styles.field}>
-                  <label>תאריך סיום *</label>
-                  <input
-                    type="datetime-local"
-                    name="end_date"
-                    value={formData.end_date}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-
-              <div className={styles.row}>
-                <div className={styles.field}>
-                  <label>דחיפות</label>
-                  <select name="priority" value={formData.priority} onChange={handleChange}>
-                    {PRIORITIES.map((p) => (
-                      <option key={p.value} value={p.value}>{p.label}</option>
+                <div className={styles.field} style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                  <label>דקות</label>
+                  <select name="start_date_m" value={formData.start_date_m} onChange={handleChange} style={{ flex: 1 }}>
+                    <option value="">דק׳</option>
+                    {MINUTE_OPTIONS.map((m) => (
+                      <option key={m} value={m}>{m}</option>
                     ))}
                   </select>
                 </div>
-                <div className={styles.field}>
-                  <label>סטטוס</label>
-                  <select name="status" value={formData.status} onChange={handleChange}>
-                    {STATUSES.map((s) => (
-                      <option key={s.value} value={s.value}>{s.label}</option>
+                <div className={styles.field} style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                  <label>שעה</label>
+                  <select name="start_date_h" value={formData.start_date_h} onChange={handleChange} style={{ flex: 1 }}>
+                    <option value="">שע׳</option>
+                    {HOUR_OPTIONS.map((h) => (
+                      <option key={h} value={h}>{h}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* End: date / minute / hour — all in one row, same height */}
+              <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+                <div className={styles.field} style={{ flex: 2, display: "flex", flexDirection: "column" }}>
+                  <label>תאריך סיום *</label>
+                  <input
+                    type="date"
+                    name="end_date_d"
+                    value={formData.end_date_d}
+                    onChange={handleChange}
+                    min={formData.start_date_d || undefined}
+                    style={{ flex: 1 }}
+                  />
+                </div>
+                <div className={styles.field} style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                  <label>דקות</label>
+                  <select name="end_date_m" value={formData.end_date_m} onChange={handleChange} style={{ flex: 1 }}>
+                    <option value="">דקות</option>
+                    {endMinuteOptions.map((m) => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className={styles.field} style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                  <label>שעה</label>
+                  <select name="end_date_h" value={formData.end_date_h} onChange={handleChange} style={{ flex: 1 }}>
+                    <option value="">שעה</option>
+                    {endHourOptions.map((h) => (
+                      <option key={h} value={h}>{h}</option>
                     ))}
                   </select>
                 </div>

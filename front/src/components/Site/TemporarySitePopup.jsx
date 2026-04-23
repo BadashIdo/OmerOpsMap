@@ -1,41 +1,28 @@
 import { useState } from "react";
 import styles from "../../styles/Site.module.css";
+import SiteActions from "./SiteActions";
 import { has } from "../../lib/siteUtils";
 
 export default function TemporarySitePopup({ site, isAdmin, onEdit }) {
   const [showMore, setShowMore] = useState(false);
 
   const formatDate = (dateString) => {
+    if (!dateString) return "";
     const date = new Date(dateString);
     return date.toLocaleDateString("he-IL", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
     });
   };
 
-  const getPriorityColor = (priority) => {
-    const colors = {
-      low: "#4CAF50",
-      medium: "#FF9800",
-      high: "#FF5722",
-      critical: "#F44336",
-    };
-    return colors[priority] || colors.medium;
-  };
+  const address =
+    has(site.address) ? site.address : [site.street, site.house_number || site.houseNumber].filter(has).join(" ");
 
-  const getStatusText = (status) => {
-    const statusMap = {
-      active: "פעיל",
-      paused: "מושהה",
-      resolved: "טופל",
-    };
-    return statusMap[status] || status;
-  };
-
-  const contactLine = [site.contact_name, site.phone].filter(has).join("  ");
+  const contactLine = [site.contact_name || site.contactName, site.phone].filter(has).join("  ");
+  const catLine = [site.category, site.sub_category || site.subCategory].filter(has).join(" / ");
   const coordLine =
     has(site.lat) && has(site.lng)
       ? `${Number(site.lat).toFixed(6)}, ${Number(site.lng).toFixed(6)}`
@@ -43,35 +30,46 @@ export default function TemporarySitePopup({ site, isAdmin, onEdit }) {
 
   return (
     <div className={styles.popup}>
-      {/* כותרת + תגית זמני */}
+      {/* כותרת + רובע */}
       <div className={styles.titleRow}>
-        <div className={styles.title}>
-          {has(site.name) ? site.name : "אירוע זמני"}
-        </div>
-        <div
-          className={styles.pill}
-          style={{
-            backgroundColor: getPriorityColor(site.priority),
-            color: "white",
-          }}
-        >
-          ⚡ {site.priority}
-        </div>
+        <div className={styles.title}>{has(site.name) ? site.name : "אירוע זמני"}</div>
+        {has(site.district) && <div className={styles.pill}>{site.district}</div>}
       </div>
 
       {/* טבלת שורות */}
       <div className={styles.rows}>
-        {has(site.category) && (
+        {has(site.district) && (
           <div className={styles.row}>
-            <span className={styles.label}>סוג</span>
-            <span className={styles.value}>{site.category}</span>
+            <span className={styles.label}>רובע</span>
+            <span className={styles.value}>{site.district}</span>
           </div>
         )}
 
-        {has(site.status) && (
+        {has(address) && (
           <div className={styles.row}>
-            <span className={styles.label}>סטטוס</span>
-            <span className={styles.value}>{getStatusText(site.status)}</span>
+            <span className={styles.label}>כתובת</span>
+            <span className={styles.value}>{address}</span>
+          </div>
+        )}
+
+        {has(contactLine) && (
+          <div className={styles.row}>
+            <span className={styles.label}>איש קשר</span>
+            <span className={styles.value}>{contactLine}</span>
+          </div>
+        )}
+
+        {has(catLine) && (
+          <div className={styles.row}>
+            <span className={styles.label}>קטגוריה</span>
+            <span className={styles.value}>{catLine}</span>
+          </div>
+        )}
+
+        {has(site.type) && (
+          <div className={styles.row}>
+            <span className={styles.label}>סוג אתר</span>
+            <span className={styles.value}>{site.type}</span>
           </div>
         )}
 
@@ -86,13 +84,6 @@ export default function TemporarySitePopup({ site, isAdmin, onEdit }) {
           <div className={styles.row}>
             <span className={styles.label}>סיום</span>
             <span className={styles.value}>{formatDate(site.end_date)}</span>
-          </div>
-        )}
-
-        {has(contactLine) && (
-          <div className={styles.row}>
-            <span className={styles.label}>איש קשר</span>
-            <span className={styles.value}>{contactLine}</span>
           </div>
         )}
 
@@ -112,12 +103,16 @@ export default function TemporarySitePopup({ site, isAdmin, onEdit }) {
             className={styles.smallBtn}
             onClick={() => setShowMore((v) => !v)}
           >
-            פרטים נוספים
+            מידע נוסף
           </button>
 
           {showMore && <div className={styles.descBox}>{site.description}</div>}
         </>
       )}
+
+      {/* ניווט */}
+      <SiteActions lat={site.lat} lng={site.lng} />
+
       {/* פעולות מנהל */}
       {isAdmin && (
         <button

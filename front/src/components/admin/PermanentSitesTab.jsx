@@ -3,7 +3,7 @@ import { fetchPermanentSites, deletePermanentSiteAuth } from "../../api/sitesApi
 import SiteEditModal from "./SiteEditModal";
 import styles from "../../styles/AdminTab.module.css";
 
-export default function PermanentSitesTab({ authHeader, onDataChange, categoriesStructure }) {
+export default function PermanentSitesTab({ authHeader, onDataChange, categoriesStructure, onLocateSite }) {
   const [sites, setSites] = useState([]);
   const [filteredSites, setFilteredSites] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -135,6 +135,13 @@ export default function PermanentSitesTab({ authHeader, onDataChange, categories
                   </td>
                   <td>
                     <div className={styles.tableActions}>
+                      <button
+                        className={styles.editBtn}
+                        onClick={() => onLocateSite?.(site)}
+                        style={{ background: "#e3f2fd", color: "#1565c0", borderColor: "#bbdefb" }}
+                      >
+                        📍 הצג במפה
+                      </button>
                       <button
                         className={styles.editBtn}
                         onClick={() => setSelectedSite(site)}

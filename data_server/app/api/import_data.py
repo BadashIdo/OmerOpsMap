@@ -9,7 +9,7 @@ import tempfile
 import shutil
 from pathlib import Path
 from datetime import datetime, timezone
-
+import math
 import openpyxl
 
 from app.database import get_db
@@ -22,6 +22,24 @@ from pydantic import BaseModel
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 from import_excel_to_db import parse_excel, ImportLogger, clean_str, to_number
+
+
+def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Calculate distance in meters between two coordinates"""
+    if lat1 is None or lon1 is None or lat2 is None or lon2 is None:
+        return float('inf')
+    R = 6371000  # Radius of earth in meters
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+    
+    a = math.sin(delta_phi / 2.0) ** 2 + \
+        math.cos(phi1) * math.cos(phi2) * \
+        math.sin(delta_lambda / 2.0) ** 2
+    
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
 
 
 router = APIRouter(prefix="/api/admin/import", tags=["import"])
@@ -138,15 +156,39 @@ def parse_temporary_excel(excel_path: str, logger: ImportLogger) -> Tuple[List[T
         priority_raw = clean_str(r.get("דחיפות", ""))
         status_raw   = clean_str(r.get("סטטוס", ""))
 
+        category = clean_str(r.get("קטגוריה", "")) or None
+        if not category:
+            errors.append(f"⚠️ שורה {row_idx}: חסרה קטגוריה")
+            continue
+
+        sub_category = clean_str(r.get("תת קטגוריה", r.get("תת-קטגוריה", ""))) or None
+        if not sub_category:
+            errors.append(f"⚠️ שורה {row_idx}: חסרה תת קטגוריה")
+            continue
+
+        site_type = clean_str(r.get("סוג אתר", r.get("סוג", ""))) or None
+        
+        district = clean_str(r.get("רובע", r.get("אזור", r.get("שכונה", "")))) or None
+        if not district:
+            errors.append(f"⚠️ שורה {row_idx}: חסר רובע")
+            continue
+
+        street = clean_str(r.get("רחוב", r.get("שם רחוב", ""))) or None
+        house_number = clean_str(r.get("מספר בית", r.get("מספר", ""))) or None
+
         sites.append(TemporarySite(
             name=name,
-            category=clean_str(r.get("קטגוריה", "")) or None,
+            category=category,
+            sub_category=sub_category,
+            type=site_type,
+            district=district,
+            street=street,
+            house_number=house_number,
             description=clean_str(r.get("תיאור", "")) or None,
             lat=lat,
             lng=lng,
             start_date=start_date,
             end_date=end_date,
-            priority=_PRIORITY_MAP.get(priority_raw, "medium"),
             status=_STATUS_MAP.get(status_raw, "active"),
             contact_name=clean_str(r.get("שם איש קשר", "")) or None,
             phone=clean_str(r.get("טלפון", "")) or None,
@@ -197,16 +239,37 @@ async def preview_import(
         if site_type == "permanent":
             sites_to_create, errors = parse_excel(tmp_path, logger)
             result = await db.execute(select(PermanentSite))
-            existing_names = {s.name for s in result.scalars().all()}
-            db_count = len(existing_names)
+            existing_sites = result.scalars().all()
+            db_count = len(existing_sites)
         else:
             sites_to_create, errors = parse_temporary_excel(tmp_path, logger)
             result = await db.execute(select(TemporarySite))
-            existing_names = {s.name for s in result.scalars().all()}
-            db_count = len(existing_names)
+            existing_sites = result.scalars().all()
+            db_count = len(existing_sites)
 
-        new_sites = [s.name for s in sites_to_create if s.name not in existing_names]
-        dup_sites  = [s.name for s in sites_to_create if s.name in existing_names]
+        from collections import defaultdict
+        existing_by_name = defaultdict(list)
+        for s in existing_sites:
+            existing_by_name[s.name].append(s)
+
+        new_sites = []
+        dup_sites = []
+        
+        for s in sites_to_create:
+            is_duplicate = False
+            if s.name in existing_by_name:
+                for existing_s in existing_by_name[s.name]:
+                    dist = haversine_distance(s.lat, s.lng, existing_s.lat, existing_s.lng)
+                    if dist <= 5.0:
+                        is_duplicate = True
+                        break
+            
+            if is_duplicate:
+                dup_sites.append(s.name)
+            else:
+                new_sites.append(s.name)
+                # To prevent duplicates within the file itself
+                existing_by_name[s.name].append(s)
 
         return ImportPreviewResponse(
             total_rows=len(sites_to_create) + len(errors),
@@ -228,7 +291,6 @@ async def preview_import(
 @router.post("/execute", response_model=ImportExecuteResponse)
 async def execute_import(
     file: UploadFile = File(...),
-    mode: Literal["merge", "replace"] = Query(default="merge"),
     site_type: Literal["permanent", "temporary"] = Query(default="permanent"),
     db: AsyncSession = Depends(get_db),
     admin: Admin = Depends(get_current_admin),
@@ -258,20 +320,29 @@ async def execute_import(
 
         sites_added = sites_deleted = sites_skipped = 0
 
-        if mode == "replace":
-            for s in existing:
-                await db.delete(s)
-            sites_deleted = len(existing)
-            await db.flush()
-            db.add_all(sites_to_create)
-            sites_added = len(sites_to_create)
-        else:
-            existing_names = {s.name for s in existing}
-            new_sites = [s for s in sites_to_create if s.name not in existing_names]
-            sites_skipped = len(sites_to_create) - len(new_sites)
-            if new_sites:
-                db.add_all(new_sites)
-                sites_added = len(new_sites)
+        from collections import defaultdict
+        existing_by_name = defaultdict(list)
+        for s in existing:
+            existing_by_name[s.name].append(s)
+
+        new_sites = []
+        for s in sites_to_create:
+            is_duplicate = False
+            if s.name in existing_by_name:
+                for existing_s in existing_by_name[s.name]:
+                    dist = haversine_distance(s.lat, s.lng, existing_s.lat, existing_s.lng)
+                    if dist <= 5.0:
+                        is_duplicate = True
+                        break
+            
+            if not is_duplicate:
+                new_sites.append(s)
+                existing_by_name[s.name].append(s)
+
+        sites_skipped = len(sites_to_create) - len(new_sites)
+        if new_sites:
+            db.add_all(new_sites)
+            sites_added = len(new_sites)
 
         await db.commit()
 
@@ -280,7 +351,7 @@ async def execute_import(
 
         return ImportExecuteResponse(
             success=True,
-            message=f"יבוא הושלם בהצלחה במצב {mode}",
+            message="יבוא הושלם בהצלחה",
             sites_added=sites_added,
             sites_deleted=sites_deleted,
             sites_skipped=sites_skipped,

@@ -24,6 +24,9 @@ export default function SideBar({
   categoriesStructure,
   activeFilters,
   toggleFilter,
+  toggleGroup,
+  showTemporarySites,
+  setShowTemporarySites,
 }) {
   // Per-category accordion open/closed state (UI only, not filter state)
   const [openCats, setOpenCats] = useState({});
@@ -61,29 +64,14 @@ export default function SideBar({
           </button>
         </div>
 
-        {/* Emergency */}
-        <div className={styles.emergency}>
-          <div className={styles.toggleFake} />
-          <div className={styles.emergencyTitle}>מצב חירום</div>
-          <div className={styles.emergencyIcon}>⚠️</div>
-        </div>
-
-        {/* Exit to selection page */}
-        <button
-          className={styles.exitBtn}
-          onClick={() => {
-            if (confirm("האם לצאת ולחזור לבחירת משתמש?\n(אורח / מנהל)")) {
-              sessionStorage.clear();
-              window.location.reload();
-            }
-          }}
-        >
-          <span className={styles.exitIcon}>⎋</span>
-          <div className={styles.exitText}>
-            <div className={styles.exitTitle}>יציאה</div>
-            <div className={styles.exitSub}>שינוי משתמש (אורח/מנהל)</div>
+        {/* Temporary Sites Toggle */}
+        <div className={styles.emergency} onClick={() => setShowTemporarySites(prev => !prev)} style={{ cursor: 'pointer' }}>
+          <div className={`${styles.toggleReal} ${showTemporarySites ? styles.toggleOn : styles.toggleOff}`}>
+            <div className={styles.toggleThumb} />
           </div>
-        </button>
+          <div className={styles.emergencyTitle}>אירועים זמניים</div>
+          <div className={styles.emergencyIcon}>⚡</div>
+        </div>
 
         {/* Content */}
         <div className={styles.sections}>
@@ -92,19 +80,35 @@ export default function SideBar({
 
             return (
               <div key={mainCategory} className={styles.card}>
-                {/* לחיצה על הכותרת פותחת/סוגרת */}
-                <button
-                  type="button"
+                <div
                   className={styles.cardHeaderBtn}
-                  onClick={() => toggleCat(mainCategory)}
-                  aria-expanded={isCatOpen}
                 >
-                  <div className={`${styles.chev} ${isCatOpen ? styles.chevOpen : ""}`}>˅</div>
-                  <div className={styles.cardTitle}>{mainCategory}</div>
-                  <span className={`material-symbols-outlined ${styles.cardIcon}`}>
-                    {getCategoryIcon(mainCategory)}
-                  </span>
-                </button>
+                  <button
+                    type="button"
+                    className={styles.cardHeaderExpandBtn}
+                    onClick={() => toggleCat(mainCategory)}
+                    aria-expanded={isCatOpen}
+                  >
+                    <div className={`${styles.chev} ${isCatOpen ? styles.chevOpen : ""}`}>˅</div>
+                    <div className={styles.cardTitle}>{mainCategory}</div>
+                    <span className={`material-symbols-outlined ${styles.cardIcon}`}>
+                      {getCategoryIcon(mainCategory)}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.cardHeaderToggleAllBtn}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleGroup(subCategories);
+                    }}
+                    title="סמן/בטל הכל"
+                  >
+                    <span className="material-symbols-outlined">
+                      {subCategories.every(sub => activeFilters.includes(sub)) ? "check_box" : "check_box_outline_blank"}
+                    </span>
+                  </button>
+                </div>
 
                 {/* גוף הקטגוריה נסגר/נפתח */}
                 <div className={`${styles.cardBody} ${isCatOpen ? styles.bodyOpen : styles.bodyClosed}`}>
@@ -141,6 +145,23 @@ export default function SideBar({
             );
           })}
         </div>
+
+        {/* Exit to selection page - moved to bottom */}
+        <button
+          className={styles.exitBtn}
+          onClick={() => {
+            if (confirm("האם לצאת ולחזור לבחירת משתמש?\n(אורח / מנהל)")) {
+              sessionStorage.clear();
+              window.location.reload();
+            }
+          }}
+        >
+          <span className={styles.exitIcon}>⎋</span>
+          <div className={styles.exitText}>
+            <div className={styles.exitTitle}>יציאה</div>
+            <div className={styles.exitSub}>שינוי משתמש (אורח/מנהל)</div>
+          </div>
+        </button>
       </aside>
     </>
   );

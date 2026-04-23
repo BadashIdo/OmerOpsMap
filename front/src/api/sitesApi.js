@@ -142,3 +142,16 @@ export async function deleteTemporarySiteAuth(siteId, authHeader) {
   });
   if (!response.ok) throw new Error("שגיאה במחיקת האירוע");
 }
+
+/**
+ * Fetch all historical temporary sites (admin only).
+ * @param {Object} authHeader - { Authorization: "Bearer <token>" }
+ */
+export async function fetchTemporaryHistoryAuth(authHeader) {
+  const response = await fetch(`${API_BASE_URL}/api/temporary-sites/history`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json", ...authHeader },
+  });
+  if (!response.ok) throw new Error(`Failed to fetch history: ${response.status}`);
+  return response.json();
+}

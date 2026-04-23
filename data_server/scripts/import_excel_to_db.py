@@ -128,17 +128,28 @@ def parse_excel(excel_path: str, logger: ImportLogger) -> Tuple[List[PermanentSi
         # Determine which is Easting (X) and which is Northing (Y) based on typical ITM ranges
         # Easting: typically 100,000 - 300,000
         # Northing: typically 500,000 - 800,000
-        if coord1 > coord2:
-            # coord1 is larger, likely Northing (Y)
-            x = coord2  # Easting
-            y = coord1  # Northing
+        # WGS84: typically 34.xxx, 31.xxx
+        if coord1 < 180 and coord2 < 180:
+            # Already WGS84 (lat/lng)
+            # Usually lat is 31.x and lng is 34.x in Israel
+            if coord1 > coord2:
+                lng = coord1
+                lat = coord2
+            else:
+                lng = coord2
+                lat = coord1
         else:
-            # coord2 is larger, likely Northing (Y)
-            x = coord1  # Easting
-            y = coord2  # Northing
-        
-        # Transform coordinates
-        lat, lng = transform_coordinates(x, y)
+            if coord1 > coord2:
+                # coord1 is larger, likely Northing (Y)
+                x = coord2  # Easting
+                y = coord1  # Northing
+            else:
+                # coord2 is larger, likely Northing (Y)
+                x = coord1  # Easting
+                y = coord2  # Northing
+            
+            # Transform coordinates
+            lat, lng = transform_coordinates(x, y)
         
         if lat is None or lng is None:
             error_msg = f"⚠️  Row {row_idx}: Invalid coordinates ({x}, {y})"
@@ -155,9 +166,28 @@ def parse_excel(excel_path: str, logger: ImportLogger) -> Tuple[List[PermanentSi
             continue
         
         category = pick(r, ["קטגוריה", "קטגוריה ראשית", "קטגוריה ראשית "])
+        if not category:
+            error_msg = f"⚠️  Row {row_idx}: Missing category (קטגוריה חובה)"
+            logger.log(error_msg)
+            errors.append(error_msg)
+            continue
+            
         sub_category = pick(r, ["תת קטגוריה", "תת-קטגוריה", "תת קטגוריה ", "תתקטגוריה"])
+        if not sub_category:
+            error_msg = f"⚠️  Row {row_idx}: Missing sub_category (תת קטגוריה חובה)"
+            logger.log(error_msg)
+            errors.append(error_msg)
+            continue
+            
         site_type = pick(r, ["סוג אתר", "סוג"])
+        
         district = pick(r, ["רובע", "רובע ", "רובע  ", "אזור", "שכונה"])
+        if not district:
+            error_msg = f"⚠️  Row {row_idx}: Missing district (רובע חובה)"
+            logger.log(error_msg)
+            errors.append(error_msg)
+            continue
+            
         street = pick(r, ["רחוב", "שם רחוב"])
         house_number = pick(r, ["מספר בית", "מספר", "בית"])
         phone = pick(r, ["טלפון איש קשר", "טלפון ", "מספר טלפון", "נייד", "פלאפון"])

@@ -4,13 +4,6 @@ from app.database import Base
 import enum
 
 
-class PriorityLevel(str, enum.Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    CRITICAL = "critical"
-
-
 class EventStatus(str, enum.Enum):
     ACTIVE = "active"
     PAUSED = "paused"
@@ -24,11 +17,15 @@ class TemporarySite(Base):
     name = Column(String(255), nullable=False, index=True)
     description = Column(Text)
     category = Column(String(100), index=True)
+    sub_category = Column(String(100), index=True)
+    type = Column(String(100))
+    district = Column(String(100), index=True)
+    street = Column(String(255))
+    house_number = Column(String(50))
     lat = Column(Float, nullable=False, index=True)
     lng = Column(Float, nullable=False, index=True)
     start_date = Column(DateTime(timezone=True), nullable=False, index=True)
     end_date = Column(DateTime(timezone=True), nullable=False, index=True)
-    priority = Column(Enum(PriorityLevel), default=PriorityLevel.MEDIUM, index=True)
     status = Column(Enum(EventStatus), default=EventStatus.ACTIVE, index=True)
     contact_name = Column(String(255))
     phone = Column(String(50))
@@ -47,11 +44,15 @@ class TemporaryHistory(Base):
     name = Column(String(255), nullable=False, index=True)
     description = Column(Text)
     category = Column(String(100), index=True)
+    sub_category = Column(String(100), index=True)
+    type = Column(String(100))
+    district = Column(String(100), index=True)
+    street = Column(String(255))
+    house_number = Column(String(50))
     lat = Column(Float, nullable=False)
     lng = Column(Float, nullable=False)
     start_date = Column(DateTime(timezone=True), nullable=False)
     end_date = Column(DateTime(timezone=True), nullable=False)
-    priority = Column(Enum(PriorityLevel), default=PriorityLevel.MEDIUM)
     status = Column(Enum(EventStatus))
     contact_name = Column(String(255))
     phone = Column(String(50))
