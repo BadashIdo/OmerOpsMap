@@ -69,8 +69,8 @@ log_info "\n${BLUE}[3/6]${NC} Fetching latest code from ${BRANCH} branch..."
 if [ -d .git ]; then
   git fetch origin > /dev/null 2>&1
   git checkout ${BRANCH} > /dev/null 2>&1
-  git pull origin ${BRANCH} > /dev/null 2>&1
-  echo "✅ Pulled latest ${BRANCH} branch"
+  git reset --hard origin/${BRANCH} > /dev/null 2>&1
+  echo "✅ Pulled latest ${BRANCH} branch (hard reset)"
 else
   git clone --branch ${BRANCH} ${REPO_URL} . > /dev/null 2>&1
   echo "✅ Cloned repository (${BRANCH} branch)"
