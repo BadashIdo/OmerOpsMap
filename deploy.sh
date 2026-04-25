@@ -120,8 +120,8 @@ ENVFILE
 echo "✅ .env file created"
 
 log_info "\n${BLUE}[6/6]${NC} Building and starting Docker containers..."
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d > /dev/null 2>&1
-echo "✅ Containers started successfully"
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+echo "✅ Containers started (see logs below for build progress)"
 
 log_info "\n${GREEN}✨ DEPLOYMENT COMPLETE!${NC}"
 
@@ -147,11 +147,12 @@ echo "  3. Login with credentials above"
 echo "  4. Test the application features"
 echo "  5. To upgrade to Let's Encrypt later: update docker-compose.prod.yml"
 
-log_info "\n${YELLOW}📋 Useful Commands:${NC}"
-echo "  • View logs:     docker compose logs -f"
-echo "  • Check status:  docker ps"
-echo "  • Restart:       docker compose restart"
-echo "  • Stop:          docker compose down"
+log_info "\n${YELLOW}📋 Monitor Build Progress:${NC}"
+echo "  • Real-time logs:    docker compose logs -f"
+echo "  • Specific service:  docker compose logs -f frontend"
+echo "  • Check status:      docker ps"
+echo "  • Restart services:  docker compose restart"
+echo "  • Stop all:          docker compose down"
 
 DEPLOY_SCRIPT
 
