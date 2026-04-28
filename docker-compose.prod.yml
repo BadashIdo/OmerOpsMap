@@ -67,6 +67,20 @@ services:
       - INITIAL_SUBADMIN_PASSWORD=${INITIAL_SUBADMIN_PASSWORD:-power1234}
       - INITIAL_SUBADMIN_DISPLAY_NAME=${INITIAL_SUBADMIN_DISPLAY_NAME:-מנהל משנה}
       - INITIAL_SUBADMIN_EMAIL=${INITIAL_SUBADMIN_EMAIL:-}
+      # ── External integrations (Phase 1.0+) ─────────────────────────────────
+      # Provide keys via the host's .env file or your orchestration's secrets
+      # store (GCP Secret Manager, DO App Platform encrypted env, etc).
+      # Each client self-disables when its key is missing.
+      - EXTERNAL_SYNC_ENABLED=${EXTERNAL_SYNC_ENABLED:-true}
+      - OMER_RADIUS_KM=${OMER_RADIUS_KM:-5.0}
+      - TOMTOM_API_KEY=${TOMTOM_API_KEY:-}
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY:-}
+      - IMS_API_TOKEN=${IMS_API_TOKEN:-}
+      - FIRMS_API_KEY=${FIRMS_API_KEY:-}
+      - GMAPS_API_KEY=${GMAPS_API_KEY:-}
+      - WAZE_PARTNER_TOKEN=${WAZE_PARTNER_TOKEN:-}
+      - OREF_ACTIVE_POLL_SECS=${OREF_ACTIVE_POLL_SECS:-5}
+      - OREF_IDLE_POLL_SECS=${OREF_IDLE_POLL_SECS:-30}
     depends_on:
       postgres:
         condition: service_healthy
