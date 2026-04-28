@@ -76,6 +76,18 @@ else
   echo "✅ Cloned repository (${BRANCH} branch)"
 fi
 
+# Show current commit info
+COMMIT_HASH=\$(git rev-parse --short HEAD)
+COMMIT_MESSAGE=\$(git log -1 --pretty=%B)
+COMMIT_DATE=\$(git log -1 --format=%ai)
+COMMIT_AUTHOR=\$(git log -1 --format=%an)
+
+log_info "\n${YELLOW}📍 DEPLOYING COMMIT:${NC}"
+echo "  • Hash:    ${GREEN}\${COMMIT_HASH}${NC}"
+echo "  • Author:  ${GREEN}\${COMMIT_AUTHOR}${NC}"
+echo "  • Date:    ${GREEN}\${COMMIT_DATE}${NC}"
+echo "  • Message: ${GREEN}\${COMMIT_MESSAGE}${NC}"
+
 log_info "\n${BLUE}[4/6]${NC} Stopping and removing old Docker containers..."
 docker compose down -v > /dev/null 2>&1 || echo "No existing containers"
 docker system prune -f > /dev/null 2>&1 || true
