@@ -24,8 +24,10 @@
  *  isSidebarOpen       — hides the panel when true
  */
 
+import { useState } from "react";
 import styles from "../styles/MapControls.module.css";
 import { OMER_CENTER } from "../lib/constants";
+import ConfirmDialog from "./ConfirmDialog";
 
 export default function MapControls({
   mapRef,
@@ -36,11 +38,11 @@ export default function MapControls({
   onOpenSidebar,
   isSidebarOpen,
 }) {
-  const handleExit = () => {
-    if (confirm("האם לצאת ולחזור לבחירת משתמש?\n(אורח / מנהל)")) {
-      sessionStorage.clear();
-      window.location.reload();
-    }
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+  const handleConfirmExit = () => {
+    sessionStorage.clear();
+    window.location.reload();
   };
 
   return (
@@ -86,11 +88,22 @@ export default function MapControls({
       {/* Log out / switch user */}
       <button
         className={`${styles.btn} ${styles.exitBtn}`}
-        onClick={handleExit}
+        onClick={() => setShowExitConfirm(true)}
         title="יציאה ושינוי משתמש"
       >
         <span style={{ fontSize: "20px" }}>⎋</span>
       </button>
+
+      <ConfirmDialog
+        open={showExitConfirm}
+        title="יציאה"
+        message={"האם לצאת ולחזור לבחירת משתמש?\n(אורח / מנהל)"}
+        confirmLabel="יציאה"
+        cancelLabel="ביטול"
+        confirmVariant="danger"
+        onConfirm={handleConfirmExit}
+        onCancel={() => setShowExitConfirm(false)}
+      />
     </div>
   );
 }
