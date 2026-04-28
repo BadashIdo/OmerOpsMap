@@ -233,8 +233,9 @@
   /* ✅ זה העיקר: זה יהיה האזור היחיד שגולל */
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: scroll;               /* scroll (לא auto) — חשוב ל-iOS */
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;     /* מונע מהמפה מלקבל את הגלילה */
 
   /* layout + רווחים */
   display: flex;
