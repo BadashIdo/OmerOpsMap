@@ -72,3 +72,11 @@ Thumbs.db
 # Temporary Excel files
 ~$*.xlsx
 ~$*.xls
+
+# Playwright MCP test artifacts
+.playwright-mcp/
+desktop-*.png
+mobile-*.png
+
+# pytest cache
+.pytest_cache/
