@@ -23,7 +23,7 @@ export default function AdminPanel({ isOpen, onClose, onDataChange, categoriesSt
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || admin?.role !== "admin") return null;
 
   return (
     <>

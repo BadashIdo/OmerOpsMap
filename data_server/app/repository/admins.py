@@ -46,6 +46,7 @@ class AdminsRepository:
             password_hash=hash_password(admin_data.password),
             display_name=admin_data.display_name,
             email=admin_data.email,
+            role=admin_data.role,
         )
         self.session.add(admin)
         await self.session.commit()

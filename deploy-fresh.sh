@@ -102,9 +102,51 @@ log_info "\n${BLUE}[6/8]${NC} Cloning fresh code from ${BRANCH} branch..."
 git clone --branch ${BRANCH} ${REPO_URL} . > /dev/null 2>&1
 echo "✅ Cloned repository from ${BRANCH} branch"
 
-log_info "\n${BLUE}[7/8]${NC} Executing git reset --hard..."
+log_info "\n${BLUE}[7/8]${NC} Executing git reset --hard and creating .env file..."
 git reset --hard > /dev/null 2>&1
 echo "✅ Git reset --hard executed"
+
+# Create nginx certs directory
+mkdir -p nginx/certs
+
+# Generate self-signed certificate (valid for 365 days)
+openssl req -x509 -newkey rsa:2048 -keyout nginx/certs/self-signed.key -out nginx/certs/self-signed.crt -days 365 -nodes \
+  -subj "/C=IL/ST=Israel/L=Omer/O=OmerOpsMap/CN=\${DROPLET_IP}" > /dev/null 2>&1
+echo "✅ Self-signed SSL certificate generated"
+
+cat > .env << ENVFILE
+# OmerOpsMap Production Environment
+# Generated on \$(date)
+
+# JWT & Security
+SECRET_KEY=\${SECRET_KEY}
+ALGORITHM=HS256
+JWT_EXPIRE_HOURS=24
+
+# Admin Account (auto-created on first startup)
+INITIAL_ADMIN_USERNAME=admin
+INITIAL_ADMIN_PASSWORD=${ADMIN_PASSWORD}
+INITIAL_ADMIN_DISPLAY_NAME=מנהל עיריית עומר
+INITIAL_ADMIN_EMAIL=admin@omer.com
+
+# Subadmin Account (auto-created on first startup)
+INITIAL_SUBADMIN_USERNAME=power_user
+INITIAL_SUBADMIN_PASSWORD=1234
+INITIAL_SUBADMIN_DISPLAY_NAME=מנהל משנה
+INITIAL_SUBADMIN_EMAIL=subadmin@omer.com
+
+# Database
+DATABASE_URL=postgresql+asyncpg://omeropsmap:omeropsmap_prod_pass@postgres:5432/omeropsmap
+
+# Frontend Configuration (HTTPS with self-signed certificate)
+VITE_API_URL=https://\${DROPLET_IP}
+VITE_WS_URL=wss://\${DROPLET_IP}/ws
+
+# CORS Origins (HTTP for internal, HTTPS for external)
+ALLOWED_ORIGINS=http://\${DROPLET_IP},https://\${DROPLET_IP},http://frontend,http://nginx
+ENVFILE
+
+echo "✅ .env file created"
 
 # Show current commit info
 COMMIT_HASH=\$(git rev-parse --short HEAD)
@@ -139,6 +181,11 @@ echo "  • WebSocket (WSS):         wss://${DROPLET_IP}/ws"
 log_info "\n${YELLOW}🔐 Admin Login:${NC}"
 echo "  • Username: ${GREEN}admin${NC}"
 echo "  • Password: ${GREEN}${ADMIN_PASSWORD}${NC}"
+
+log_info "\n${YELLOW}🔐 Subadmin Login:${NC}"
+echo "  • Username: ${GREEN}power_user${NC}"
+echo "  • Password: ${GREEN}1234${NC}"
+echo "  • Note: Subadmin cannot delete sites and has no access to system management"
 
 log_info "\n${YELLOW}⚠️  SSL CERTIFICATE INFO:${NC}"
 echo "  ⚠️  Using self-signed certificate for testing"
