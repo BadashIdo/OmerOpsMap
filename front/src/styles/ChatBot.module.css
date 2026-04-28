@@ -43,6 +43,7 @@
   flex-direction: column;
   overflow: hidden;
   animation: slideUp 0.3s ease-out;
+  touch-action: none;
 }
 
 @keyframes slideUp {
@@ -331,8 +332,8 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .chatWindow {
-    width: calc(100vw - 40px);
-    height: calc(100vh - 40px);
+    width: calc(100% - 40px);
+    height: calc(100svh - 40px);
     bottom: 20px;
     left: 20px;
     right: 20px;

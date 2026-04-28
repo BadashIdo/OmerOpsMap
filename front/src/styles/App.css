@@ -1,6 +1,6 @@
 .page {
-  height: 100vh;
-  width: 100vw;
+  height: 100svh;
+  width: 100%;
 }
 
 .map {
@@ -123,7 +123,8 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   margin: 0;
   width: 600px;
-  max-width: calc(100vw - 40px);
+  max-width: calc(100% - 40px);
+  touch-action: none;
 }
 
 /* מובייל: SearchBar רוחב מלא מקצה לקצה */
@@ -173,7 +174,7 @@
   top: 0;
   right: -300px; /* מתחיל מחוץ למסך בצד ימין */
   width: 300px;
-  height: 100vh;
+  height: 100svh;
   background: white;
   z-index: 2500;
   box-shadow: -2px 0 15px rgba(0,0,0,0.1);
@@ -182,6 +183,7 @@
   flex-direction: column;
   direction: rtl;
   text-align: right;
+  touch-action: none;
 }
 
 .sidebar.open {
@@ -234,11 +236,12 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100svh;
   background: rgba(0,0,0,0.3);
   z-index: 2400;
   display: none;
+  touch-action: none;
 }
 
 .sidebar-overlay.visible {

@@ -7,6 +7,7 @@
   pointer-events: none;
   transition: opacity 0.2s ease;
   z-index: 1090;
+  touch-action: none;
 }
 
 .overlayVisible {
@@ -21,7 +22,7 @@
   right: 15px;
   bottom: 15px;
   height: auto;
-  max-height: calc(100vh - 95px);
+  max-height: calc(100svh - 95px);
   width: min(360px, 92vw);
   background: #2e3440;
   color: #e6eaf2;
@@ -36,6 +37,7 @@
   overflow: hidden;
   padding-bottom: env(safe-area-inset-bottom);
   font-family: inherit;
+  touch-action: none;
 }
 
 .open {

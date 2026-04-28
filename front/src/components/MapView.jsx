@@ -22,7 +22,7 @@
  */
 
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
-import { useRef, useCallback, useMemo } from "react";
+import { useRef, useCallback, useMemo, useEffect } from "react";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
@@ -45,25 +45,41 @@ const createClusterIcon = (cluster) =>
 import SitePopup from "./Site/SitePopup";
 import TemporarySitePopup from "./Site/TemporarySitePopup";
 
-// Component to handle map long press events
-function MapLongPressHandler({ onLongPress }) {
+// Component to handle map long press events (works on desktop and mobile)
+function MapLongPressHandler({ onLongPress, mapRef }) {
   const pressTimerRef = useRef(null);
   const pressLocationRef = useRef(null);
   const LONG_PRESS_DURATION = 600; // ms
 
-  const handleMouseDown = useCallback((e) => {
-    pressLocationRef.current = e.latlng;
-    pressTimerRef.current = setTimeout(() => {
-      if (onLongPress && pressLocationRef.current) {
-        onLongPress({
-          lat: pressLocationRef.current.lat,
-          lng: pressLocationRef.current.lng,
-        });
-      }
-    }, LONG_PRESS_DURATION);
-  }, [onLongPress]);
+  const handlePressStart = useCallback((e) => {
+    if (!mapRef.current) return;
 
-  const handleMouseUp = useCallback(() => {
+    // Handle both Leaflet events (e.latlng) and touch events (e.touches)
+    let latlng;
+    if (e.latlng) {
+      latlng = e.latlng;
+    } else if (e.touches && e.touches[0]) {
+      const touch = e.touches[0];
+      const rect = mapRef.current.getContainer().getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      latlng = mapRef.current.containerPointToLatLng(L.point(x, y));
+    }
+
+    if (latlng) {
+      pressLocationRef.current = latlng;
+      pressTimerRef.current = setTimeout(() => {
+        if (onLongPress && pressLocationRef.current) {
+          onLongPress({
+            lat: pressLocationRef.current.lat,
+            lng: pressLocationRef.current.lng,
+          });
+        }
+      }, LONG_PRESS_DURATION);
+    }
+  }, [onLongPress, mapRef]);
+
+  const handlePressEnd = useCallback(() => {
     if (pressTimerRef.current) {
       clearTimeout(pressTimerRef.current);
       pressTimerRef.current = null;
@@ -71,10 +87,37 @@ function MapLongPressHandler({ onLongPress }) {
   }, []);
 
   useMapEvents({
-    mousedown: handleMouseDown,
-    mouseup: handleMouseUp,
-    dragstart: handleMouseUp,
+    mousedown: handlePressStart,
+    mouseup: handlePressEnd,
+    dragstart: handlePressEnd,
   });
+
+  // Also add direct DOM touch listeners for mobile
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const container = mapRef.current.getContainer();
+
+    const handleTouchStart = (e) => {
+      if (e.touches && e.touches[0]) {
+        handlePressStart(e);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      handlePressEnd();
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd);
+    container.addEventListener('touchcancel', handleTouchEnd);
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchend', handleTouchEnd);
+      container.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [mapRef, handlePressStart, handlePressEnd]);
 
   return null;
 }
@@ -95,7 +138,7 @@ export default function MapView({ mapRef, markerRefs, clusterRef, userLocation, 
       />
 
       {/* Long press handler for adding new requests */}
-      {onLongPress && <MapLongPressHandler onLongPress={onLongPress} />}
+      {onLongPress && <MapLongPressHandler onLongPress={onLongPress} mapRef={mapRef} />}
 
       {/* User GPS location — not clustered, always shown individually */}
       {userLocation && (
