@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import styles from "../styles/SideBar.module.css";
 import { getCategoryIcon } from "../lib/categoryIcons";
 import { getCategoryConfig } from "../lib/leafletIcons";
+import ConfirmDialog from "./ConfirmDialog";
 
 /**
  * SideBar — slide-in panel for filtering map sites by category and district.
@@ -30,6 +31,12 @@ export default function SideBar({
 }) {
   // Per-category accordion open/closed state (UI only, not filter state)
   const [openCats, setOpenCats] = useState({});
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+  const handleConfirmExit = () => {
+    sessionStorage.clear();
+    window.location.reload();
+  };
 
   // Open the first category by default when data first loads
   useEffect(() => {
@@ -149,12 +156,7 @@ export default function SideBar({
         {/* Exit to selection page - moved to bottom */}
         <button
           className={styles.exitBtn}
-          onClick={() => {
-            if (confirm("האם לצאת ולחזור לבחירת משתמש?\n(אורח / מנהל)")) {
-              sessionStorage.clear();
-              window.location.reload();
-            }
-          }}
+          onClick={() => setShowExitConfirm(true)}
         >
           <span className={styles.exitIcon}>⎋</span>
           <div className={styles.exitText}>
@@ -163,6 +165,17 @@ export default function SideBar({
           </div>
         </button>
       </aside>
+
+      <ConfirmDialog
+        open={showExitConfirm}
+        title="יציאה"
+        message={"האם לצאת ולחזור לבחירת משתמש?\n(אורח / מנהל)"}
+        confirmLabel="יציאה"
+        cancelLabel="ביטול"
+        confirmVariant="danger"
+        onConfirm={handleConfirmExit}
+        onCancel={() => setShowExitConfirm(false)}
+      />
     </>
   );
 }

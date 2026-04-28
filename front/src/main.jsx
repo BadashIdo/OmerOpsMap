@@ -1,4 +1,3 @@
-import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./app/App.jsx";
 import "./styles/globals.css";
@@ -11,8 +10,8 @@ const fixVh = () =>
 fixVh();
 window.addEventListener("resize", fixVh);
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+// StrictMode is intentionally NOT used: react-leaflet's MapContainer crashes
+// under React 19's dev-mode double-invoke ("Map container is already initialized")
+// because Leaflet stamps `_leaflet_id` on the DOM element and refuses to re-init.
+// StrictMode is a dev-only no-op in production, so removing it has no runtime impact.
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
