@@ -37,7 +37,7 @@ echo "✅ Docker images removed"
 
 # Step 3: Build images
 log_section "Step 3: Building Docker images..."
-docker-compose build
+DOCKER_BUILDKIT=0 docker-compose build
 echo "✅ Docker images built successfully"
 
 # Step 4: Start containers
