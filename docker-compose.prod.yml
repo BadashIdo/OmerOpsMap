@@ -33,7 +33,10 @@ services:
     container_name: omeropsmap_postgres
     environment:
       POSTGRES_USER: omeropsmap
-      POSTGRES_PASSWORD: omeropsmap_prod_pass # CHANGE THIS
+      # MUST be set in .env in production. No default — container fails fast
+      # if this is missing, surfacing the misconfiguration before any data is
+      # written under a guessable password.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
       POSTGRES_DB: omeropsmap
     # הסרנו את החשיפה של פורט 5432 החוצה (כדי שלא יהיה ניתן לפרוץ למסד הנתונים מרחוק)
     volumes:
@@ -55,18 +58,36 @@ services:
     container_name: omeropsmap_data_server
     # פורט 8001 לא נחשף החוצה. NPM ידבר איתו ברשת הפנימית
     environment:
-      - DATABASE_URL=postgresql+asyncpg://omeropsmap:omeropsmap_prod_pass@postgres:5432/omeropsmap
-      - SECRET_KEY=${SECRET_KEY:-generate-a-very-secure-secret-key}
+      - DATABASE_URL=postgresql+asyncpg://omeropsmap:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}@postgres:5432/omeropsmap
+      # SECRET_KEY MUST be a long random string. Container will fail to start
+      # if you forget to set it — that is intentional. Generate one with:
+      #   python -c 'import secrets; print(secrets.token_urlsafe(64))'
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY must be set in .env (long random string)}
       - ALGORITHM=HS256
       - JWT_EXPIRE_HOURS=24
       - INITIAL_ADMIN_USERNAME=${INITIAL_ADMIN_USERNAME:-admin}
-      - INITIAL_ADMIN_PASSWORD=${INITIAL_ADMIN_PASSWORD:-123123}
+      # INITIAL_ADMIN_PASSWORD MUST be set in .env — no insecure default in prod.
+      - INITIAL_ADMIN_PASSWORD=${INITIAL_ADMIN_PASSWORD:?INITIAL_ADMIN_PASSWORD must be set in .env}
       - INITIAL_ADMIN_DISPLAY_NAME=${INITIAL_ADMIN_DISPLAY_NAME:-מנהל}
       - INITIAL_ADMIN_EMAIL=${INITIAL_ADMIN_EMAIL:-}
       - INITIAL_SUBADMIN_USERNAME=${INITIAL_SUBADMIN_USERNAME:-power_user}
-      - INITIAL_SUBADMIN_PASSWORD=${INITIAL_SUBADMIN_PASSWORD:-power1234}
+      - INITIAL_SUBADMIN_PASSWORD=${INITIAL_SUBADMIN_PASSWORD:?INITIAL_SUBADMIN_PASSWORD must be set in .env}
       - INITIAL_SUBADMIN_DISPLAY_NAME=${INITIAL_SUBADMIN_DISPLAY_NAME:-מנהל משנה}
       - INITIAL_SUBADMIN_EMAIL=${INITIAL_SUBADMIN_EMAIL:-}
+      # ── External integrations (Phase 1.0+) ─────────────────────────────────
+      # Provide keys via the host's .env file or your orchestration's secrets
+      # store (GCP Secret Manager, DO App Platform encrypted env, etc).
+      # Each client self-disables when its key is missing.
+      - EXTERNAL_SYNC_ENABLED=${EXTERNAL_SYNC_ENABLED:-true}
+      - OMER_RADIUS_KM=${OMER_RADIUS_KM:-5.0}
+      - TOMTOM_API_KEY=${TOMTOM_API_KEY:-}
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY:-}
+      - IMS_API_TOKEN=${IMS_API_TOKEN:-}
+      - FIRMS_API_KEY=${FIRMS_API_KEY:-}
+      - GMAPS_API_KEY=${GMAPS_API_KEY:-}
+      - WAZE_PARTNER_TOKEN=${WAZE_PARTNER_TOKEN:-}
+      - OREF_ACTIVE_POLL_SECS=${OREF_ACTIVE_POLL_SECS:-5}
+      - OREF_IDLE_POLL_SECS=${OREF_IDLE_POLL_SECS:-30}
     depends_on:
       postgres:
         condition: service_healthy
@@ -80,6 +101,14 @@ services:
     networks:
       - proxy-tier
     restart: unless-stopped
+    healthcheck:
+      # Python is always available in this image; curl is not. Use httpx
+      # (already a dep) to hit /health and exit non-zero on failure.
+      test: ["CMD-SHELL", "python -c 'import httpx,sys; r=httpx.get(\"http://localhost:8001/health\",timeout=3); sys.exit(0 if r.status_code==200 else 1)' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   # ==========================================
   # Frontend (React + Vite)

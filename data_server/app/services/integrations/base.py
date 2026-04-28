@@ -46,12 +46,17 @@ class IntegrationClient(ABC):
       - `cadence_seconds` — APScheduler interval
       - `stale_ttl_seconds` — override default mark-stale window (0 = use cadence*3)
       - `purge_hours`     — hard-delete window for stale rows
+      - `radius_km`       — per-source geofence radius. 0 = use the global
+                            `settings.omer_radius_km`. Sources whose data
+                            naturally extends beyond Omer (e.g. TomTom traffic
+                            on access roads through Beer Sheva) override this.
     """
 
     name: str = ""
     cadence_seconds: int = 300
     stale_ttl_seconds: int = 0
     purge_hours: int = 24
+    radius_km: float = 0.0
 
     def is_disabled(self) -> bool:
         """Override to skip registration when required secrets are missing."""

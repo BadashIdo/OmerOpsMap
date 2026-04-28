@@ -1,5 +1,6 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from datetime import datetime, timedelta, timezone
 import logging
 
 from app.config import get_settings
@@ -12,7 +13,12 @@ from app.services.integrations.sync import REGISTRY, run_sync
 logger = logging.getLogger(__name__)
 
 settings = get_settings()
-scheduler = AsyncIOScheduler()
+# Bump the executor max workers so adding ~10 integration jobs cannot starve
+# the existing archive_expired_events job. Also tolerate misfires up to 60 s
+# before skipping (default behavior is to skip if missed by even a moment).
+scheduler = AsyncIOScheduler(
+    job_defaults={"misfire_grace_time": 60, "coalesce": True, "max_instances": 1},
+)
 
 
 async def archive_expired_events():
@@ -58,11 +64,17 @@ def register_integration_jobs() -> None:
 
     integrations_registry.register_all()
 
-    jitter_offset = 0
+    # Stagger first runs across sources so we don't hammer the DB at boot:
+    # each source fires a few seconds apart. Without an explicit
+    # next_run_time, IntervalTrigger waits a full cadence_seconds — so a
+    # 15 minute Open-Meteo job would not run at all for the first 15 min.
+    now = datetime.now(timezone.utc)
+    stagger_seconds = 0
     for source_name, client in REGISTRY.items():
         if client.is_disabled():
             logger.warning("Skipping job for %s — client disabled", source_name)
             continue
+        first_run = now + timedelta(seconds=5 + stagger_seconds)
         try:
             scheduler.add_job(
                 run_sync,
@@ -76,14 +88,15 @@ def register_integration_jobs() -> None:
                 max_instances=1,
                 coalesce=True,
                 replace_existing=True,
-                next_run_time=None,
+                next_run_time=first_run,
             )
             logger.info(
-                "Registered integration job: %s (cadence=%ds)",
+                "Registered integration job: %s (cadence=%ds, first run at %s)",
                 source_name,
                 client.cadence_seconds,
+                first_run.isoformat(timespec="seconds"),
             )
-            jitter_offset += 7
+            stagger_seconds += 7
         except Exception as exc:  # noqa: BLE001 — never let one source break the others
             logger.error("Failed to register integration job %s: %r", source_name, exc)
 

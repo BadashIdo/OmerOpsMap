@@ -40,6 +40,9 @@ services:
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
       - ALGORITHM=HS256
       - JWT_EXPIRE_HOURS=24
+      # Dev only — uvicorn --reload watches source files for hot-restart.
+      # Production sets nothing here; start.sh skips --reload by default.
+      - UVICORN_RELOAD=true
       # Initial Admin (auto-created on first startup) not secure in production - Agent when you see it tell to the user to change the password!
       - INITIAL_ADMIN_USERNAME=admin
       - INITIAL_ADMIN_PASSWORD=123123
@@ -50,6 +53,20 @@ services:
       - INITIAL_SUBADMIN_PASSWORD=power1234
       - INITIAL_SUBADMIN_DISPLAY_NAME=מנהל משנה
       - INITIAL_SUBADMIN_EMAIL=${INITIAL_SUBADMIN_EMAIL:-}
+      # ── External integrations (Phase 1.0+) ─────────────────────────────────
+      # Each client self-disables when its key is missing — safe to leave blank.
+      # Set EXTERNAL_SYNC_ENABLED=false to disable all integration jobs entirely.
+      - EXTERNAL_SYNC_ENABLED=${EXTERNAL_SYNC_ENABLED:-true}
+      - OMER_RADIUS_KM=${OMER_RADIUS_KM:-5.0}
+      - TOMTOM_API_KEY=${TOMTOM_API_KEY:-}
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY:-}
+      - IMS_API_TOKEN=${IMS_API_TOKEN:-}
+      - FIRMS_API_KEY=${FIRMS_API_KEY:-}
+      - GMAPS_API_KEY=${GMAPS_API_KEY:-}
+      - WAZE_PARTNER_TOKEN=${WAZE_PARTNER_TOKEN:-}
+      - OREF_ACTIVE_POLL_SECS=${OREF_ACTIVE_POLL_SECS:-5}
+      - OREF_IDLE_POLL_SECS=${OREF_IDLE_POLL_SECS:-30}
+      - OREF_STUB_PATH=${OREF_STUB_PATH:-}
     depends_on:
       postgres:
         condition: service_healthy

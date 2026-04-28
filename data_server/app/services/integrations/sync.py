@@ -56,8 +56,16 @@ def register_client(client: IntegrationClient) -> None:
     BREAKERS.setdefault(client.name, CircuitBreaker())
 
 
-def _filter_to_omer(rows: List[NormalizedFeature]) -> List[NormalizedFeature]:
-    return [r for r in rows if point_in_omer(r.lat, r.lng, settings.omer_radius_km)]
+def _filter_to_omer(
+    rows: List[NormalizedFeature],
+    radius_km: float = 0.0,
+) -> List[NormalizedFeature]:
+    """Drop features outside the geofence.
+
+    `radius_km`: positive value overrides the global `settings.omer_radius_km`.
+    """
+    effective_radius = radius_km if radius_km > 0 else settings.omer_radius_km
+    return [r for r in rows if point_in_omer(r.lat, r.lng, effective_radius)]
 
 
 async def run_sync(source: str) -> RunResult:
@@ -84,7 +92,7 @@ async def run_sync(source: str) -> RunResult:
         run_id = run.id
         try:
             raw = await client.fetch()
-            kept = _filter_to_omer(raw)
+            kept = _filter_to_omer(raw, radius_km=client.radius_km)
             added, updated = await repo.upsert_many(source, kept, run_id)
             removed = await repo.mark_stale(source, run_id, client.stale_ttl_seconds)
             await repo.purge_old(source, hours=client.purge_hours)

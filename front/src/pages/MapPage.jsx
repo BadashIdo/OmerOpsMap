@@ -45,6 +45,7 @@ import SiteEditModal from "../components/admin/SiteEditModal";
 import FeedbackButton from "../components/FeedbackButton";
 import AlertBanner from "../components/AlertBanner";
 import LayersControl from "../components/LayersControl";
+import WeatherWidget from "../components/WeatherWidget";
 import { useExternalFeatures } from "../hooks/useExternalFeatures";
 import { EXTERNAL_LAYERS } from "../lib/constants";
 
@@ -397,7 +398,16 @@ export default function MapPage() {
         {/* ── Pikud Haoref alert banner (top, only when active oref alert) ── */}
         <AlertBanner alerts={activeOrefAlerts} />
 
-        {/* ── External-layers toggle panel ── */}
+        {/* ── Weather widget (top-start corner, only when layer is on) ── */}
+        {visibleLayers.openmeteo_weather && (
+          <WeatherWidget
+            feature={weatherFeatures.features[0]}
+            lastSyncedAt={weatherFeatures.lastSyncedAt}
+            isLoading={weatherFeatures.isLoading}
+          />
+        )}
+
+        {/* ── External-layers toggle (round trigger → modal sheet) ── */}
         <LayersControl
           visibleLayers={visibleLayers}
           onToggle={toggleLayer}

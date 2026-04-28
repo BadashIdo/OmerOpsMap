@@ -73,10 +73,12 @@ Thumbs.db
 ~$*.xlsx
 ~$*.xls
 
-# Playwright MCP test artifacts
+# Playwright MCP test artifacts (screenshots from interactive QA)
 .playwright-mcp/
-desktop-*.png
-mobile-*.png
+/*.png
 
 # pytest cache
 .pytest_cache/
+
+# Local docker-compose override (dev secrets / local-only API URLs)
+docker-compose.override.yml

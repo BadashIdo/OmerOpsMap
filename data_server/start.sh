@@ -54,4 +54,11 @@ asyncio.run(auto_import())
 PYTHON_EOF
 
 echo "Starting FastAPI server..."
-exec uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+# UVICORN_RELOAD=true in dev (docker-compose.yml) — auto-reloads on source
+# changes. Production does NOT set it, so we run without --reload (lower
+# memory, no file-watcher, faster startup).
+if [ "${UVICORN_RELOAD:-false}" = "true" ]; then
+    exec uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+else
+    exec uvicorn app.main:app --host 0.0.0.0 --port 8001
+fi

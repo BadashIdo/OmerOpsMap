@@ -31,7 +31,10 @@ EXTERNAL_SOURCES = (
 
 
 def upgrade() -> None:
-    external_source_enum = postgresql.ENUM(*EXTERNAL_SOURCES, name='external_source')
+    # Create the enum once explicitly. Pass create_type=False on subsequent
+    # references so SQLAlchemy does not try to CREATE TYPE again as a side
+    # effect of create_table.
+    external_source_enum = postgresql.ENUM(*EXTERNAL_SOURCES, name='external_source', create_type=False)
     external_source_enum.create(op.get_bind(), checkfirst=True)
 
     op.create_table(
@@ -61,10 +64,11 @@ def upgrade() -> None:
     op.create_index('ix_external_features_source_fetched_at', 'external_features', ['source', 'fetched_at'])
     op.create_index('ix_external_features_source_is_stale', 'external_features', ['source', 'is_stale'])
 
+    integration_runs_source_enum = postgresql.ENUM(*EXTERNAL_SOURCES, name='external_source', create_type=False)
     op.create_table(
         'integration_runs',
         sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('source', external_source_enum, nullable=False),
+        sa.Column('source', integration_runs_source_enum, nullable=False),
         sa.Column('started_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
         sa.Column('finished_at', sa.DateTime(timezone=True), nullable=True),
         sa.Column('ok', sa.Boolean(), server_default=sa.text('false'), nullable=False),
