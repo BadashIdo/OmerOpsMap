@@ -433,6 +433,20 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
 
         <form className={styles.form} ref={modalRef} onSubmit={handleSubmit}>
           {error && <div className={styles.error}>{error}</div>}
+          {!isNew && isSubadmin && (
+            <div style={{
+              padding: "12px 16px",
+              background: "#fff3cd",
+              border: "1px solid #ffc107",
+              borderRadius: 8,
+              color: "#856404",
+              marginBottom: 16,
+              textAlign: "center",
+              fontWeight: 500
+            }}>
+              ⚠️ ניתן רק ליצור אתרים חדשים, לא לערוך קיימים
+            </div>
+          )}
 
           <div className={styles.field}>
             <label>שם *</label>
@@ -671,46 +685,48 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
             </div>
           </div>
 
-          <div className={styles.actions} style={{ display: "flex", gap: 12, width: "100%" }}>
-            <button 
-              type="submit" 
-              className={styles.saveBtn} 
-              disabled={isLoading}
-              style={{ flex: 1, padding: "14px 16px" }}
-            >
-              {isLoading ? "שומר..." : isNew ? "הוסף" : "שמור"}
-            </button>
-            <button
-              type="button"
-              className={styles.cancelBtn}
-              onClick={onClose}
-              style={{ flex: 1, padding: "14px 16px", textAlign: "center" }}
-            >
-              בטל
-            </button>
-            {!isNew && !isSubadmin && (
+          {!(!isNew && isSubadmin) && (
+            <div className={styles.actions} style={{ display: "flex", gap: 12, width: "100%" }}>
+              <button
+                type="submit"
+                className={styles.saveBtn}
+                disabled={isLoading}
+                style={{ flex: 1, padding: "14px 16px" }}
+              >
+                {isLoading ? "שומר..." : isNew ? "הוסף" : "שמור"}
+              </button>
               <button
                 type="button"
-                onClick={() => setShowDeleteConfirm(true)}
-                style={{
-                  flex: 1,
-                  background: "#ffebee",
-                  color: "#d32f2f",
-                  border: "1px solid #ffcdd2",
-                  borderRadius: 8,
-                  padding: "14px 16px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 6,
-                }}
+                className={styles.cancelBtn}
+                onClick={onClose}
+                style={{ flex: 1, padding: "14px 16px", textAlign: "center" }}
               >
-                🗑️ מחיקה
+                בטל
               </button>
-            )}
-          </div>
+              {!isNew && !isSubadmin && (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  style={{
+                    flex: 1,
+                    background: "#ffebee",
+                    color: "#d32f2f",
+                    border: "1px solid #ffcdd2",
+                    borderRadius: 8,
+                    padding: "14px 16px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                  }}
+                >
+                  🗑️ מחיקה
+                </button>
+              )}
+            </div>
+          )}
         </form>
       </div>
     </>
