@@ -24,10 +24,14 @@ UPLOAD_DIR = "/app/uploads/feedback"
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 MAX_PHOTO_MB = 10
 
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+# makedirs is called lazily (not at import time) to avoid crashing when the
+# volume-mounted uploads directory doesn't have the feedback sub-folder yet.
+def _ensure_upload_dir() -> None:
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 async def _save_photo(photo: UploadFile) -> str:
+    _ensure_upload_dir()
     if photo.content_type not in ALLOWED_TYPES:
         raise HTTPException(status_code=400, detail="סוג קובץ לא נתמך. יש להעלות תמונה (jpg/png/gif/webp)")
     ext = os.path.splitext(photo.filename or "")[1] or ".jpg"
