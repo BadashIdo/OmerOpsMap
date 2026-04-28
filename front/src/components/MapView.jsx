@@ -210,8 +210,12 @@ export default function MapView({
         )), [temporarySites, setMarkerRef, isAdmin, onEditSite])}
       </MarkerClusterGroup>
 
-      {/* External data layers — one MarkerClusterGroup per source */}
-      {EXTERNAL_LAYERS.filter((layer) => visibleLayers[layer.id]).map((layer) => {
+      {/* External data layers — one MarkerClusterGroup per source.
+          Weather is rendered as a top-corner widget, not a map pin. */}
+      {EXTERNAL_LAYERS
+        .filter((layer) => visibleLayers[layer.id])
+        .filter((layer) => layer.id !== "openmeteo_weather")
+        .map((layer) => {
         const features = externalFeaturesBySource[layer.id] || [];
         if (features.length === 0) return null;
         return (
