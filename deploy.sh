@@ -124,6 +124,12 @@ INITIAL_ADMIN_PASSWORD=${ADMIN_PASSWORD}
 INITIAL_ADMIN_DISPLAY_NAME=מנהל עיריית עומר
 INITIAL_ADMIN_EMAIL=admin@omer.com
 
+# Subadmin Account (auto-created on first startup)
+INITIAL_SUBADMIN_USERNAME=power_user
+INITIAL_SUBADMIN_PASSWORD=power1234
+INITIAL_SUBADMIN_DISPLAY_NAME=מנהל משנה
+INITIAL_SUBADMIN_EMAIL=subadmin@omer.com
+
 # Database
 DATABASE_URL=postgresql+asyncpg://omeropsmap:omeropsmap_prod_pass@postgres:5432/omeropsmap
 
@@ -151,6 +157,11 @@ echo "  • WebSocket (WSS):         wss://${DROPLET_IP}/ws"
 log_info "\n${YELLOW}🔐 Admin Login:${NC}"
 echo "  • Username: ${GREEN}admin${NC}"
 echo "  • Password: ${GREEN}${ADMIN_PASSWORD}${NC}"
+
+log_info "\n${YELLOW}🔐 Subadmin Login:${NC}"
+echo "  • Username: ${GREEN}power_user${NC}"
+echo "  • Password: ${GREEN}power1234${NC}"
+echo "  • Note: Subadmin cannot delete sites and has no access to system management"
 
 log_info "\n${YELLOW}⚠️  SSL CERTIFICATE INFO:${NC}"
 echo "  ⚠️  Using self-signed certificate for testing"

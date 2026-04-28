@@ -5,7 +5,7 @@ from typing import List
 from app.database import get_db
 from app.repository.temporary_sites import TemporarySitesRepository
 from app.schemas.temporary_site import TemporarySiteCreate, TemporarySiteUpdate, TemporarySiteResponse
-from app.auth.admin import verify_admin
+from app.auth.admin import verify_admin, verify_admin_only
 from app.api.websocket import notify_data_changed
 
 router = APIRouter(prefix="/api/temporary-sites", tags=["temporary-sites"])
@@ -76,16 +76,16 @@ async def update_temporary_site(
 async def delete_temporary_site(
     site_id: int,
     db: AsyncSession = Depends(get_db),
-    _: bool = Depends(verify_admin)
+    _= Depends(verify_admin_only)
 ):
-    """Delete a temporary site (admin only)"""
+    """Delete a temporary site (admin only, not subadmin)"""
     repo = TemporarySitesRepository(db)
     success = await repo.delete(site_id)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found")
-    
+
     # Notify all clients about the deletion
     await notify_data_changed("temporary", "delete", {"id": site_id})
-    
+
     return None
 

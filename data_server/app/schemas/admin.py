@@ -7,6 +7,7 @@ class AdminBase(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     display_name: Optional[str] = Field(None, max_length=100)
     email: Optional[str] = Field(None, max_length=255)
+    role: str = Field("admin", pattern="^(admin|subadmin)$")
 
 
 class AdminCreate(AdminBase):

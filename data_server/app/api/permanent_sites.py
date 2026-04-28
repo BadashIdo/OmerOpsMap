@@ -5,7 +5,7 @@ from typing import List
 from app.database import get_db
 from app.repository.permanent_sites import PermanentSitesRepository
 from app.schemas.permanent_site import PermanentSiteCreate, PermanentSiteUpdate, PermanentSiteResponse
-from app.auth.admin import verify_admin
+from app.auth.admin import verify_admin, verify_admin_only
 from app.api.websocket import notify_data_changed
 
 router = APIRouter(prefix="/api/permanent-sites", tags=["permanent-sites"])
@@ -68,16 +68,16 @@ async def update_permanent_site(
 async def delete_permanent_site(
     site_id: int,
     db: AsyncSession = Depends(get_db),
-    _: bool = Depends(verify_admin)
+    _= Depends(verify_admin_only)
 ):
-    """Delete a permanent site (admin only)"""
+    """Delete a permanent site (admin only, not subadmin)"""
     repo = PermanentSitesRepository(db)
     success = await repo.delete(site_id)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found")
-    
+
     # Notify all clients about the deletion
     await notify_data_changed("permanent", "delete", {"id": site_id})
-    
+
     return None
 

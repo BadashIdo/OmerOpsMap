@@ -45,6 +45,11 @@ services:
       - INITIAL_ADMIN_PASSWORD=123123
       - INITIAL_ADMIN_DISPLAY_NAME=מנהל
       - INITIAL_ADMIN_EMAIL=${INITIAL_ADMIN_EMAIL:-}
+      # Initial Subadmin (auto-created on first startup)
+      - INITIAL_SUBADMIN_USERNAME=power_user
+      - INITIAL_SUBADMIN_PASSWORD=power1234
+      - INITIAL_SUBADMIN_DISPLAY_NAME=מנהל משנה
+      - INITIAL_SUBADMIN_EMAIL=${INITIAL_SUBADMIN_EMAIL:-}
     depends_on:
       postgres:
         condition: service_healthy
