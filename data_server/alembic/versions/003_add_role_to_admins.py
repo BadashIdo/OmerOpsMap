@@ -1,7 +1,7 @@
 """Add role column to admins table
 
 Revision ID: 003
-Revises: 002
+Revises: 17e60d83835f
 Create Date: 2026-04-25 10:00:00.000000
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '003'
-down_revision = '002'
+down_revision = '17e60d83835f'
 branch_labels = None
 depends_on = None
 
