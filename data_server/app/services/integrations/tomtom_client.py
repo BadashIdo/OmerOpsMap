@@ -19,7 +19,7 @@ import httpx
 
 from app.config import get_settings
 from app.services.integrations.base import IntegrationClient, NormalizedFeature
-from app.services.integrations.geofence import omer_bbox
+from app.services.integrations.geofence import OMER_CENTER, omer_bbox
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,10 @@ class TomTomClient(IntegrationClient):
     cadence_seconds = 90
     purge_hours = 24  # ToS-mandated; do not extend
     stale_ttl_seconds = 0  # default = cadence*3
+    # Wider geofence than Omer-only: a Beer Sheva jam on Route 60 / 25 / 40 is
+    # an Omer access-road problem. 12 km covers Omer + Beer Sheva metro +
+    # Lehavim + Meitar + the highway corridors connecting them.
+    radius_km = 12.0
 
     def __init__(self) -> None:
         self.settings = get_settings()
@@ -63,7 +67,9 @@ class TomTomClient(IntegrationClient):
         if self.is_disabled():
             return []
 
-        lat_min, lng_min, lat_max, lng_max = omer_bbox()
+        # Use this client's radius (12 km) for the bbox query so we do not
+        # waste a round-trip pulling only a 5 km box and then discarding it.
+        lat_min, lng_min, lat_max, lng_max = omer_bbox(self.radius_km)
         # TomTom expects bbox as `minLng,minLat,maxLng,maxLat`.
         bbox = f"{lng_min},{lat_min},{lng_max},{lat_max}"
         params = {

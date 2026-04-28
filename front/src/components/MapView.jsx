@@ -21,8 +21,8 @@
  *  onLongPress     — called with { lat, lng } on a long mouse press
  */
 
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
-import { useRef, useCallback, useMemo, useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from "react-leaflet";
+import React, { useRef, useCallback, useMemo, useEffect } from "react";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
@@ -210,14 +210,28 @@ export default function MapView({
         )), [temporarySites, setMarkerRef, isAdmin, onEditSite])}
       </MarkerClusterGroup>
 
-      {/* External data layers — one MarkerClusterGroup per source.
-          Weather is rendered as a top-corner widget, not a map pin. */}
+      {/* External data layers.
+          - Weather: rendered as a top-corner widget, not a map pin.
+          - TomTom: rendered as Waze-style colored polylines along the road
+            geometry, NOT clustered (lines don't cluster meaningfully).
+          - Other sources: clustered point markers per source. */}
       {EXTERNAL_LAYERS
         .filter((layer) => visibleLayers[layer.id])
         .filter((layer) => layer.id !== "openmeteo_weather")
         .map((layer) => {
         const features = externalFeaturesBySource[layer.id] || [];
         if (features.length === 0) return null;
+
+        if (layer.id === "tomtom_traffic") {
+          return (
+            <TomTomTrafficLayer
+              key={`ext-${layer.id}`}
+              features={features}
+              labelHe={layer.label_he}
+            />
+          );
+        }
+
         return (
           <MarkerClusterGroup
             key={`ext-${layer.id}`}
@@ -268,5 +282,191 @@ export default function MapView({
       })}
 
     </MapContainer>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TomTomTrafficLayer — Waze-style traffic visualization for incidents.
+//
+// TomTom's `magnitudeOfDelay` (0-4) drives color and stroke weight:
+//   0 Unknown    → amber, thin
+//   1 Minor      → orange, normal
+//   2 Moderate   → red-orange, normal
+//   3 Major      → red, thick
+//   4 Closure    → very deep red, thick + dashed (signals "blocked", not "slow")
+//
+// Each incident with LineString/MultiLineString geometry renders as:
+//   - A soft halo polyline (wider, semi-transparent) — readability on busy maps
+//   - A solid main polyline — the actual traffic indicator
+//   - A small icon marker at the centroid — tap target + popup anchor
+//
+// The popup mirrors what Waze shows: cause, severity badge, length and delay
+// in human-readable form, road number(s), and a freshness footer.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TOMTOM_SEVERITY = {
+  0: { color: "#fbbf24", label: "לא ידוע", weight: 5 },
+  1: { color: "#fb923c", label: "תנועה קלה", weight: 6 },
+  2: { color: "#ef4444", label: "תנועה בינונית", weight: 7 },
+  3: { color: "#b91c1c", label: "תנועה כבדה", weight: 8 },
+  4: { color: "#7f1d1d", label: "כביש חסום", weight: 8, dashed: true },
+};
+
+function tomtomStyle(severity) {
+  return TOMTOM_SEVERITY[severity] || TOMTOM_SEVERITY[1];
+}
+
+function formatDelaySeconds(seconds) {
+  if (seconds == null || seconds <= 0) return null;
+  if (seconds < 60) return `עיכוב ${seconds} שנ׳`;
+  const minutes = Math.round(seconds / 60);
+  return `עיכוב ~${minutes} דק׳`;
+}
+
+function formatLengthMeters(meters) {
+  if (meters == null || meters <= 0) return null;
+  if (meters < 1000) return `${Math.round(meters)} מ׳`;
+  return `${(meters / 1000).toFixed(1)} ק"מ`;
+}
+
+function TomTomTrafficLayer({ features, labelHe }) {
+  return (
+    <>
+      {features.map((f) => {
+        const geom = f.geom_polyline;
+        const sev = tomtomStyle(f.severity);
+        const opacity = f.is_stale ? 0.4 : 1;
+        const payload = f.payload || {};
+
+        const positions = (() => {
+          if (!geom || !geom.coordinates) return null;
+          if (geom.type === "LineString") {
+            return geom.coordinates.map(([lng, lat]) => [lat, lng]);
+          }
+          if (geom.type === "MultiLineString") {
+            return geom.coordinates.map((line) =>
+              line.map(([lng, lat]) => [lat, lng])
+            );
+          }
+          return null;
+        })();
+
+        const delayText = formatDelaySeconds(payload.delay);
+        const lengthText = formatLengthMeters(payload.length);
+        const roads = (payload.roadNumbers || []).filter(Boolean).join(", ");
+
+        const popup = (
+          <Popup>
+            <div style={{ direction: "rtl", maxWidth: "300px", fontFamily: "inherit" }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 6, lineHeight: 1.3 }}>
+                {f.name}
+              </div>
+
+              {/* Severity chip + road number */}
+              <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 5,
+                    padding: "3px 8px",
+                    borderRadius: 999,
+                    background: sev.color,
+                    color: "#fff",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    letterSpacing: "0.2px",
+                  }}
+                >
+                  <span style={{ width: 6, height: 6, borderRadius: 3, background: "#fff", opacity: 0.9 }} />
+                  {sev.label}
+                </span>
+                {roads && (
+                  <span style={{ fontSize: 11, color: "#475569", fontWeight: 600 }}>
+                    כביש <bdi>{roads}</bdi>
+                  </span>
+                )}
+              </div>
+
+              {/* Stats row */}
+              {(delayText || lengthText) && (
+                <div style={{ display: "flex", gap: 12, marginBottom: 8, fontSize: 12, color: "#1f2937" }}>
+                  {lengthText && (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 14, color: "#64748b" }}>
+                        straighten
+                      </span>
+                      <bdi>{lengthText}</bdi>
+                    </span>
+                  )}
+                  {delayText && (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 14, color: "#64748b" }}>
+                        schedule
+                      </span>
+                      <bdi>{delayText}</bdi>
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {f.description && (
+                <div style={{ fontSize: 12, color: "#475569", marginBottom: 8, lineHeight: 1.4 }}>
+                  {f.description}
+                </div>
+              )}
+
+              <div style={{ fontSize: 10, color: "#94a3b8", borderTop: "1px dashed #e2e8f0", paddingTop: 6, unicodeBidi: "plaintext" }}>
+                {labelHe} · TomTom{f.is_stale ? " · נתון מיושן" : ""}
+              </div>
+            </div>
+          </Popup>
+        );
+
+        return (
+          <React.Fragment key={`tomtom-${f.id}`}>
+            {positions && (
+              <>
+                {/* Halo — gives the line presence on busy basemaps */}
+                <Polyline
+                  positions={positions}
+                  pathOptions={{
+                    color: sev.color,
+                    weight: sev.weight + 8,
+                    opacity: 0.18 * opacity,
+                    lineCap: "round",
+                    lineJoin: "round",
+                  }}
+                  interactive={false}
+                />
+                {/* Main line */}
+                <Polyline
+                  positions={positions}
+                  pathOptions={{
+                    color: sev.color,
+                    weight: sev.weight,
+                    opacity: 0.95 * opacity,
+                    lineCap: "round",
+                    lineJoin: "round",
+                    dashArray: sev.dashed ? "10 10" : undefined,
+                    className: sev.dashed ? "tomtom-line-closed" : undefined,
+                  }}
+                >
+                  {popup}
+                </Polyline>
+              </>
+            )}
+            {/* Tap target + popup anchor at the centroid */}
+            <Marker
+              position={[f.lat, f.lng]}
+              icon={getExternalIcon(f)}
+              opacity={opacity}
+            >
+              {popup}
+            </Marker>
+          </React.Fragment>
+        );
+      })}
+    </>
   );
 }
