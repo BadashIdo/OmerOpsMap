@@ -37,7 +37,12 @@
   overflow: hidden;
   padding-bottom: env(safe-area-inset-bottom);
   font-family: inherit;
-  touch-action: none;
+  touch-action: pan-x pan-y;
+}
+
+.sidebar,
+.sidebar * {
+  touch-action: pan-x pan-y;
 }
 
 .open {
