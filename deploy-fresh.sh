@@ -139,8 +139,8 @@ INITIAL_SUBADMIN_EMAIL=subadmin@omer.com
 DATABASE_URL=postgresql+asyncpg://omeropsmap:omeropsmap_prod_pass@postgres:5432/omeropsmap
 
 # Frontend Configuration (HTTPS with self-signed certificate)
-VITE_API_URL=https://\${DROPLET_IP}
-VITE_WS_URL=wss://\${DROPLET_IP}/ws
+VITE_API_URL=https://${DROPLET_IP}
+VITE_WS_URL=wss://${DROPLET_IP}/ws
 
 # CORS Origins (HTTP for internal, HTTPS for external)
 ALLOWED_ORIGINS=http://\${DROPLET_IP},https://\${DROPLET_IP},http://frontend,http://nginx
