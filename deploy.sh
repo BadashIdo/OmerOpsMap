@@ -2,10 +2,16 @@
 
 #############################################################################
 # OmerOpsMap Deployment Script for DigitalOcean
-# Clone/pull latest "deploy" branch, restart all Docker containers
+# Clone/pull latest code from specified branch, restart all Docker containers
 #
-# Usage: ./deploy.sh [DROPLET_IP] [ADMIN_PASSWORD]
-# Example: ./deploy.sh 165.245.218.35 "admin123"
+# Usage: ./deploy.sh [DROPLET_IP] [ADMIN_PASSWORD] [BRANCH]
+#
+# Examples:
+#   ./deploy.sh                                    # Deploy "deploy" branch to default IP
+#   ./deploy.sh 165.245.218.35                     # Deploy "deploy" branch to IP
+#   ./deploy.sh 165.245.218.35 "admin123"          # Deploy "deploy" branch with password
+#   ./deploy.sh 165.245.218.35 "admin123" main     # Deploy "main" branch
+#   ./deploy.sh 165.245.218.35 "admin123" feature  # Deploy custom branch
 #############################################################################
 
 set -e
@@ -20,8 +26,8 @@ NC='\033[0m' # No Color
 # Parse arguments
 DROPLET_IP="${1:-165.245.218.35}"
 ADMIN_PASSWORD="${2:-admin123}"
+BRANCH="${3:-deploy}"
 REPO_URL="https://github.com/BadashIdo/OmerOpsMap.git"
-BRANCH="deploy"
 APP_DIR="/opt/omeropsmap"
 
 log_section() {
