@@ -131,8 +131,8 @@ export function getCategoryIcon(name) {
   const html = `
     <div style="
       position: relative;
-      width: 25px;
-      height: 41px;
+      width: 22px;
+      height: 37px;
     ">
       <div style="
         position: absolute;
@@ -141,17 +141,17 @@ export function getCategoryIcon(name) {
         transform: translateX(-50%);
         width: 0;
         height: 0;
-        border-left: 12.5px solid transparent;
-        border-right: 12.5px solid transparent;
-        border-top: 20px solid ${config.color};
+        border-left: 11px solid transparent;
+        border-right: 11px solid transparent;
+        border-top: 17px solid ${config.color};
       "></div>
       <div style="
         position: absolute;
         top: 0;
         left: 50%;
         transform: translateX(-50%);
-        width: 25px;
-        height: 25px;
+        width: 22px;
+        height: 22px;
         background-color: ${config.color};
         border-radius: 50% 50% 50% 0;
         transform: translateX(-50%) rotate(-45deg);
@@ -160,10 +160,10 @@ export function getCategoryIcon(name) {
       "></div>
       <span class="material-symbols-outlined" style="
         position: absolute;
-        top: 4px;
+        top: 3px;
         left: 50%;
         transform: translateX(-50%);
-        font-size: 16px;
+        font-size: 14px;
         color: white;
         z-index: 10;
         text-shadow: 0 1px 2px rgba(0,0,0,0.3);
@@ -174,9 +174,9 @@ export function getCategoryIcon(name) {
   return new L.DivIcon({
     html: html,
     className: 'custom-marker-icon',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
+    iconSize: [22, 37],
+    iconAnchor: [11, 37],
+    popupAnchor: [1, -31],
   });
 }
 
