@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import PermanentSitesTab from "./admin/PermanentSitesTab";
 import TemporarySitesTab from "./admin/TemporarySitesTab";
 import DataImportTab from "./admin/DataImportTab";
 import DataExportTab from "./admin/DataExportTab";
+import FeedbackTab from "./admin/FeedbackTab";
+import { getFeedbackCountNew } from "../api/feedbackApi";
 import styles from "../styles/AdminPanel.module.css";
 
 const TABS = [
@@ -11,17 +13,34 @@ const TABS = [
   { id: "temporary", label: "אירועים זמניים", icon: "⚡" },
   { id: "import", label: "יבוא נתונים", icon: "📥" },
   { id: "export", label: "ייצוא נתונים", icon: "📤" },
+  { id: "feedback", label: "משובים", icon: "💬" },
 ];
 
-export default function AdminPanel({ isOpen, onClose, onDataChange, categoriesStructure, onLocateSite }) {
+export default function AdminPanel({ isOpen, onClose, onDataChange, categoriesStructure, onLocateSite, feedbackRefreshTrigger = 0 }) {
   const { admin, getAuthHeader } = useAuth();
   const [activeTab, setActiveTab] = useState("permanent");
+  const [newFeedbackCount, setNewFeedbackCount] = useState(0);
 
   const handleDataChange = () => {
     if (onDataChange) {
       onDataChange();
     }
   };
+
+  // Refresh new-feedback count when the panel opens or a feedback ws event arrives
+  useEffect(() => {
+    if (!isOpen || admin?.role !== "admin") return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await getFeedbackCountNew(getAuthHeader());
+        if (!cancelled) setNewFeedbackCount(data.count || 0);
+      } catch {
+        // Silent — badge just stays as last known value
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen, admin?.role, feedbackRefreshTrigger, getAuthHeader]);
 
   if (!isOpen || admin?.role !== "admin") return null;
 
@@ -55,6 +74,9 @@ export default function AdminPanel({ isOpen, onClose, onDataChange, categoriesSt
             >
               <span className={styles.tabIcon}>{tab.icon}</span>
               <span className={styles.tabLabel}>{tab.label}</span>
+              {tab.id === "feedback" && newFeedbackCount > 0 && (
+                <span className={styles.badge}>{newFeedbackCount}</span>
+              )}
             </button>
           ))}
         </div>
@@ -85,6 +107,13 @@ export default function AdminPanel({ isOpen, onClose, onDataChange, categoriesSt
           {activeTab === "export" && (
             <DataExportTab
               authHeader={getAuthHeader()}
+            />
+          )}
+          {activeTab === "feedback" && (
+            <FeedbackTab
+              authHeader={getAuthHeader()}
+              refreshTrigger={feedbackRefreshTrigger}
+              onCountChange={setNewFeedbackCount}
             />
           )}
         </div>

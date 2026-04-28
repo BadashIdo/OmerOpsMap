@@ -42,6 +42,7 @@ import ChatBot from "../components/ChatBot";
 import AdminPanel from "../components/AdminPanel";
 import NotificationToast from "../components/NotificationToast";
 import SiteEditModal from "../components/admin/SiteEditModal";
+import FeedbackButton from "../components/FeedbackButton";
 
 export default function MapPage() {
   const { admin, isAdmin, getAuthHeader } = useAuth();
@@ -49,6 +50,10 @@ export default function MapPage() {
   // Incrementing this triggers a re-fetch in useSites / useTemporarySites
   const [dataRefreshTrigger, setDataRefreshTrigger] = useState(0);
   const refreshData = useCallback(() => setDataRefreshTrigger((prev) => prev + 1), []);
+
+  // Incrementing this triggers a re-fetch in AdminPanel's feedback tab + count badge
+  const [feedbackRefreshTrigger, setFeedbackRefreshTrigger] = useState(0);
+  const refreshFeedback = useCallback(() => setFeedbackRefreshTrigger((prev) => prev + 1), []);
 
   // ── Raw data from API ──────────────────────────────────────────────────────
   const { points, loadError } = useSites(dataRefreshTrigger);
@@ -90,6 +95,15 @@ export default function MapPage() {
       try {
         if (message?.type !== "data_changed") return;
 
+        // Feedback events: only admins care; refresh the feedback list/badge.
+        if (message.data_type === "feedback") {
+          refreshFeedback();
+          if (admin?.role === "admin" && message.action === "create") {
+            addNotification("התקבל משוב חדש", "update");
+          }
+          return;
+        }
+
         refreshData();
 
         const actionText =
@@ -105,7 +119,7 @@ export default function MapPage() {
         console.error("Error handling WebSocket message:", err);
       }
     },
-    [addNotification]
+    [addNotification, admin, refreshData, refreshFeedback]
   );
 
   useWebSocket(handleWebSocketMessage);
@@ -249,6 +263,7 @@ export default function MapPage() {
               setIsAdminPanelOpen(false);
               goToPoint(site);
             }}
+            feedbackRefreshTrigger={feedbackRefreshTrigger}
           />
         )}
 
@@ -295,6 +310,9 @@ export default function MapPage() {
             </div>
           ))}
         </div>
+
+        {/* ── Feedback button (visible to everyone, including guests) ── */}
+        <FeedbackButton />
 
         {/* ── AI ChatBot ── */}
         <ChatBot isOpen={isChatOpen} setIsOpen={setIsChatOpen} />

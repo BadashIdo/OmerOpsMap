@@ -1,0 +1,386 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.addBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.addBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.searchInput {
+  flex: 1 1 220px;
+  padding: 10px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.searchInput:focus,
+.filter:focus {
+  outline: none;
+  border-color: #2196f3;
+}
+
+.filter {
+  padding: 10px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  font-family: inherit;
+}
+
+.refreshBtn {
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.refreshBtn:hover {
+  background: #e0e0e0;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 20px;
+  color: #666;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e0e0e0;
+  border-top-color: #2196f3;
+  border-radius: 50%;
+  animation: fb-spin 1s linear infinite;
+}
+
+@keyframes fb-spin {
+  to { transform: rotate(360deg); }
+}
+
+.errorBox {
+  background: #ffebee;
+  color: #c62828;
+  padding: 14px;
+  border-radius: 8px;
+}
+
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+}
+
+.emptyIcon {
+  font-size: 56px;
+  margin-bottom: 12px;
+}
+
+.empty h3 {
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.empty p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  background: #f8f9fa;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.card:hover {
+  border-color: #c9d6ff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardName {
+  font-size: 16px;
+  font-weight: 600;
+  color: #222;
+}
+
+.statusPill {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* Inline status changer styled like the pill but actually a <select> */
+.statusSelect {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 28px 4px 12px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-repeat: no-repeat;
+  background-position: left 8px center;
+  background-size: 10px;
+}
+
+.statusSelect:focus {
+  outline: 2px solid rgba(0, 0, 0, 0.15);
+  outline-offset: 1px;
+}
+
+.statusNew {
+  background-color: #ffebee;
+  color: #c62828;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path fill='%23c62828' d='M6 8.5 1.5 4h9z'/></svg>");
+}
+
+.statusInProgress {
+  background-color: #fff3e0;
+  color: #e65100;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path fill='%23e65100' d='M6 8.5 1.5 4h9z'/></svg>");
+}
+
+.statusResolved {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path fill='%232e7d32' d='M6 8.5 1.5 4h9z'/></svg>");
+}
+
+/* Resolved feedback: greyed out + struck-through body */
+.cardResolved {
+  background: #ececec;
+  opacity: 0.75;
+}
+
+.cardResolved .cardName,
+.cardResolved .cardMeta,
+.cardResolved .cardBody {
+  color: #888;
+}
+
+.cardResolved .cardBody {
+  text-decoration: line-through;
+  text-decoration-color: #999;
+}
+
+.cardResolved .topicBadge {
+  background: #e0e0e0;
+  color: #777;
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #555;
+}
+
+.topicBadge {
+  background: #e3f2fd;
+  color: #1565c0;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.date {
+  color: #888;
+}
+
+.contact {
+  color: #555;
+}
+
+.cardBody {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.viewBtn,
+.editBtn,
+.deleteBtn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.viewBtn {
+  background: #f5f5f5;
+  color: #444;
+}
+
+.viewBtn:hover {
+  background: #e0e0e0;
+}
+
+.editBtn {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.editBtn:hover {
+  background: #bbdefb;
+}
+
+.deleteBtn {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.deleteBtn:hover {
+  background: #ffcdd2;
+}
+
+.confirmOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirmBox {
+  background: white;
+  border-radius: 12px;
+  padding: 22px 26px;
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+  direction: rtl;
+}
+
+.confirmBox h4 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.confirmBox p {
+  margin: 0 0 16px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.cancelBtn {
+  padding: 8px 18px;
+  background: #f5f5f5;
+  color: #444;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.cancelBtn:hover {
+  background: #e0e0e0;
+}
+
+.confirmDeleteBtn {
+  padding: 8px 18px;
+  background: #c62828;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.confirmDeleteBtn:hover {
+  background: #b71c1c;
+}

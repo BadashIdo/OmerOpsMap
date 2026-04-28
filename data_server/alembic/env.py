@@ -9,7 +9,7 @@ from alembic import context
 
 # Import models for alembic to detect
 from app.database import Base
-from app.models import PermanentSite, TemporarySite, TemporaryHistory
+from app.models import PermanentSite, TemporarySite, TemporaryHistory, Admin, Feedback
 from app.config import get_settings
 
 # Get DATABASE_URL from app settings (reads from env vars)
