@@ -78,8 +78,8 @@ export default function MapPage() {
     useFilters({ points, temporarySites });
 
   const { query, setQuery, showResults, setShowResults, results } = useSearch({
-    filteredPoints,
-    filteredTemporarySites,
+    points,
+    temporarySites,
   });
 
   const { userLocation, isTracking, handleLocate } = useGeoLocation(mapRef);
@@ -115,10 +115,23 @@ export default function MapPage() {
   /**
    * Fly the map to a site and open its popup.
    * Accepts items from both search results and the temporary events panel.
+   * Auto-enables subcategory and district filters if they're not currently visible.
    */
   const goToPoint = useCallback((p) => {
     setQuery(p.name);
     setShowResults(false);
+
+    // Check if the site's subcategory is visible; if not, toggle it
+    const subCat = p.sub_category || p.subCategory;
+    if (subCat && !activeFilters.includes(subCat)) {
+      toggleFilter(subCat);
+    }
+
+    // Check if the site's district is visible; if not, toggle it
+    const district = p.district;
+    if (district && !activeFilters.includes(district)) {
+      toggleFilter(district);
+    }
 
     const map = mapRef.current;
     if (!map) return;
@@ -129,7 +142,7 @@ export default function MapPage() {
     // Same offset as handleMarkerClick — pin at screen center, popup opens above it
     const projected = map.project([p.lat, p.lng], targetZoom);
     const centered = map.unproject([projected.x, projected.y - 150], targetZoom);
-    
+
     // Duration set to 2.5s for a very slow, smooth sweep
     map.flyTo(centered, targetZoom, { animate: true, duration: 2.5, noMoveStart: true });
 
@@ -163,7 +176,7 @@ export default function MapPage() {
         marker.openPopup();
       }
     }, 3100);
-  }, [mapRef, markerRefs, clusterRef, setQuery, setShowResults]);
+  }, [mapRef, markerRefs, clusterRef, setQuery, setShowResults, activeFilters, toggleFilter]);
 
   /** Long-press on the map: admin or subadmin — opens SiteEditModal to create a new permanent site. */
   const handleMapLongPress = useCallback(
