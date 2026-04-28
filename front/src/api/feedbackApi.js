@@ -7,12 +7,20 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
 
-/** Public — anyone (including guests) submits a feedback. */
-export async function submitFeedback(payload) {
+/** Public — anyone (including guests) submits a feedback. Supports optional photo (File) and lat/lng. */
+export async function submitFeedback({ name, topic, contact, description, lat, lng, photo }) {
+  const form = new FormData();
+  form.append("name", name);
+  form.append("topic", topic);
+  form.append("description", description);
+  if (contact) form.append("contact", contact);
+  if (lat != null && lat !== "") form.append("lat", lat);
+  if (lng != null && lng !== "") form.append("lng", lng);
+  if (photo) form.append("photo", photo);
+
   const response = await fetch(`${API_BASE_URL}/api/feedback`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: form,
   });
   if (!response.ok) throw new Error("שגיאה בשליחת המשוב");
   return response.json();

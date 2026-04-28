@@ -33,8 +33,10 @@ class FeedbackRepository:
         )
         return result.scalar_one_or_none()
 
-    async def create(self, data: BaseModel) -> Feedback:
+    async def create(self, data: BaseModel, photo_url: str = None) -> Feedback:
         fb = Feedback(**data.model_dump())
+        if photo_url is not None:
+            fb.photo_url = photo_url
         self.session.add(fb)
         await self.session.commit()
         await self.session.refresh(fb)

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text
+from sqlalchemy import Column, Integer, String, DateTime, Text, Float
 from sqlalchemy.sql import func
 from app.database import Base
 
@@ -13,6 +13,9 @@ class Feedback(Base):
     description = Column(Text, nullable=False)
     status = Column(String(20), nullable=False, server_default="new", index=True)
     admin_notes = Column(Text, nullable=True)
+    lat = Column(Float, nullable=True)
+    lng = Column(Float, nullable=True)
+    photo_url = Column(String(500), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

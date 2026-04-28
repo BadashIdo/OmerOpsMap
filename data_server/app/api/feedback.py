@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Form, UploadFile, File
 from fastapi import status as http_status
+from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
+import os, uuid, re, shutil
 
 from app.database import get_db
 from app.repository.feedback import FeedbackRepository
@@ -18,15 +20,56 @@ from app.api.websocket import notify_data_changed
 
 router = APIRouter(prefix="/api/feedback", tags=["feedback"])
 
+UPLOAD_DIR = "/app/uploads/feedback"
+ALLOWED_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+MAX_PHOTO_MB = 10
+
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+async def _save_photo(photo: UploadFile) -> str:
+    if photo.content_type not in ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail="סוג קובץ לא נתמך. יש להעלות תמונה (jpg/png/gif/webp)")
+    ext = os.path.splitext(photo.filename or "")[1] or ".jpg"
+    filename = f"{uuid.uuid4().hex}{ext}"
+    path = os.path.join(UPLOAD_DIR, filename)
+    size = 0
+    with open(path, "wb") as f:
+        while chunk := await photo.read(1024 * 1024):
+            size += len(chunk)
+            if size > MAX_PHOTO_MB * 1024 * 1024:
+                f.close()
+                os.remove(path)
+                raise HTTPException(status_code=400, detail=f"התמונה גדולה מדי (מקסימום {MAX_PHOTO_MB}MB)")
+            f.write(chunk)
+    return f"/uploads/feedback/{filename}"
+
 
 @router.post("", response_model=FeedbackResponse, status_code=http_status.HTTP_201_CREATED)
 async def create_feedback(
-    data: FeedbackCreate,
+    name: str = Form(...),
+    topic: str = Form(...),
+    description: str = Form(...),
+    contact: Optional[str] = Form(None),
+    lat: Optional[float] = Form(None),
+    lng: Optional[float] = Form(None),
+    photo: Optional[UploadFile] = File(None),
     db: AsyncSession = Depends(get_db),
 ):
     """Submit a new feedback (public — guests and any user)."""
+    if not re.match(TOPIC_PATTERN, topic):
+        raise HTTPException(status_code=422, detail="נושא לא תקין")
+
+    photo_url = None
+    if photo and photo.filename:
+        photo_url = await _save_photo(photo)
+
+    data = FeedbackCreate(
+        name=name, topic=topic, description=description,
+        contact=contact or None, lat=lat, lng=lng,
+    )
     repo = FeedbackRepository(db)
-    fb = await repo.create(data)
+    fb = await repo.create(data, photo_url=photo_url)
     await notify_data_changed("feedback", "create", {"id": fb.id})
     return fb
 

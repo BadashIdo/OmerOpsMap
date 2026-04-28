@@ -3,7 +3,6 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
   z-index: 10000;
-  touch-action: none;
 }
 
 .modal {
@@ -13,6 +12,7 @@
   transform: translate(-50%, -50%);
   width: 92%;
   max-width: 520px;
+  max-height: 90vh;
   max-height: 90svh;
   background: white;
   border-radius: 16px;
@@ -22,6 +22,11 @@
   flex-direction: column;
   direction: rtl;
   overflow: hidden;
+}
+
+.modal,
+.modal * {
+  touch-action: pan-y;
 }
 
 .header {
@@ -64,7 +69,11 @@
   flex-direction: column;
   gap: 12px;
   padding: 20px;
-  overflow-y: auto;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  flex: 1;
+  min-height: 0;
 }
 
 .field {
@@ -163,4 +172,16 @@
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+.locationLink {
+  display: inline-block;
+  color: #1565c0;
+  font-size: 14px;
+  text-decoration: none;
+  margin-top: 4px;
+}
+
+.locationLink:hover {
+  text-decoration: underline;
 }

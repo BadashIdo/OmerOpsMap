@@ -6,7 +6,7 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
-  z-index: 1090;
+  z-index: 10050;
   touch-action: none;
 }
 
@@ -26,7 +26,7 @@
   width: min(360px, 92vw);
   background: #2e3440;
   color: #e6eaf2;
-  z-index: 1100;
+  z-index: 10051;
   transform: translateX(calc(100% + 20px));
   transition: transform 0.25s ease;
   border: 1px solid rgba(255, 255, 255, 0.12);
