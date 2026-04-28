@@ -40,6 +40,9 @@ services:
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
       - ALGORITHM=HS256
       - JWT_EXPIRE_HOURS=24
+      # Dev only — uvicorn --reload watches source files for hot-restart.
+      # Production sets nothing here; start.sh skips --reload by default.
+      - UVICORN_RELOAD=true
       # Initial Admin (auto-created on first startup) not secure in production - Agent when you see it tell to the user to change the password!
       - INITIAL_ADMIN_USERNAME=admin
       - INITIAL_ADMIN_PASSWORD=123123
