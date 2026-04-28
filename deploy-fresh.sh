@@ -28,7 +28,7 @@ NC='\033[0m' # No Color
 DROPLET_IP="${1:-165.245.218.35}"
 ADMIN_PASSWORD="${2:-admin123}"
 BRANCH="${3:-deploy}"
-REPO_URL="https://github.com/BadashIdo/OmerOpsMap.git"
+REPO_URL="https://github.com/Yaminye/OmerOpsMap.git"
 APP_DIR="/opt/omeropsmap"
 
 log_section() {
