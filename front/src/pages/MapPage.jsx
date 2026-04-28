@@ -44,7 +44,7 @@ import NotificationToast from "../components/NotificationToast";
 import SiteEditModal from "../components/admin/SiteEditModal";
 
 export default function MapPage() {
-  const { isAdmin, getAuthHeader } = useAuth();
+  const { admin, isAdmin, getAuthHeader } = useAuth();
 
   // Incrementing this triggers a re-fetch in useSites / useTemporarySites
   const [dataRefreshTrigger, setDataRefreshTrigger] = useState(0);
@@ -165,16 +165,16 @@ export default function MapPage() {
     }, 3100);
   }, [mapRef, markerRefs, clusterRef, setQuery, setShowResults]);
 
-  /** Long-press on the map: admin only — opens SiteEditModal to create a new permanent site. */
+  /** Long-press on the map: admin or subadmin — opens SiteEditModal to create a new permanent site. */
   const handleMapLongPress = useCallback(
     (location) => {
-      if (isAdmin) {
+      if (admin) {
         setEditingSite({ lat: location.lat, lng: location.lng });
         setEditingSiteType("permanent");
         setSiteEditModalOpen(true);
       }
     },
-    [isAdmin]
+    [admin]
   );
 
   /**
