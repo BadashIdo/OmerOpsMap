@@ -133,7 +133,7 @@ export default function MapPage() {
     // Duration set to 2.5s for a very slow, smooth sweep
     map.flyTo(centered, targetZoom, { animate: true, duration: 2.5, noMoveStart: true });
 
-    // Open popup after the fly animation completes
+    // Wait for fly animation to complete (2.5s) + 0.5s before opening cluster/popup
     setTimeout(() => {
       let markerKey = `permanent-${p.id}`;
       if (p._type === "temporary") {
@@ -141,7 +141,7 @@ export default function MapPage() {
       } else if (!markerRefs.current[markerKey] && markerRefs.current[`temporary-${p.id}`]) {
         markerKey = `temporary-${p.id}`;
       }
-      
+
       const marker = markerRefs.current[markerKey];
       if (!marker) return;
 
@@ -162,7 +162,7 @@ export default function MapPage() {
       } else {
         marker.openPopup();
       }
-    }, 2600);
+    }, 3100);
   }, [mapRef, markerRefs, clusterRef, setQuery, setShowResults]);
 
   /** Long-press on the map: admin only — opens SiteEditModal to create a new permanent site. */

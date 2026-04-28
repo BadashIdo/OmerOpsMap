@@ -131,7 +131,7 @@ export function AuthProvider({ children }) {
   const value = {
     admin,
     token,
-    isAdmin: !!admin,
+    isAdmin: admin?.role === "admin",
     isLoading,
     error,
     setError, // Expose setError to allow clearing errors
