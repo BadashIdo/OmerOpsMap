@@ -7,6 +7,7 @@ import {
   deletePermanentSiteAuth,
   deleteTemporarySiteAuth,
 } from "../../api/sitesApi";
+import { useAuth } from "../../context/AuthContext";
 import LocationPickerMap from "./LocationPickerMap";
 import { DISTRICTS } from "../../lib/constants";
 import styles from "../../styles/SiteEditModal.module.css";
@@ -37,7 +38,9 @@ const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, 
 const MINUTE_OPTIONS = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0"));
 
 export default function SiteEditModal({ site, siteType, authHeader, categoriesStructure, onClose, onSave }) {
+  const { admin } = useAuth();
   const isNew = !site?.id;
+  const isSubadmin = admin?.role === "subadmin";
 
   const getInitialFormData = (type) => {
     if (type === "permanent") {
@@ -677,17 +680,17 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
             >
               {isLoading ? "שומר..." : isNew ? "הוסף" : "שמור"}
             </button>
-            <button 
-              type="button" 
-              className={styles.cancelBtn} 
+            <button
+              type="button"
+              className={styles.cancelBtn}
               onClick={onClose}
               style={{ flex: 1, padding: "14px 16px", textAlign: "center" }}
             >
               בטל
             </button>
-            {!isNew && (
-              <button 
-                type="button" 
+            {!isNew && !isSubadmin && (
+              <button
+                type="button"
                 onClick={() => setShowDeleteConfirm(true)}
                 style={{
                   flex: 1,
