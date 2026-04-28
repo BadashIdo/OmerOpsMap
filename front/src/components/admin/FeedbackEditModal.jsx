@@ -159,6 +159,39 @@ export default function FeedbackEditModal({ feedback, mode, authHeader, onClose,
             />
           </label>
 
+          {/* Location — read-only display */}
+          {(feedback?.lat != null && feedback?.lng != null) && (
+            <div className={styles.field}>
+              <span className={styles.labelText}>מיקום</span>
+              <a
+                href={`https://maps.google.com/?q=${feedback.lat},${feedback.lng}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.locationLink}
+              >
+                📍 {Number(feedback.lat).toFixed(5)}, {Number(feedback.lng).toFixed(5)}
+              </a>
+            </div>
+          )}
+
+          {/* Photo — read-only display */}
+          {feedback?.photo_url && (
+            <div className={styles.field}>
+              <span className={styles.labelText}>תמונה מצורפת</span>
+              <a
+                href={`${import.meta.env.VITE_API_URL || "http://localhost:8001"}${feedback.photo_url}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src={`${import.meta.env.VITE_API_URL || "http://localhost:8001"}${feedback.photo_url}`}
+                  alt="תמונה מצורפת"
+                  style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 8, border: "2px solid #e0e0e0", display: "block", marginTop: 6 }}
+                />
+              </a>
+            </div>
+          )}
+
           {error && <div className={styles.error}>{error}</div>}
 
           <div className={styles.footer}>

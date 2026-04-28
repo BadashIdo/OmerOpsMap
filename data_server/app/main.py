@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
-import logging
+import logging, os
 
 from app.api.router import api_router
 from app.services.expiry_scheduler import start_scheduler, stop_scheduler
@@ -124,6 +125,11 @@ app.add_middleware(
 
 # Include all API routes
 app.include_router(api_router)
+
+# Serve uploaded files (feedback photos etc.)
+_uploads_dir = "/app/uploads"
+os.makedirs(_uploads_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=_uploads_dir), name="uploads")
 
 
 @app.get("/")

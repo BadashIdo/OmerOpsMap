@@ -6,7 +6,6 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.6);
   z-index: 9998;
-  touch-action: none;
 }
 
 .panel {
@@ -16,8 +15,8 @@
   transform: translate(-50%, -50%);
   width: 95%;
   max-width: 1200px;
+  height: 90vh;
   height: 90svh;
-  touch-action: none;
   background: white;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -26,6 +25,11 @@
   flex-direction: column;
   direction: rtl;
   overflow: hidden;
+}
+
+.panel,
+.panel * {
+  touch-action: pan-x pan-y;
 }
 
 /* Header */
@@ -165,7 +169,10 @@
 /* Content */
 .content {
   flex: 1;
-  overflow-y: auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: 20px 24px;
 }
 

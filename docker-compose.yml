@@ -59,6 +59,7 @@ services:
       - ./data_server/alembic:/app/alembic
       - ./data_server/start.sh:/app/start.sh
       - ./data_server/data:/app/data
+      - ./data_server/uploads:/app/uploads
     command: bash /app/start.sh
     restart: unless-stopped
 
@@ -73,8 +74,8 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_URL=${VITE_API_URL:-http://localhost:8001}
-      - VITE_WS_URL=${VITE_WS_URL:-ws://localhost:8001/ws}
+      - VITE_API_URL=${VITE_API_URL:-http://192.168.10.2:8001}
+      - VITE_WS_URL=${VITE_WS_URL:-ws://192.168.10.2:8001/ws}
     volumes:
       - ./front/src:/app/src
       - ./front/public:/app/public

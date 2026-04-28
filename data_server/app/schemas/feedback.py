@@ -12,6 +12,8 @@ class FeedbackBase(BaseModel):
     topic: str = Field(..., pattern=TOPIC_PATTERN)
     contact: Optional[str] = Field(None, max_length=255)
     description: str = Field(..., min_length=1)
+    lat: Optional[float] = None
+    lng: Optional[float] = None
 
 
 class FeedbackCreate(FeedbackBase):
@@ -38,6 +40,7 @@ class FeedbackResponse(FeedbackBase):
     id: int
     status: str
     admin_notes: Optional[str] = None
+    photo_url: Optional[str] = None
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
 
