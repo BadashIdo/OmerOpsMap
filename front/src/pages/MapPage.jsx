@@ -43,6 +43,10 @@ import AdminPanel from "../components/AdminPanel";
 import NotificationToast from "../components/NotificationToast";
 import SiteEditModal from "../components/admin/SiteEditModal";
 import FeedbackButton from "../components/FeedbackButton";
+import AlertBanner from "../components/AlertBanner";
+import LayersControl from "../components/LayersControl";
+import { useExternalFeatures } from "../hooks/useExternalFeatures";
+import { EXTERNAL_LAYERS } from "../lib/constants";
 
 export default function MapPage() {
   const { admin, isAdmin, getAuthHeader } = useAuth();
@@ -69,6 +73,23 @@ export default function MapPage() {
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [showTemporarySites, setShowTemporarySites] = useState(true);
+
+  // ── External layer visibility (per-source toggle in LayersControl) ─────────
+  const [visibleLayers, setVisibleLayers] = useState(() =>
+    Object.fromEntries(EXTERNAL_LAYERS.map((l) => [l.id, l.defaultVisible]))
+  );
+  const toggleLayer = useCallback((layerId) => {
+    setVisibleLayers((prev) => ({ ...prev, [layerId]: !prev[layerId] }));
+  }, []);
+
+  // Bumped per-source when a "data_changed" event for type="external" arrives.
+  // Each source has its own counter so an oref event doesn't cause TomTom refetch.
+  const [externalRefreshTriggers, setExternalRefreshTriggers] = useState(() =>
+    Object.fromEntries(EXTERNAL_LAYERS.map((l) => [l.id, 0]))
+  );
+  const bumpExternalSource = useCallback((source) => {
+    setExternalRefreshTriggers((prev) => ({ ...prev, [source]: (prev[source] || 0) + 1 }));
+  }, []);
 
   // ── Admin site management ──────────────────────────────────────────
   const [siteEditModalOpen, setSiteEditModalOpen] = useState(false);
@@ -104,6 +125,13 @@ export default function MapPage() {
           return;
         }
 
+        // External integration events — refresh only the affected source.
+        if (message.data_type === "external") {
+          const source = message.data?.source;
+          if (source) bumpExternalSource(source);
+          return;
+        }
+
         refreshData();
 
         const actionText =
@@ -119,10 +147,46 @@ export default function MapPage() {
         console.error("Error handling WebSocket message:", err);
       }
     },
-    [addNotification, admin, refreshData, refreshFeedback]
+    [addNotification, admin, refreshData, refreshFeedback, bumpExternalSource]
   );
 
   useWebSocket(handleWebSocketMessage);
+
+  // ── External feature streams — one hook per source (only when visible) ─────
+  // Note: hook order is fixed per render — calling them all unconditionally
+  // and gating with `enabled` keeps React happy.
+  const orefFeatures = useExternalFeatures(
+    "oref_alert",
+    !!visibleLayers.oref_alert,
+    externalRefreshTriggers.oref_alert
+  );
+  const tomtomFeatures = useExternalFeatures(
+    "tomtom_traffic",
+    !!visibleLayers.tomtom_traffic,
+    externalRefreshTriggers.tomtom_traffic
+  );
+  const weatherFeatures = useExternalFeatures(
+    "openmeteo_weather",
+    !!visibleLayers.openmeteo_weather,
+    externalRefreshTriggers.openmeteo_weather
+  );
+
+  const externalFeaturesBySource = {
+    oref_alert: orefFeatures.features,
+    tomtom_traffic: tomtomFeatures.features,
+    openmeteo_weather: weatherFeatures.features,
+  };
+
+  const layerInfo = {
+    oref_alert: { lastSyncedAt: orefFeatures.lastSyncedAt, error: orefFeatures.error },
+    tomtom_traffic: { lastSyncedAt: tomtomFeatures.lastSyncedAt, error: tomtomFeatures.error },
+    openmeteo_weather: { lastSyncedAt: weatherFeatures.lastSyncedAt, error: weatherFeatures.error },
+  };
+
+  // Active oref alerts for the AlertBanner — only ones not stale.
+  const activeOrefAlerts = visibleLayers.oref_alert
+    ? orefFeatures.features.filter((f) => !f.is_stale)
+    : [];
 
   // ── Map interactions ───────────────────────────────────────────────────────
 
@@ -330,6 +394,16 @@ export default function MapPage() {
         {/* ── AI ChatBot ── */}
         <ChatBot isOpen={isChatOpen} setIsOpen={setIsChatOpen} />
 
+        {/* ── Pikud Haoref alert banner (top, only when active oref alert) ── */}
+        <AlertBanner alerts={activeOrefAlerts} />
+
+        {/* ── External-layers toggle panel ── */}
+        <LayersControl
+          visibleLayers={visibleLayers}
+          onToggle={toggleLayer}
+          layerInfo={layerInfo}
+        />
+
         {/* ── The Leaflet map (full screen, behind everything else) ── */}
         <MapView
           mapRef={mapRef}
@@ -338,6 +412,8 @@ export default function MapPage() {
           userLocation={userLocation}
           points={filteredPoints}
           temporarySites={showTemporarySites ? filteredTemporarySites : []}
+          externalFeaturesBySource={externalFeaturesBySource}
+          visibleLayers={visibleLayers}
           onMarkerClick={handleMarkerClick}
           onLongPress={handleMapLongPress}
           isAdmin={isAdmin}

@@ -190,3 +190,91 @@ export function getCategoryConfig(name) {
   const key = (name || '').trim();
   return categoryIconMap[key] || defaultIcon;
 }
+
+
+/**
+ * Per-source external feature icons. Pulses the oref alert.
+ * @param {Object} feature - { source, kind, severity, is_stale }
+ */
+export function getExternalIcon(feature) {
+  const { source, kind, is_stale } = feature || {};
+
+  const config = externalIconConfig(source, kind);
+  const opacity = is_stale ? 0.4 : 1;
+  const pulse = source === "oref_alert" && !is_stale;
+
+  const html = `
+    <div style="
+      position: relative;
+      width: 36px;
+      height: 36px;
+      opacity: ${opacity};
+    ">
+      ${pulse ? `
+        <div style="
+          position: absolute;
+          inset: 0;
+          background: ${config.color};
+          border-radius: 50%;
+          opacity: 0.35;
+          animation: extPulse 1.4s ease-out infinite;
+        "></div>
+      ` : ""}
+      <div style="
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 28px;
+        height: 28px;
+        background: ${config.color};
+        border: 3px solid #fff;
+        border-radius: 50%;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
+        <span class="material-symbols-outlined" style="
+          font-size: 16px;
+          color: #fff;
+          line-height: 1;
+        ">${config.icon}</span>
+      </div>
+    </div>
+    <style>
+      @keyframes extPulse {
+        0%   { transform: scale(0.7); opacity: 0.7; }
+        100% { transform: scale(2.2); opacity: 0;   }
+      }
+    </style>
+  `;
+
+  return new L.DivIcon({
+    html,
+    className: `external-marker external-marker--${source || "unknown"}`,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -18],
+  });
+}
+
+/** Source+kind → { icon, color } for external markers. Pure lookup. */
+export function externalIconConfig(source, kind) {
+  if (source === "oref_alert") {
+    return { icon: "warning", color: "#dc3545" };
+  }
+  if (source === "openmeteo_weather") {
+    return { icon: "cloud", color: "#0099cc" };
+  }
+  if (source === "tomtom_traffic") {
+    if (kind === "accident") return { icon: "car_crash", color: "#dc3545" };
+    if (kind === "road_closed") return { icon: "block", color: "#b30000" };
+    if (kind === "lane_closed") return { icon: "merge", color: "#ff6b35" };
+    if (kind === "road_works") return { icon: "construction", color: "#ffc107" };
+    if (kind === "jam") return { icon: "traffic_jam", color: "#fd7e14" };
+    if (kind === "broken_down_vehicle") return { icon: "car_repair", color: "#6c757d" };
+    return { icon: "traffic", color: "#ff6b35" };
+  }
+  return { icon: "info", color: "#6c757d" };
+}

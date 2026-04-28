@@ -1,0 +1,167 @@
+/* LayersControl — desktop side panel + mobile bottom sheet. */
+
+.trigger {
+  position: fixed;
+  top: 76px;
+  inset-inline-end: 14px;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: #1a6fbd;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  direction: rtl;
+}
+
+.trigger:hover { transform: translateY(-1px); }
+.trigger:active { transform: translateY(0); }
+
+.triggerLabel { font-size: 14px; }
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.34);
+  z-index: 1300;
+  animation: layersControlBackdropIn 180ms ease-out;
+}
+
+.panel {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  font-family: inherit;
+  direction: rtl;
+}
+
+.panelDesktop {
+  position: fixed;
+  top: 96px;
+  inset-inline-end: 22px;
+  width: 280px;
+  z-index: 950;
+}
+
+.panelMobile {
+  position: fixed;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
+  bottom: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 1400;
+  animation: layersControlSheetIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eef0f3;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #6c757d;
+  padding: 4px;
+  display: flex;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.row {
+  padding: 0;
+}
+
+.toggle {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: start;
+  font-family: inherit;
+  font-size: 14px;
+  color: #1f2937;
+  transition: background-color 120ms;
+}
+
+.toggle:hover { background: #f4f6f9; }
+
+.toggleOn {
+  background: #f0f7ff;
+}
+
+.toggleOn:hover { background: #e1efff; }
+
+.icon { font-size: 22px; }
+
+.label {
+  font-weight: 600;
+}
+
+.lastSync {
+  font-size: 11px;
+  color: #6c757d;
+  unicode-bidi: plaintext;
+}
+
+.lastSyncStale {
+  color: #c33;
+  font-weight: 600;
+}
+
+.checkmark {
+  width: 18px;
+  text-align: center;
+  color: #1a6fbd;
+  font-weight: 700;
+}
+
+.footer {
+  padding: 8px 16px 12px;
+  border-top: 1px solid #eef0f3;
+  font-size: 11px;
+  color: #6c757d;
+}
+
+.poweredBy { unicode-bidi: plaintext; }
+
+@keyframes layersControlSheetIn {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0);    }
+}
+
+@keyframes layersControlBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

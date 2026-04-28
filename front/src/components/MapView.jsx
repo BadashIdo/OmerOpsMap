@@ -27,8 +27,8 @@ import MarkerClusterGroup from "react-leaflet-cluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import L from "leaflet";
-import { userIcon, getCategoryIcon } from "../lib/leafletIcons";
-import { OMER_CENTER } from "../lib/constants";
+import { userIcon, getCategoryIcon, getExternalIcon } from "../lib/leafletIcons";
+import { OMER_CENTER, EXTERNAL_LAYERS } from "../lib/constants";
 
 /** Blue cluster icon — same color regardless of count */
 const createClusterIcon = (cluster) =>
@@ -122,7 +122,20 @@ function MapLongPressHandler({ onLongPress, mapRef }) {
   return null;
 }
 
-export default function MapView({ mapRef, markerRefs, clusterRef, userLocation, points, temporarySites = [], onMarkerClick, onLongPress, isAdmin, onEditSite }) {
+export default function MapView({
+  mapRef,
+  markerRefs,
+  clusterRef,
+  userLocation,
+  points,
+  temporarySites = [],
+  externalFeaturesBySource = {},
+  visibleLayers = {},
+  onMarkerClick,
+  onLongPress,
+  isAdmin,
+  onEditSite,
+}) {
   // Stable ref callback — not recreated on every render, prevents unnecessary updates while dragging
   const setMarkerRef = useCallback((el, key) => {
     markerRefs.current[key] = el;
@@ -196,6 +209,59 @@ export default function MapView({ mapRef, markerRefs, clusterRef, userLocation, 
           </Marker>
         )), [temporarySites, setMarkerRef, isAdmin, onEditSite])}
       </MarkerClusterGroup>
+
+      {/* External data layers — one MarkerClusterGroup per source */}
+      {EXTERNAL_LAYERS.filter((layer) => visibleLayers[layer.id]).map((layer) => {
+        const features = externalFeaturesBySource[layer.id] || [];
+        if (features.length === 0) return null;
+        return (
+          <MarkerClusterGroup
+            key={`ext-${layer.id}`}
+            chunkedLoading
+            maxClusterRadius={60}
+            spiderfyOnMaxZoom
+            showCoverageOnHover={false}
+            iconCreateFunction={(cluster) =>
+              L.divIcon({
+                html: `<div style="
+                  width:38px;height:38px;background:${layer.color};border-radius:50%;
+                  display:flex;align-items:center;justify-content:center;
+                  color:#fff;font-weight:700;font-size:14px;
+                  border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.35);
+                ">${cluster.getChildCount()}</div>`,
+                className: "",
+                iconSize: L.point(38, 38),
+              })
+            }
+          >
+            {features.map((f) => (
+              <Marker
+                key={`ext-${layer.id}-${f.id}`}
+                position={[f.lat, f.lng]}
+                icon={getExternalIcon(f)}
+                opacity={f.is_stale ? 0.5 : 1}
+              >
+                <Popup>
+                  <div style={{ direction: "rtl", maxWidth: "260px" }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
+                      {f.name}
+                    </div>
+                    {f.description && (
+                      <div style={{ fontSize: 12, color: "#444", marginBottom: 6 }}>
+                        {f.description}
+                      </div>
+                    )}
+                    <div style={{ fontSize: 11, color: "#888", unicodeBidi: "plaintext" }}>
+                      {layer.label_he}
+                      {f.is_stale ? " · נתון מיושן" : ""}
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MarkerClusterGroup>
+        );
+      })}
 
     </MapContainer>
   );
