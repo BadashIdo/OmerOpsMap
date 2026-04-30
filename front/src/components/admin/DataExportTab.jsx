@@ -5,6 +5,7 @@ export default function DataExportTab({ authHeader }) {
     const [isExporting, setIsExporting] = useState(false);
     const [exportError, setExportError] = useState("");
     const [exportSuccess, setExportSuccess] = useState("");
+    const [selectedTable, setSelectedTable] = useState("all");
 
     // API URL from environment
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
@@ -15,7 +16,7 @@ export default function DataExportTab({ authHeader }) {
         setExportSuccess("");
 
         try {
-            const response = await fetch(`${API_URL}/api/admin/export/database`, {
+            const response = await fetch(`${API_URL}/api/admin/export/database?table=${selectedTable}`, {
                 method: "GET",
                 headers: {
                     ...authHeader,
@@ -67,15 +68,28 @@ export default function DataExportTab({ authHeader }) {
         <div className={styles.tabContent}>
             <h2 style={{ marginBottom: "20px" }}>📤 ייצוא נתונים</h2>
 
-            <div style={{ padding: "15px", backgroundColor: "#e3f2fd", borderRadius: "8px", border: "1px solid #90caf9", maxWidth: "600px" }}>
-                <h3 style={{ marginTop: 0, color: "#1976D2" }}>הורדת גיבוי מלא</h3>
-                <p style={{ lineHeight: "1.6" }}>
-                    פעולה זו תוריד קובץ Excel המכיל את כל הנתונים השמורים במערכת, כולל:
+            <div className={styles.infoBox}>
+                <h3 style={{ marginTop: 0 }}>הורדת נתונים מותאמת</h3>
+                <p style={{ lineHeight: "1.6", marginBottom: "15px" }}>
+                    בחר איזו טבלה ברצונך לייצא מתוך מסד הנתונים:
                 </p>
-                <ul style={{ lineHeight: "1.6", marginRight: "20px" }}>
-                    <li>אתרים קבועים (Permanent Sites)</li>
-                    <li>אירועים זמניים (Temporary Events)</li>
-                </ul>
+
+                <div style={{ marginBottom: "20px" }}>
+                    <select
+                        value={selectedTable}
+                        onChange={(e) => setSelectedTable(e.target.value)}
+                        className={styles.searchInput}
+                        style={{ width: "100%", maxWidth: "400px", cursor: "pointer" }}
+                    >
+                        <option value="all">כל המערכת (גיבוי מלא בכל הלשוניות)</option>
+                        <option value="permanent_sites">אתרים קבועים (Permanent Sites)</option>
+                        <option value="temporary_sites">אירועים זמניים (Temporary Events)</option>
+                        <option value="feedback">דיווחי משתמשים (Feedback)</option>
+                        <option value="admins">מנהלי מערכת (Admins)</option>
+                        <option value="external_features">שכבות חיצוניות מסונכרנות</option>
+                        <option value="integration_runs">היסטוריית סנכרונים</option>
+                    </select>
+                </div>
 
                 <div style={{ marginTop: "20px", display: "flex", justifyContent: "center" }}>
                     <button
@@ -103,14 +117,14 @@ export default function DataExportTab({ authHeader }) {
 
             {/* Export Success Message */}
             {exportSuccess && (
-                <div style={{ padding: "15px", backgroundColor: "#e8f5e9", color: "#2e7d32", borderRadius: "5px", marginTop: "20px", maxWidth: "600px" }}>
+                <div className={styles.successBox}>
                     {exportSuccess}
                 </div>
             )}
 
             {/* Export Error Message */}
             {exportError && (
-                <div style={{ padding: "15px", backgroundColor: "#ffebee", color: "#c62828", borderRadius: "5px", marginTop: "20px", maxWidth: "600px" }}>
+                <div className={styles.errorBox}>
                     ❌ {exportError}
                 </div>
             )}

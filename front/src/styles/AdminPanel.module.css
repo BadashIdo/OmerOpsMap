@@ -212,3 +212,61 @@
   }
 }
 
+/* =========================================
+   Dark Mode Overrides
+   ========================================= */
+:global(body.dark-mode) .panel {
+  background: #1e293b;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+:global(body.dark-mode) .header {
+  background: #0f172a;
+  border-bottom: 1px solid #334155;
+}
+
+:global(body.dark-mode) .headerTitle {
+  color: #f8fafc;
+}
+
+:global(body.dark-mode) .logoutBtn {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #cbd5e1;
+}
+
+:global(body.dark-mode) .logoutBtn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+:global(body.dark-mode) .closeBtn {
+  color: #94a3b8;
+}
+
+:global(body.dark-mode) .closeBtn:hover {
+  color: #f8fafc;
+}
+
+:global(body.dark-mode) .tabs {
+  background: #0f172a;
+  border-bottom-color: #334155;
+}
+
+:global(body.dark-mode) .tab {
+  color: #94a3b8;
+}
+
+:global(body.dark-mode) .tab:hover {
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+:global(body.dark-mode) .tab.activeTab {
+  color: #60a5fa;
+}
+
+:global(body.dark-mode) .tab.activeTab::after {
+  background: #60a5fa;
+}
+

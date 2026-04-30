@@ -6,7 +6,7 @@
  * Each layer renders as a rich card (icon, name, sub-line, last-sync, switch).
  */
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { EXTERNAL_LAYERS } from "../lib/constants";
 import styles from "../styles/LayersControl.module.css";
 
@@ -26,12 +26,13 @@ const LAYER_SUBLINES = {
   openmeteo_weather: "תחזית נקודתית למרכז עומר",
 };
 
-export default function LayersControl({ visibleLayers, onToggle, layerInfo }) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function LayersControl({ visibleLayers, onToggle, layerInfo, open, onClose, isDarkMode, toggleDarkMode }) {
+  const isOpen = open ?? false;
+  const closeSheet = onClose ?? (() => {});
 
   useEffect(() => {
     if (!isOpen) return;
-    const onKey = (e) => { if (e.key === "Escape") setIsOpen(false); };
+    const onKey = (e) => { if (e.key === "Escape") closeSheet(); };
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
     return () => {
@@ -40,30 +41,13 @@ export default function LayersControl({ visibleLayers, onToggle, layerInfo }) {
     };
   }, [isOpen]);
 
-  const activeCount = EXTERNAL_LAYERS.filter((l) => visibleLayers?.[l.id]).length;
-
   return (
     <>
-      <button
-        type="button"
-        className={styles.trigger}
-        onClick={() => setIsOpen(true)}
-        aria-label="פתח לוח שכבות חיצוניות"
-        aria-expanded={isOpen}
-      >
-        <span className={`material-symbols-outlined ${styles.triggerIcon}`}>layers</span>
-        {activeCount > 0 && (
-          <span className={styles.badge} aria-label={`${activeCount} שכבות פעילות`}>
-            <bdi>{activeCount}</bdi>
-          </span>
-        )}
-      </button>
-
       {isOpen && (
         <>
           <div
             className={styles.backdrop}
-            onClick={() => setIsOpen(false)}
+            onClick={closeSheet}
             aria-hidden="true"
           />
           <div
@@ -82,13 +66,49 @@ export default function LayersControl({ visibleLayers, onToggle, layerInfo }) {
                 type="button"
                 className={styles.closeBtn}
                 aria-label="סגור"
-                onClick={() => setIsOpen(false)}
+                onClick={closeSheet}
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
             </header>
 
             <ul className={styles.list}>
+              {/* Display Mode Toggle */}
+              <li className={styles.row}>
+                <button
+                  type="button"
+                  className={`${styles.card} ${!isDarkMode ? styles.cardOn : ""}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleDarkMode();
+                  }}
+                  aria-pressed={!isDarkMode}
+                >
+                  <span
+                    className={styles.iconWrap}
+                    style={{ "--card-accent": !isDarkMode ? "#f1c40f" : "#a29bfe" }}
+                    aria-hidden="true"
+                  >
+                    <span className={`material-symbols-outlined ${styles.icon}`}>
+                      {!isDarkMode ? "light_mode" : "dark_mode"}
+                    </span>
+                  </span>
+                  <div className={styles.cardText}>
+                    <span className={styles.cardTitle}>מצב תצוגה</span>
+                    <span className={styles.cardSub}>
+                      {!isDarkMode ? "מצב יום פעיל" : "מצב לילה פעיל"}
+                    </span>
+                  </div>
+                  <span
+                    className={`${styles.switch} ${!isDarkMode ? styles.switchOn : ""}`}
+                    style={!isDarkMode ? { background: "#f1c40f" } : {}}
+                    aria-hidden="true"
+                  >
+                    <span className={styles.switchKnob} />
+                  </span>
+                </button>
+              </li>
+
               {EXTERNAL_LAYERS.map((layer) => {
                 const visible = !!visibleLayers?.[layer.id];
                 const info = layerInfo?.[layer.id] || {};

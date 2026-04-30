@@ -82,3 +82,4 @@ Thumbs.db
 
 # Local docker-compose override (dev secrets / local-only API URLs)
 docker-compose.override.yml
+nginx/certs/

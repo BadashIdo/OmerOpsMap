@@ -257,3 +257,69 @@
   justify-content: center;
   line-height: 1;
 }
+
+/* =========================================
+   Dark Mode Overrides
+   ========================================= */
+:global(body.dark-mode) .modal {
+  background: #1e293b;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+}
+
+:global(body.dark-mode) .header {
+  border-bottom-color: #334155;
+}
+
+:global(body.dark-mode) .closeBtn {
+  color: #94a3b8;
+}
+
+:global(body.dark-mode) .closeBtn:hover {
+  color: #f8fafc;
+}
+
+:global(body.dark-mode) .labelText {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+:global(body.dark-mode) .input,
+:global(body.dark-mode) .textarea,
+:global(body.dark-mode) select.input {
+  background: #0f172a;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+:global(body.dark-mode) .input:focus,
+:global(body.dark-mode) .textarea:focus {
+  border-color: #3b82f6;
+  background: #1e293b;
+}
+
+:global(body.dark-mode) .input::placeholder,
+:global(body.dark-mode) .textarea::placeholder {
+  color: #64748b;
+}
+
+:global(body.dark-mode) .hint {
+  color: #94a3b8;
+}
+
+:global(body.dark-mode) .locationBtn {
+  background: #0f172a;
+  color: #60a5fa;
+  border-color: #3b82f6;
+}
+
+:global(body.dark-mode) .locationBtn:hover {
+  background: #1e293b;
+}
+
+:global(body.dark-mode) .success h3 {
+  color: #f8fafc;
+}
+
+:global(body.dark-mode) .success p {
+  color: #94a3b8;
+}
