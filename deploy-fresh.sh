@@ -57,6 +57,21 @@ echo "  5. Delete ALL Docker images"
 echo "  6. Rebuild everything from scratch"
 
 #############################################################################
+# Upload local .env to droplet (kept out of git, contains API keys)
+#############################################################################
+LOCAL_ENV="$(dirname "$0")/.env"
+if [ ! -f "${LOCAL_ENV}" ]; then
+  log_warning "Local .env not found at ${LOCAL_ENV} — aborting."
+  echo "Create one (copy from .env.example) before running this script."
+  exit 1
+fi
+
+log_section "📤 Uploading local .env to droplet..."
+ssh -o StrictHostKeyChecking=accept-new root@${DROPLET_IP} "mkdir -p /tmp"
+scp -o StrictHostKeyChecking=accept-new "${LOCAL_ENV}" root@${DROPLET_IP}:/tmp/omeropsmap.env
+echo "✅ .env uploaded to /tmp/omeropsmap.env"
+
+#############################################################################
 # Deploy to Droplet via SSH
 #############################################################################
 log_section "📦 Connecting to droplet and executing FRESH deployment..."
@@ -89,6 +104,11 @@ log_info "\n${BLUE}[3/8]${NC} Deleting all Docker images..."
 docker images -q | xargs -r docker rmi -f > /dev/null 2>&1 || true
 echo "✅ All images deleted"
 
+log_info "\n${BLUE}[3.5/8]${NC} Deleting Docker volumes (DB wipe)..."
+docker volume rm omeropsmap_postgres_data > /dev/null 2>&1 || true
+docker volume prune -f > /dev/null 2>&1 || true
+echo "✅ Postgres volume wiped — DB starts fresh"
+
 log_info "\n${BLUE}[4/8]${NC} Deleting existing code directory..."
 rm -rf ${APP_DIR}
 echo "✅ Directory deleted: ${APP_DIR}"
@@ -114,39 +134,31 @@ openssl req -x509 -newkey rsa:2048 -keyout nginx/certs/self-signed.key -out ngin
   -subj "/C=IL/ST=Israel/L=Omer/O=OmerOpsMap/CN=\${DROPLET_IP}" > /dev/null 2>&1
 echo "✅ Self-signed SSL certificate generated"
 
-cat > .env << ENVFILE
-# OmerOpsMap Production Environment
-# Generated on \$(date)
+# Use uploaded local .env as base (preserves API keys like TOMTOM_API_KEY)
+if [ ! -f /tmp/omeropsmap.env ]; then
+  echo "❌ /tmp/omeropsmap.env missing — scp must have failed"
+  exit 1
+fi
+cp /tmp/omeropsmap.env .env
 
-# JWT & Security
+# Append production overrides — docker compose uses last occurrence per key
+cat >> .env << ENVFILE
+
+# ── Production overrides (appended by deploy-fresh.sh on \$(date)) ────────────
 SECRET_KEY=\${SECRET_KEY}
 ALGORITHM=HS256
 JWT_EXPIRE_HOURS=24
-
-# Admin Account (auto-created on first startup)
-INITIAL_ADMIN_USERNAME=admin
 INITIAL_ADMIN_PASSWORD=${ADMIN_PASSWORD}
-INITIAL_ADMIN_DISPLAY_NAME=מנהל עיריית עומר
-INITIAL_ADMIN_EMAIL=admin@omer.com
-
-# Subadmin Account (auto-created on first startup)
-INITIAL_SUBADMIN_USERNAME=power_user
-INITIAL_SUBADMIN_PASSWORD=power1234
-INITIAL_SUBADMIN_DISPLAY_NAME=מנהל משנה
-INITIAL_SUBADMIN_EMAIL=subadmin@omer.com
-
-# Database
+POSTGRES_PASSWORD=omeropsmap_prod_pass
 DATABASE_URL=postgresql+asyncpg://omeropsmap:omeropsmap_prod_pass@postgres:5432/omeropsmap
-
-# Frontend Configuration (HTTPS with self-signed certificate)
 VITE_API_URL=https://${DROPLET_IP}
 VITE_WS_URL=wss://${DROPLET_IP}/ws
-
-# CORS Origins (HTTP for internal, HTTPS for external)
-ALLOWED_ORIGINS=http://\${DROPLET_IP},https://\${DROPLET_IP},http://frontend,http://nginx
+ALLOWED_ORIGINS=https://${DROPLET_IP},http://frontend,http://nginx
 ENVFILE
 
-echo "✅ .env file created"
+# Cleanup uploaded copy
+rm -f /tmp/omeropsmap.env
+echo "✅ .env file created from local + prod overrides"
 
 # Show current commit info
 COMMIT_HASH=\$(git rev-parse --short HEAD)
