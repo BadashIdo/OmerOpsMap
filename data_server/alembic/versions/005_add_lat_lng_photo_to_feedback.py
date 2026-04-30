@@ -1,14 +1,14 @@
 """add lat lng photo to feedback
 
-Revision ID: 005_add_lat_lng_photo_to_feedback
-Revises: 004_add_feedback_table
+Revision ID: 006_feedback_fields
+Revises: 005
 Create Date: 2026-04-28
 """
 from alembic import op
 import sqlalchemy as sa
 
-revision = "005_feedback_fields"
-down_revision = "004"
+revision = "006_feedback_fields"
+down_revision = "005"
 branch_labels = None
 depends_on = None
 
