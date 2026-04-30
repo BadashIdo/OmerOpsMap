@@ -1,399 +1,556 @@
-/* Overlay */
-.overlay {
+/* ── Backdrop ── */
+.backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  z-index: 10050;
-  touch-action: none;
+  background: rgba(13, 24, 41, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 10000;
+  /* above chatbot button (9998) and window (9999) */
+  animation: sb_fadeIn 220ms ease-out;
 }
 
-.overlayVisible {
-  opacity: 1;
-  pointer-events: auto;
-}
+@keyframes sb_fadeIn {
+  from {
+    opacity: 0;
+  }
 
-/* Sidebar */
-.sidebar {
-  position: fixed;
-  top: 80px;
-  right: 15px;
-  bottom: 15px;
-  height: auto;
-  max-height: calc(100svh - 95px);
-  width: min(360px, 92vw);
-  background: #2e3440;
-  color: #e6eaf2;
-  z-index: 10051;
-  transform: translateX(calc(100% + 20px));
-  transition: transform 0.25s ease;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  padding-bottom: env(safe-area-inset-bottom);
-  font-family: inherit;
-  touch-action: pan-x pan-y;
-}
-
-.sidebar,
-.sidebar * {
-  touch-action: pan-x pan-y;
-}
-
-.open {
-  transform: translateX(0);
-}
-
-/* מובייל: Sidebar מלא מתחת ל-SearchBar */
-@media (max-width: 768px) {
-  .sidebar {
-    top: 70px;
-    left: 10px;
-    right: 10px;
-    bottom: 90px;
-    width: calc(100% - 20px);
-    height: auto;
-    border-radius: 16px;
+  to {
+    opacity: 1;
   }
 }
 
-/* Top */
-.top {
-  padding: 14px;
+/* ── Bottom sheet ── */
+.sheet {
+  position: fixed;
+  z-index: 10100;
+  /* above backdrop (10000) and chatbot (9999) */
+  background: #fff;
+  font-family: inherit;
+  direction: rtl;
+  overflow: hidden;
+  /* clips border-radius; .body scrolls independently */
+  touch-action: pan-y;
+  /* pan-y (not none!) — 'none' blocks child scroll on iOS */
+
+  /* Mobile — full-width bottom sheet, below search bar */
+  inset-inline-start: 0;
+  inset-inline-end: 0;
+  top: calc(75px + env(safe-area-inset-top));
+  bottom: 0;
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -16px 40px rgba(15, 23, 42, 0.18);
+  animation: sb_slideUp 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes sb_slideUp {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 768px) {
+  .sheet {
+    top: 50%;
+    inset-inline-start: 50%;
+    inset-inline-end: auto;
+    bottom: auto;
+    transform: translate(50%, -50%);
+    width: min(440px, 90vw);
+    height: 84vh;
+    max-height: 84vh;
+    border-radius: 18px;
+    padding-bottom: 0;
+    box-shadow:
+      0 24px 60px rgba(15, 23, 42, 0.22),
+      0 4px 12px rgba(15, 23, 42, 0.10);
+    animation: sb_zoomIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+
+@keyframes sb_zoomIn {
+  from {
+    opacity: 0;
+    transform: translate(50%, -50%) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(50%, -50%) scale(1);
+  }
+}
+
+/* ── Handle ── */
+.handle {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: #e2e8f0;
+}
+
+@media (min-width: 768px) {
+  .handle {
+    display: none;
+  }
+}
+
+/* ── Header ── */
+.header {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  right: 0;
+  height: 70px;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 0 0 auto;
-  /* חשוב: לא להצטמצם */
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 22px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fff;
+  z-index: 2;
 }
 
-.langPill {
-  padding: 8px 10px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 12px;
-  white-space: nowrap;
+@media (min-width: 768px) {
+  .header {
+    top: 0;
+  }
 }
 
-.brand {
+.headerText {
   flex: 1;
-  text-align: center;
+  min-width: 0;
 }
 
-.brandTitle {
-  font-weight: 800;
+.title {
+  margin: 0 0 4px;
   font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.2px;
 }
 
-.brandSub {
-  margin-top: 3px;
-  font-size: 12px;
-  opacity: 0.75;
+.subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.4;
 }
 
 .closeBtn {
-  width: 38px;
-  height: 38px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.06);
-  color: #e6eaf2;
-  cursor: pointer;
-}
-
-/* Emergency card */
-.emergency {
-  margin: 0 14px 12px;
-  padding: 12px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 0 0 auto;
-  /* חשוב: לא להצטמצם */
-}
-
-.toggleReal {
-  width: 52px;
-  height: 28px;
-  border-radius: 999px;
-  position: relative;
-  transition: background-color 0.3s;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.toggleOff {
-  background: rgba(0, 0, 0, 0.25);
-}
-
-.toggleOn {
-  background: rgba(255, 152, 0, 0.8);
-}
-
-.toggleThumb {
-  position: absolute;
-  top: 3px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #ffffff;
-  transition: transform 0.3s;
-}
-
-.toggleOff .toggleThumb {
-  right: 4px;
-}
-
-.toggleOn .toggleThumb {
-  transform: translateX(-24px);
-  right: 4px;
-}
-
-.emergencyTitle {
-  flex: 1;
-  text-align: right;
-  font-weight: 700;
-  color: #FF9800;
-}
-
-.emergencyIcon {
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  background: rgba(255, 152, 0, 0.18);
-}
-
-/* Exit button */
-.exitBtn {
-  margin: 14px 14px 18px 14px; /* Added more bottom margin since it's at the end */
-  padding: 14px 16px;
-  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 0 0 auto;
-}
-
-.exitBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(244, 67, 54, 0.4);
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.exitBtn:active {
-  transform: translateY(0);
-}
-
-.exitIcon {
-  font-size: 24px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-shrink: 0;
   width: 36px;
   height: 36px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  border: none;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 120ms ease;
 }
 
-.exitText {
-  flex: 1;
-  text-align: right;
+.closeBtn:hover {
+  background: #e2e8f0;
 }
 
-.exitTitle {
-  font-size: 15px;
-  font-weight: 700;
-  margin-bottom: 2px;
-}
-
-.exitSub {
-  font-size: 11px;
-  opacity: 0.85;
-  font-weight: 400;
-}
-
-/* Scroll area */
-.sections {
-  /* ✅ זה העיקר: זה יהיה האזור היחיד שגולל */
-  flex: 1;
-  min-height: 0;
-  overflow-y: scroll;               /* scroll (לא auto) — חשוב ל-iOS */
+/* ── Scrollable body ── */
+.body {
+  position: absolute;
+  top: 90px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto !important;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;     /* מונע מהמפה מלקבל את הגלילה */
+  overscroll-behavior: contain;
+  touch-action: pan-y !important;
+  /* allows vertical scroll on iOS/touch */
+  padding: 8px 12px calc(16px + env(safe-area-inset-bottom));
+  /* ⚠️ NO display:flex here — flex children shrink to fit height instead of overflowing.
+     Block layout lets children overflow naturally so the scrollbar appears. */
+}
 
-  /* layout + רווחים */
+/* Spacing between items (replaces flex gap) */
+.body>* {
+  margin-bottom: 8px;
+}
+
+.body>*:last-child {
+  margin-bottom: 0;
+}
+
+@media (min-width: 768px) {
+  .body {
+    top: 70px;
+    padding-bottom: 16px;
+  }
+}
+
+/* ── Temporary-sites toggle card (same style as LayersControl card) ── */
+.card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #eef2f7;
+  border-radius: 14px;
+  background: #fff;
+  cursor: pointer;
+  text-align: start;
+  font-family: inherit;
+  transition: all 180ms ease;
+}
+
+.card:hover {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.cardOn {
+  background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+  border-color: #fde68a;
+}
+
+.iconWrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in oklab, var(--card-accent) 14%, white);
+  color: var(--card-accent);
+  flex-shrink: 0;
+}
+
+.iconEmoji {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.cardText {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-
-  padding: 0 14px 14px;
-
-  /* Firefox */
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.22) rgba(255, 255, 255, 0.06);
+  gap: 2px;
 }
 
-/* Chrome / Edge / Safari */
-.sections::-webkit-scrollbar {
-  width: 6px;
+.cardTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
 }
 
-.sections::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.06);
+.cardSub {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+/* switch (identical to LayersControl) */
+.switch {
+  position: relative;
+  width: 38px;
+  height: 22px;
   border-radius: 999px;
+  background: #cbd5e1;
+  flex-shrink: 0;
+  transition: background-color 180ms ease;
 }
 
-.sections::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.22);
-  border-radius: 999px;
-  border: 2px solid rgba(0, 0, 0, 0);
-  background-clip: padding-box;
+.switchOn {
+  background: #1a6fbd;
 }
 
-.sections::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.32);
-  background-clip: padding-box;
+.switchKnob {
+  position: absolute;
+  top: 2px;
+  inset-inline-start: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
+  transition: inset-inline-start 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-/* Cards */
-.card {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+.switchOn .switchKnob {
+  inset-inline-start: 18px;
+}
+
+/* ── Accordion (categories) ── */
+.accordion {
+  border: 1px solid #eef2f7;
+  border-radius: 14px;
   overflow: hidden;
-
-  /* ✅ חשוב: שלא “יידחסו” בתוך flex ולכן לא יבטלו גלילה */
-  flex: 0 0 auto;
+  background: #fff;
 }
 
-/* Header של קטגוריה */
-.cardHeaderBtn {
-  width: 100%;
+.accordionHeader {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid transparent;
 }
 
-.cardHeaderExpandBtn {
+.accordionBtn {
   flex: 1;
-  background: transparent;
-  border: none;
-  color: inherit;
-  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px;
-  text-align: inherit;
-}
-
-.cardHeaderExpandBtn:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.cardHeaderToggleAllBtn {
-  background: transparent;
+  padding: 12px 14px;
   border: none;
-  color: inherit;
+  background: transparent;
   cursor: pointer;
-  padding: 12px;
-  display: grid;
-  place-items: center;
-  opacity: 0.7;
-  transition: opacity 0.2s;
+  font-family: inherit;
+  text-align: start;
+  color: #0f172a;
+  transition: background 120ms ease;
 }
 
-.cardHeaderToggleAllBtn:hover {
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.08);
+.accordionBtn:hover {
+  background: #f8fafc;
 }
 
-/* אייקון/חץ בכותרת */
+.accordionIcon {
+  font-size: 20px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.accordionTitle {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
 .chev {
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.06);
-  display: grid;
-  place-items: center;
-  opacity: 0.9;
-
-  transition: transform 0.18s ease;
+  font-size: 20px;
+  color: #94a3b8;
+  transition: transform 450ms cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
 }
 
 .chevOpen {
   transform: rotate(180deg);
 }
 
-.cardTitle {
-  flex: 1;
-  text-align: center;
-  font-weight: 700;
-}
-
-.cardIcon {
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
+.toggleAllBtn {
+  padding: 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #64748b;
   display: grid;
   place-items: center;
-  background: rgba(255, 255, 255, 0.06);
+  transition: color 120ms ease;
 }
 
-/* גוף הקטגוריה */
-.cardBody {
-  padding: 10px 12px 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+.toggleAllBtn:hover {
+  color: #1a6fbd;
+}
+
+/* ── Accordion body ── */
+.accordionBody {
+  border-top: 1px solid #f1f5f9;
+  padding: 6px 10px 10px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
+  /* Animate entrance — slides down from slightly above while fading in */
+  animation: accordionOpen 1000ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: top;
 }
 
-/* פתיחה/סגירה של גוף הקטגוריה */
-.bodyClosed {
-  display: none;
-}
+@keyframes accordionOpen {
+  from {
+    opacity: 0;
+    transform: scaleY(0.75) translateY(-10px);
+  }
 
-.bodyOpen {
-  display: flex;
+  to {
+    opacity: 1;
+    transform: scaleY(1) translateY(0);
+  }
 }
 
 .checkRow {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.checkRow:hover {
+  background: #f8fafc;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .checkText {
   flex: 1;
-  text-align: right;
-  font-size: 14px;
-  opacity: 0.95;
+  font-size: 13px;
+  color: #334155;
 }
 
-.checkbox {
-  width: 18px;
-  height: 18px;
+
+/* ── Mobile small adjustments ── */
+@media (max-width: 480px) {
+  .header {
+    padding: 10px 18px 12px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .body {
+    padding: 6px 10px 12px;
+  }
+
+  .card {
+    padding: 12px 14px;
+    gap: 12px;
+  }
+
+  .iconWrap {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* =========================================
+   Dark Mode Overrides
+   ========================================= */
+:global(body.dark-mode) .sheet {
+  background: #1e293b;
+  box-shadow: 0 -16px 40px rgba(0, 0, 0, 0.5);
+}
+
+:global(body.dark-mode) .header {
+  background: #1e293b;
+  border-bottom-color: #334155;
+}
+
+:global(body.dark-mode) .title {
+  color: #f8fafc;
+}
+
+:global(body.dark-mode) .subtitle {
+  color: #94a3b8;
+}
+
+:global(body.dark-mode) .closeBtn {
+  background: #334155;
+  color: #cbd5e1;
+}
+
+:global(body.dark-mode) .closeBtn:hover {
+  background: #475569;
+  color: #f8fafc;
+}
+
+:global(body.dark-mode) .handle {
+  background: #475569;
+}
+
+:global(body.dark-mode) .card {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+:global(body.dark-mode) .card:hover {
+  background: #1e293b;
+  border-color: #475569;
+}
+
+:global(body.dark-mode) .cardOn {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border-color: #3b82f6;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+
+:global(body.dark-mode) .cardOn:hover {
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+}
+
+:global(body.dark-mode) .cardTitle {
+  color: #ffffff;
+}
+
+:global(body.dark-mode) .cardSub {
+  color: #94a3b8;
+}
+
+/* Toggles */
+:global(body.dark-mode) .switch {
+  background: #ffffff;
+}
+
+:global(body.dark-mode) .switch:not([class*="switchOn"]) .switchKnob {
+  background: #334155;
+  box-shadow: none;
+}
+
+:global(body.dark-mode) .switchOn {
+  background: #1a6fbd;
+}
+
+:global(body.dark-mode) .switchOn .switchKnob {
+  background: #ffffff;
+}
+
+/* Accordion (Categories) */
+:global(body.dark-mode) .accordion {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+:global(body.dark-mode) .accordionBtn {
+  color: #f8fafc;
+}
+
+:global(body.dark-mode) .accordionBtn:hover {
+  background: #1e293b;
+}
+
+:global(body.dark-mode) .accordionTitle {
+  color: #f8fafc;
+}
+
+:global(body.dark-mode) .accordionIcon,
+:global(body.dark-mode) .chev {
+  color: #94a3b8;
+}
+
+:global(body.dark-mode) .accordionBody {
+  border-top-color: #334155;
+}
+
+:global(body.dark-mode) .checkRow:hover {
+  background: #1e293b;
+}
+
+:global(body.dark-mode) .checkText {
+  color: #cbd5e1;
 }

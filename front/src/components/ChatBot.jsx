@@ -143,7 +143,7 @@ const ChatBot = ({ isOpen, setIsOpen }) => {
           onClick={() => setIsOpen(true)}
           title="פתח צ'אט AI"
         >
-          💬
+          🤖
         </button>
       )}
 

@@ -62,7 +62,7 @@
   background: rgba(13, 24, 41, 0.55);
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
-  z-index: 1300;
+  z-index: 9999;
   animation: lc_fadeIn 220ms ease-out;
 }
 
@@ -73,7 +73,7 @@
 
 .sheet {
   position: fixed;
-  z-index: 1400;
+  z-index: 10000;
   background: #fff;
   font-family: inherit;
   direction: rtl;
@@ -87,7 +87,7 @@
   bottom: 0;
   border-radius: 22px 22px 0 0;
   padding-bottom: env(safe-area-inset-bottom);
-  max-height: 88vh;
+  max-height: 97vh;
   box-shadow: 0 -16px 40px rgba(15, 23, 42, 0.18);
   animation: lc_slideUp 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -105,8 +105,8 @@
     inset-inline-end: auto;
     bottom: auto;
     transform: translate(50%, -50%);  /* RTL-correct: pushes back on the start axis */
-    width: min(440px, 90vw);
-    max-height: 80vh;
+    width: min(484px, 99vw);
+    max-height: 88vh;
     border-radius: 18px;
     padding-bottom: 0;
     box-shadow:
@@ -336,4 +336,92 @@
   .iconWrap { width: 40px; height: 40px; }
   .cardTitle { font-size: 13px; }
   .cardSub { font-size: 11px; }
+}
+
+/* =========================================
+   Dark Mode Overrides
+   ========================================= */
+:global(body.dark-mode) .sheet {
+  background: #1e293b;
+  box-shadow: 0 -16px 40px rgba(0, 0, 0, 0.5);
+}
+
+:global(body.dark-mode) .header {
+  border-bottom-color: #334155;
+}
+
+:global(body.dark-mode) .title {
+  color: #f8fafc;
+}
+
+:global(body.dark-mode) .subtitle {
+  color: #94a3b8;
+}
+
+:global(body.dark-mode) .closeBtn {
+  background: #334155;
+  color: #cbd5e1;
+}
+
+:global(body.dark-mode) .closeBtn:hover {
+  background: #475569;
+  color: #f8fafc;
+}
+
+:global(body.dark-mode) .handle {
+  background: #475569;
+}
+
+:global(body.dark-mode) .card {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+:global(body.dark-mode) .card:hover {
+  background: #1e293b;
+  border-color: #475569;
+}
+
+:global(body.dark-mode) .cardOn {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border-color: #3b82f6;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+
+:global(body.dark-mode) .cardOn:hover {
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+}
+
+:global(body.dark-mode) .cardTitle {
+  color: #ffffff;
+}
+
+:global(body.dark-mode) .cardSub {
+  color: #94a3b8;
+}
+
+:global(body.dark-mode) .switch {
+  background: #ffffff;
+}
+
+:global(body.dark-mode) .switch:not([class*="switchOn"]) .switchKnob {
+  background: #334155;
+  box-shadow: none;
+}
+
+:global(body.dark-mode) .switchOn {
+  background: #1a6fbd;
+}
+
+:global(body.dark-mode) .switchOn .switchKnob {
+  background: #ffffff;
+}
+
+:global(body.dark-mode) .footer {
+  border-top-color: #334155;
+  color: #64748b;
+}
+
+:global(body.dark-mode) .providers {
+  color: #94a3b8;
 }

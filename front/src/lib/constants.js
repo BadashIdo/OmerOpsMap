@@ -44,7 +44,7 @@ export const EXTERNAL_LAYERS = [
     label_he: "מזג אוויר",
     color: "#0099cc",
     icon: "cloud",
-    defaultVisible: true,
+    defaultVisible: false,
     cadenceSeconds: 15 * 60,
   },
 ];

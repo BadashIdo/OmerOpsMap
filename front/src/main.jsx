@@ -1,6 +1,7 @@
 import ReactDOM from "react-dom/client";
 import App from "./app/App.jsx";
 import "./styles/globals.css";
+import "./styles/dark-mode.css";
 import "leaflet/dist/leaflet.css";
 import "./lib/leafletIcons";
 

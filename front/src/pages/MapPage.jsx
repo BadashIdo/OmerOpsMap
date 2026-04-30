@@ -21,7 +21,7 @@
  *  useNotifications  → toast list + pending admin badge count
  */
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import "../styles/App.css";
 import appStyles from "../styles/App.module.css";
 
@@ -73,7 +73,24 @@ export default function MapPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isLayersOpen, setIsLayersOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [showTemporarySites, setShowTemporarySites] = useState(true);
+
+  // ── Dark Mode ──────────────────────────────────────────────────────────────
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem("theme") === "dark";
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.classList.add("dark-mode");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.body.classList.remove("dark-mode");
+      localStorage.setItem("theme", "light");
+    }
+  }, [isDarkMode]);
 
   // ── External layer visibility (per-source toggle in LayersControl) ─────────
   const [visibleLayers, setVisibleLayers] = useState(() =>
@@ -374,6 +391,9 @@ export default function MapPage() {
           onOpenAdmin={() => setIsAdminPanelOpen(true)}
           onOpenSidebar={() => setIsSidebarOpen(true)}
           isSidebarOpen={isSidebarOpen}
+          onOpenLayers={() => setIsLayersOpen(true)}
+          activeLayersCount={Object.values(visibleLayers).filter(Boolean).length}
+          onOpenFeedback={() => setIsFeedbackOpen(true)}
         />
 
         {/* ── Toast notifications ── */}
@@ -390,7 +410,7 @@ export default function MapPage() {
         </div>
 
         {/* ── Feedback button (visible to everyone, including guests) ── */}
-        <FeedbackButton />
+        <FeedbackButton open={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
 
         {/* ── AI ChatBot ── */}
         <ChatBot isOpen={isChatOpen} setIsOpen={setIsChatOpen} />
@@ -409,9 +429,13 @@ export default function MapPage() {
 
         {/* ── External-layers toggle (round trigger → modal sheet) ── */}
         <LayersControl
+          open={isLayersOpen}
+          onClose={() => setIsLayersOpen(false)}
           visibleLayers={visibleLayers}
           onToggle={toggleLayer}
           layerInfo={layerInfo}
+          isDarkMode={isDarkMode}
+          toggleDarkMode={() => setIsDarkMode((prev) => !prev)}
         />
 
         {/* ── The Leaflet map (full screen, behind everything else) ── */}
