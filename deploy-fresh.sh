@@ -160,7 +160,7 @@ ENVFILE
 rm -f /tmp/omeropsmap.env
 echo "✅ .env file created from local + prod overrides"
 
-# Show current commit info
+# Show current commit info 
 COMMIT_HASH=\$(git rev-parse --short HEAD)
 COMMIT_FULL_HASH=\$(git rev-parse HEAD)
 COMMIT_MESSAGE=\$(git log -1 --pretty=%B)
