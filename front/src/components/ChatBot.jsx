@@ -2,21 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { sendChatMessage } from '../api/chatService';
 import styles from '../styles/ChatBot.module.css';
 
-/**
- * ChatBot Component
- * 
- * AI Chat interface that will connect to the AI Agent service (Port 8000)
- * Currently prepared for future integration with back/Ai_agent
- * 
- * Features:
- * - Toggle open/close chat window
- * - Message history display
- * - User input with send button
- * - Auto-scroll to latest message
- * - Responsive design
- * - Ready for WebSocket or REST API integration
- */
-
 const CHAT_STORAGE_KEY = 'chat_messages';
 
 const WELCOME_MESSAGE = {
@@ -31,7 +16,6 @@ function loadMessages() {
     const stored = sessionStorage.getItem(CHAT_STORAGE_KEY);
     if (!stored) return [WELCOME_MESSAGE];
     const parsed = JSON.parse(stored);
-    // timestamps are serialized as strings — restore them
     return parsed.map(m => ({ ...m, timestamp: new Date(m.timestamp) }));
   } catch {
     return [WELCOME_MESSAGE];
@@ -48,12 +32,10 @@ const ChatBot = ({ isOpen, setIsOpen, onSiteClick, allSites = [] }) => {
   const inputRef = useRef(null);
   const typingRef = useRef(null);
 
-  // Persist messages to sessionStorage whenever they change
   useEffect(() => {
     sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
   }, [messages]);
 
-  // Auto-scroll to bottom when messages change or chat opens
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping, typingText]);
@@ -82,12 +64,6 @@ const ChatBot = ({ isOpen, setIsOpen, onSiteClick, allSites = [] }) => {
     }, speed);
   };
 
-  /**
-   * Build context window from message history
-   * format:
-   * [User]: ...
-   * [AI]: ...
-   */
   const buildContextWindow = (currentMessages) => {
     return currentMessages
       .slice(-4)
@@ -98,18 +74,12 @@ const ChatBot = ({ isOpen, setIsOpen, onSiteClick, allSites = [] }) => {
       .join('\n');
   };
 
-  /**
-   * Get user location from sessionStorage (only if tracking is enabled)
-   */
   const getUserLocation = () => {
     const isTracking = sessionStorage.getItem('location_tracking') === 'true';
     if (!isTracking) return null;
     return sessionStorage.getItem('user_location') || null;
   };
 
-  /**
-   * Send message to AI Agent
-   */
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
@@ -121,18 +91,13 @@ const ChatBot = ({ isOpen, setIsOpen, onSiteClick, allSites = [] }) => {
       timestamp: new Date(),
     };
 
-    // Build context BEFORE adding the new message (as requested)
     const contextWindow = buildContextWindow(messages);
-
     setMessages((prev) => [...prev, userMessage]);
     setInputText('');
     setIsLoading(true);
 
     try {
-      // Get location from sessionStorage
       const location = getUserLocation();
-
-      // Call API
       const result = await sendChatMessage(userText, contextWindow, location);
 
       if (result.success) {
@@ -151,7 +116,7 @@ const ChatBot = ({ isOpen, setIsOpen, onSiteClick, allSites = [] }) => {
       console.error('Error sending message to AI Agent:', error);
       const errorMessage = {
         id: Date.now() + 1,
-        text: 'מצטער, נראה ששירות הצ\'ט אינו זמין כרגע. 🔌',
+        text: "מצטער, נראה ששירות הצ'ט אינו זמין כרגע. 🔌",
         sender: 'bot',
         timestamp: new Date(),
       };
@@ -169,33 +134,55 @@ const ChatBot = ({ isOpen, setIsOpen, onSiteClick, allSites = [] }) => {
   };
 
   const renderBotText = (text) => {
-    const lines = text.split('\n');
+    if (!onSiteClick || !allSites?.length) {
+      return (
+        <div className={styles.botTextBlock}>
+          {text.split('\n').map((l, i) => <p key={i}>{l || ' '}</p>)}
+        </div>
+      );
+    }
+
+    // Sort longest names first to avoid partial matches
+    const sortedSites = [...allSites].sort((a, b) => (b.name?.length || 0) - (a.name?.length || 0));
+
+    const highlightLine = (line) => {
+      let remaining = line;
+      const parts = [];
+      let key = 0;
+      while (remaining.length > 0) {
+        let matched = false;
+        for (const site of sortedSites) {
+          if (!site.name) continue;
+          const idx = remaining.indexOf(site.name);
+          if (idx !== -1) {
+            if (idx > 0) parts.push(<span key={key++}>{remaining.slice(0, idx)}</span>);
+            parts.push(
+              <button
+                key={key++}
+                className={styles.siteLink}
+                onClick={() => { onSiteClick(site); setIsOpen(false); }}
+              >
+                {site.name}
+              </button>
+            );
+            remaining = remaining.slice(idx + site.name.length);
+            matched = true;
+            break;
+          }
+        }
+        if (!matched) {
+          parts.push(<span key={key++}>{remaining}</span>);
+          break;
+        }
+      }
+      return parts;
+    };
+
     return (
       <div className={styles.botTextBlock}>
-        {lines.map((line, i) => {
-          const match = line.match(/^(\d+\.\s*📍\s*)(.+)$/);
-          if (match && onSiteClick) {
-            const prefix = match[1];
-            const siteName = match[2].trim();
-            const site = allSites.find(
-              s => s.name?.trim().toLowerCase() === siteName.toLowerCase()
-            );
-            if (site) {
-              return (
-                <p key={i}>
-                  {prefix}
-                  <button
-                    className={styles.siteLink}
-                    onClick={() => { onSiteClick(site); setIsOpen(false); }}
-                  >
-                    {siteName}
-                  </button>
-                </p>
-              );
-            }
-          }
-          return <p key={i}>{line || ' '}</p>;
-        })}
+        {text.split('\n').map((line, i) => (
+          <p key={i}>{line ? highlightLine(line) : ' '}</p>
+        ))}
       </div>
     );
   };
@@ -209,7 +196,6 @@ const ChatBot = ({ isOpen, setIsOpen, onSiteClick, allSites = [] }) => {
 
   return (
     <>
-      {/* Chat Toggle Button */}
       {!isOpen && (
         <button
           className={styles.chatToggle}
@@ -220,10 +206,8 @@ const ChatBot = ({ isOpen, setIsOpen, onSiteClick, allSites = [] }) => {
         </button>
       )}
 
-      {/* Chat Window */}
       {isOpen && (
         <div className={styles.chatWindow}>
-          {/* Header */}
           <div className={styles.chatHeader}>
             <div className={styles.headerContent}>
               <span className={styles.headerIcon}>🤖</span>
@@ -244,13 +228,11 @@ const ChatBot = ({ isOpen, setIsOpen, onSiteClick, allSites = [] }) => {
             </button>
           </div>
 
-          {/* Messages Area */}
           <div className={styles.messagesContainer}>
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`${styles.message} ${msg.sender === 'user' ? styles.userMessage : styles.botMessage
-                  }`}
+                className={`${styles.message} ${msg.sender === 'user' ? styles.userMessage : styles.botMessage}`}
               >
                 <div className={styles.messageContent}>
                   {msg.sender === 'bot' ? renderBotText(msg.text) : <p>{msg.text}</p>}
@@ -280,7 +262,6 @@ const ChatBot = ({ isOpen, setIsOpen, onSiteClick, allSites = [] }) => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Area */}
           <div className={styles.inputContainer}>
             <textarea
               ref={inputRef}

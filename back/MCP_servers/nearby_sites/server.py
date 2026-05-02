@@ -244,7 +244,7 @@ def get_nearby_sites(
         
         for i, site in enumerate(closest, 1):
             emoji = "📍" if site["type"] == "permanent" else "⚠️"
-            result += f"{i}. {emoji} {site['name']}\n"
+            result += f"{i}. שם: {site['name']}\n"
             if site.get("sub_category"):
                 result += f"   קטגוריה: {site['sub_category']}\n"
             elif site.get("category"):
@@ -417,7 +417,7 @@ def get_recent_sites(
 
         for i, site in enumerate(recent, 1):
             emoji = "📍" if site["type"] == "permanent" else "⚠️"
-            result += f"{i}. {emoji} {site['name']}\n"
+            result += f"{i}. שם: {site['name']}\n"
             if site.get("sub_category"):
                 result += f"   קטגוריה: {site['sub_category']}\n"
             elif site.get("category"):

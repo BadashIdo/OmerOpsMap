@@ -1,4 +1,5 @@
 from contextlib import AsyncExitStack
+from langsmith import traceable
 from graph.mcp.clients import NEARBY_SITES_MCP
 
 
@@ -10,6 +11,19 @@ def _extract_text(result) -> str:
     return str(result)
 
 
+@traceable(name="get_nearby_sites")
+async def _call_nearby_sites(params: dict) -> str:
+    result = await NEARBY_SITES_MCP.call_tool("get_nearby_sites", params)
+    return _extract_text(result)
+
+
+@traceable(name="get_recent_sites")
+async def _call_recent_sites(params: dict) -> str:
+    result = await NEARBY_SITES_MCP.call_tool("get_recent_sites", params)
+    return _extract_text(result)
+
+
+@traceable(name="mcp_tool_calls")
 async def call_selected_tools(
     use_nearby_sites: bool = False,
     use_recent_sites: bool = False,
@@ -36,8 +50,7 @@ async def call_selected_tools(
             if name_search:
                 params["name_search"] = name_search
             try:
-                result = await NEARBY_SITES_MCP.call_tool("get_nearby_sites", params)
-                results["nearby_sites"] = _extract_text(result)
+                results["nearby_sites"] = await _call_nearby_sites(params)
             except Exception as e:
                 results["nearby_sites"] = f"שגיאה: {e}"
 
@@ -46,8 +59,7 @@ async def call_selected_tools(
             if categories:
                 params["categories"] = categories
             try:
-                result = await NEARBY_SITES_MCP.call_tool("get_recent_sites", params)
-                results["recent_sites"] = _extract_text(result)
+                results["recent_sites"] = await _call_recent_sites(params)
             except Exception as e:
                 results["recent_sites"] = f"שגיאה: {e}"
 

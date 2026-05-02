@@ -115,6 +115,10 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       # Docker service name — not localhost — so the agent finds the MCP container
       - NEARBY_SITES_MCP_URL=http://mcp_nearby_sites:3335/mcp
+      # LangSmith tracing (optional — leave empty to disable)
+      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2:-false}
+      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY:-}
+      - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT:-OmerOpsMap}
     depends_on:
       - mcp_nearby_sites
     restart: unless-stopped
