@@ -6,25 +6,19 @@
 # Main agent LLM - generates final answers
 # Used in: graph/nodes/tool_agent.py
 main_llm:
-  model_name: "gpt-4o-mini"
+  model_name: "gpt-5-mini"
   temperature: 0
 
 # Tool router LLM - decides which tools to use
 # Used in: graph/chains/tool_router.py
 tool_router_llm:
-  model_name: "gpt-4o-mini"
-  temperature: 0
-
-# Category selector LLM - selects categories for nearby sites
-# Used in: graph/chains/tool_router.py (category_chain)
-category_selector_llm:
-  model_name: "gpt-4o-mini"
+  model_name: "gpt-5-mini"
   temperature: 0
 
 # Moderation LLM - checks for inappropriate content
 # Used in: graph/chains/moderation.py
 moderation_llm:
-  model_name: "gpt-4o-mini"
+  model_name: "gpt-5-mini"
   temperature: 0
 
 # ============================================

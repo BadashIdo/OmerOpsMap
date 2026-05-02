@@ -15,19 +15,25 @@
  *   handleLocate  — toggle: show location (and fly to it) or hide it
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function useGeoLocation(mapRef) {
   const [userLocation, setUserLocation] = useState(null);
   const [isTracking, setIsTracking] = useState(false);
 
+  // Clear any stale location from a previous session on every page load
+  useEffect(() => {
+    sessionStorage.removeItem("user_location");
+    sessionStorage.removeItem("location_tracking");
+  }, []);
+
   function handleLocate() {
     if (isTracking) {
-      // Hide the marker
+      // Hide the marker — remove all location data so ChatBot can't send it
       setIsTracking(false);
       setUserLocation(null);
       sessionStorage.removeItem("user_location");
-      sessionStorage.setItem("location_tracking", "false");
+      sessionStorage.removeItem("location_tracking");
       return;
     }
 

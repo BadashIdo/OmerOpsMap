@@ -413,7 +413,12 @@ export default function MapPage() {
         <FeedbackButton open={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
 
         {/* ── AI ChatBot ── */}
-        <ChatBot isOpen={isChatOpen} setIsOpen={setIsChatOpen} />
+        <ChatBot
+          isOpen={isChatOpen}
+          setIsOpen={setIsChatOpen}
+          onSiteClick={goToPoint}
+          allSites={[...points, ...temporarySites]}
+        />
 
         {/* ── Pikud Haoref alert banner (top, only when active oref alert) ── */}
         <AlertBanner alerts={activeOrefAlerts} />

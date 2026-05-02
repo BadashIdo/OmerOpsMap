@@ -10,7 +10,7 @@ from langchain_core.runnables import RunnableSequence
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
-from graph.prompts.prompt_moderate import MODERATION_SYSTEM_PROMPT
+from configuration.prompts import MODERATION_SYSTEM_PROMPT
 
 
 # LLM

@@ -17,31 +17,70 @@ import styles from '../styles/ChatBot.module.css';
  * - Ready for WebSocket or REST API integration
  */
 
-const ChatBot = ({ isOpen, setIsOpen }) => {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      text: 'שלום! אני עוזר AI של מערכת OmerOpsMap. במה אוכל לעזור לך היום?',
-      sender: 'bot',
-      timestamp: new Date(),
-    },
-  ]);
+const CHAT_STORAGE_KEY = 'chat_messages';
+
+const WELCOME_MESSAGE = {
+  id: 1,
+  text: 'שלום! אני עוזר AI של מערכת OmerOpsMap. במה אוכל לעזור לך היום?',
+  sender: 'bot',
+  timestamp: new Date(),
+};
+
+function loadMessages() {
+  try {
+    const stored = sessionStorage.getItem(CHAT_STORAGE_KEY);
+    if (!stored) return [WELCOME_MESSAGE];
+    const parsed = JSON.parse(stored);
+    // timestamps are serialized as strings — restore them
+    return parsed.map(m => ({ ...m, timestamp: new Date(m.timestamp) }));
+  } catch {
+    return [WELCOME_MESSAGE];
+  }
+}
+
+const ChatBot = ({ isOpen, setIsOpen, onSiteClick, allSites = [] }) => {
+  const [messages, setMessages] = useState(loadMessages);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [typingText, setTypingText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const typingRef = useRef(null);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Persist messages to sessionStorage whenever they change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
   }, [messages]);
 
-  // Focus input when chat opens
+  // Auto-scroll to bottom when messages change or chat opens
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isTyping, typingText]);
+
   useEffect(() => {
     if (isOpen) {
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'instant' }), 50);
       inputRef.current?.focus();
     }
   }, [isOpen]);
+
+  const typewriterEffect = (fullText, onDone) => {
+    setIsTyping(true);
+    setTypingText('');
+    let i = 0;
+    const speed = Math.max(7, Math.min(18, 1800 / fullText.length));
+    typingRef.current = setInterval(() => {
+      i++;
+      setTypingText(fullText.slice(0, i));
+      if (i >= fullText.length) {
+        clearInterval(typingRef.current);
+        setIsTyping(false);
+        setTypingText('');
+        onDone();
+      }
+    }, speed);
+  };
 
   /**
    * Build context window from message history
@@ -51,6 +90,7 @@ const ChatBot = ({ isOpen, setIsOpen }) => {
    */
   const buildContextWindow = (currentMessages) => {
     return currentMessages
+      .slice(-4)
       .map(msg => {
         const role = msg.sender === 'user' ? '[User]' : '[AI]';
         return `${role}: ${msg.text}`;
@@ -96,13 +136,14 @@ const ChatBot = ({ isOpen, setIsOpen }) => {
       const result = await sendChatMessage(userText, contextWindow, location);
 
       if (result.success) {
+        const fullText = result.response;
         const botMessage = {
           id: Date.now() + 1,
-          text: result.response,
+          text: fullText,
           sender: 'bot',
           timestamp: new Date(),
         };
-        setMessages((prev) => [...prev, botMessage]);
+        typewriterEffect(fullText, () => setMessages((prev) => [...prev, botMessage]));
       } else {
         throw new Error(result.error);
       }
@@ -125,6 +166,38 @@ const ChatBot = ({ isOpen, setIsOpen }) => {
       e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  const renderBotText = (text) => {
+    const lines = text.split('\n');
+    return (
+      <div className={styles.botTextBlock}>
+        {lines.map((line, i) => {
+          const match = line.match(/^(\d+\.\s*📍\s*)(.+)$/);
+          if (match && onSiteClick) {
+            const prefix = match[1];
+            const siteName = match[2].trim();
+            const site = allSites.find(
+              s => s.name?.trim().toLowerCase() === siteName.toLowerCase()
+            );
+            if (site) {
+              return (
+                <p key={i}>
+                  {prefix}
+                  <button
+                    className={styles.siteLink}
+                    onClick={() => { onSiteClick(site); setIsOpen(false); }}
+                  >
+                    {siteName}
+                  </button>
+                </p>
+              );
+            }
+          }
+          return <p key={i}>{line || ' '}</p>;
+        })}
+      </div>
+    );
   };
 
   const formatTime = (date) => {
@@ -180,7 +253,7 @@ const ChatBot = ({ isOpen, setIsOpen }) => {
                   }`}
               >
                 <div className={styles.messageContent}>
-                  <p>{msg.text}</p>
+                  {msg.sender === 'bot' ? renderBotText(msg.text) : <p>{msg.text}</p>}
                   <span className={styles.messageTime}>
                     {formatTime(msg.timestamp)}
                   </span>
@@ -191,10 +264,16 @@ const ChatBot = ({ isOpen, setIsOpen }) => {
               <div className={`${styles.message} ${styles.botMessage}`}>
                 <div className={styles.messageContent}>
                   <div className={styles.typingIndicator}>
-                    <span></span>
-                    <span></span>
-                    <span></span>
+                    <span></span><span></span><span></span>
                   </div>
+                </div>
+              </div>
+            )}
+            {isTyping && (
+              <div className={`${styles.message} ${styles.botMessage}`}>
+                <div className={styles.messageContent}>
+                  {renderBotText(typingText)}
+                  <span className={styles.cursor}>|</span>
                 </div>
               </div>
             )}

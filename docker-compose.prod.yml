@@ -133,6 +133,47 @@ services:
       - proxy-tier
     restart: unless-stopped
 
+  # ==========================================
+  # MCP nearby_sites — feeds real site data to the AI agent
+  # ==========================================
+  mcp_nearby_sites:
+    build: ./back/MCP_servers/nearby_sites
+    container_name: omeropsmap_mcp_nearby_sites
+    environment:
+      # Internal Docker DNS — data_server is not exposed to the host in prod
+      - DATA_SERVER_URL=http://data_server:8001
+    depends_on:
+      data_server:
+        condition: service_healthy
+    networks:
+      - proxy-tier
+    restart: unless-stopped
+
+  # ==========================================
+  # AI Agent — answers citizen queries via /ask
+  # Port 8000 exposed to host; add Nginx proxy rule when ready
+  # ==========================================
+  ai_agent:
+    build: ./back/Ai_agent
+    container_name: omeropsmap_ai_agent
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:?OPENAI_API_KEY must be set in .env}
+      # Internal Docker DNS — not localhost
+      - NEARBY_SITES_MCP_URL=http://mcp_nearby_sites:3335/mcp
+    depends_on:
+      - mcp_nearby_sites
+    networks:
+      - proxy-tier
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import httpx,sys; r=httpx.get(\"http://localhost:8000/health\",timeout=3); sys.exit(0 if r.status_code==200 else 1)' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
 networks:
   proxy-tier:
     external: false

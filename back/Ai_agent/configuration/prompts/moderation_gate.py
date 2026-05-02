@@ -1,6 +1,3 @@
-# graph/prompts/prompt_moderate.py
-from __future__ import annotations
-
 MODERATION_SYSTEM_PROMPT = """
 You are a moderation gate for a municipal Q&A assistant.
 Decide whether the user message should be processed.

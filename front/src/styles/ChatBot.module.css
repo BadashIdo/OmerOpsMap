@@ -359,3 +359,34 @@
   border-bottom-left-radius: 16px;
   border-bottom-right-radius: 4px;
 }
+.botTextBlock p {
+  margin: 2px 0;
+}
+
+.siteLink {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #1a73e8;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: 600;
+}
+
+.siteLink:hover {
+  color: #0d47a1;
+}
+
+.cursor {
+  display: inline-block;
+  width: 2px;
+  background: currentColor;
+  margin-right: 1px;
+  animation: blink 0.7s step-end infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
