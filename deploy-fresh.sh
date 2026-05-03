@@ -66,6 +66,13 @@ if [ ! -f "${LOCAL_ENV}" ]; then
   exit 1
 fi
 
+# Sanity check: OPENAI_API_KEY required by ai_agent — fail fast if missing
+if ! grep -q '^OPENAI_API_KEY=' "${LOCAL_ENV}"; then
+  log_warning "OPENAI_API_KEY missing from ${LOCAL_ENV} — ai_agent will refuse to start."
+  echo "Add OPENAI_API_KEY=sk-... to your local .env before running this script."
+  exit 1
+fi
+
 log_section "📤 Uploading local .env to droplet..."
 ssh -o StrictHostKeyChecking=accept-new root@${DROPLET_IP} "mkdir -p /tmp"
 scp -o StrictHostKeyChecking=accept-new "${LOCAL_ENV}" root@${DROPLET_IP}:/tmp/omeropsmap.env
@@ -153,6 +160,7 @@ POSTGRES_PASSWORD=omeropsmap_prod_pass
 DATABASE_URL=postgresql+asyncpg://omeropsmap:omeropsmap_prod_pass@postgres:5432/omeropsmap
 VITE_API_URL=https://${DROPLET_IP}
 VITE_WS_URL=wss://${DROPLET_IP}/ws
+VITE_AI_AGENT_URL=https://${DROPLET_IP}/ai
 ALLOWED_ORIGINS=https://${DROPLET_IP},http://frontend,http://nginx
 ENVFILE
 
@@ -189,6 +197,7 @@ log_info "\n${YELLOW}📊 Access Your Application:${NC}"
 echo "  • Web App (HTTPS):         https://${DROPLET_IP}"
 echo "  • API (HTTPS):             https://${DROPLET_IP}/api"
 echo "  • WebSocket (WSS):         wss://${DROPLET_IP}/ws"
+echo "  • AI Chat (HTTPS):         https://${DROPLET_IP}/ai/ask"
 
 log_info "\n${YELLOW}🔐 Admin Login:${NC}"
 echo "  • Username: ${GREEN}admin${NC}"
