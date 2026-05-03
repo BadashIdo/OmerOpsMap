@@ -37,18 +37,18 @@ def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
 def get_nearby_sites(
     user_lat: float = None,
     user_lng: float = None,
-    count: int = 5,
+    sites_count: int = 5,
     include_temporary: bool = True,
     categories: list[str] = None,
     name_search: str = None
 ) -> str:
     """
     מוצא אתרים לפי קטגוריה, שם ו/או קרבה למיקום המשתמש.
-    
+
     Args:
         user_lat: קו רוחב של המשתמש (אופציונלי)
         user_lng: קו אורך של המשתמש (אופציונלי)
-        count: מספר האתרים להחזיר (ברירת מחדל: 5)
+        sites_count: מספר האתרים להחזיר (ברירת מחדל: 5)
         include_temporary: האם לכלול אירועים זמניים (ברירת מחדל: כן)
         categories: רשימת קטגוריות לסינון (אופציונלי)
         name_search: חיפוש לפי שם מקום ספציפי (אופציונלי)
@@ -219,7 +219,7 @@ def get_nearby_sites(
         # Sort by distance (if available) and take top N
         if has_location:
             sites.sort(key=lambda x: x["distance_km"] if x["distance_km"] is not None else float("inf"))
-        closest = sites[:count]
+        closest = sites[:sites_count]
         
         if not closest:
             if name_search:
@@ -238,9 +238,6 @@ def get_nearby_sites(
                 result = f"🗺️ {len(closest)} האתרים הקרובים למיקום שלך:\n\n"
         else:
             result = f"🗺️ נמצאו {len(closest)} אתרים ({', '.join(categories)}):\n\n"
-        
-        if not has_location and (has_categories or has_name_search):
-            result += " להצגת מרחקים — לחץ על כפתור השכבות (בפינה הימנית התחתונה) ואז על 🎯\n\n"
         
         for i, site in enumerate(closest, 1):
             emoji = "📍" if site["type"] == "permanent" else "⚠️"
@@ -270,95 +267,28 @@ def get_nearby_sites(
 
 
 @mcp.tool
-def search_sites_by_category(
-    category: str,
+def get_recent_sites(
+    sites_count: int = 10,
+    categories: list[str] = None,
     user_lat: float = None,
     user_lng: float = None,
-    count: int = 10
-) -> str:
-    """
-    מחפש אתרים לפי קטגוריה.
-    
-    Args:
-        category: קטגוריה לחיפוש (למשל: חינוך, בריאות, ספורט)
-        user_lat: קו רוחב של המשתמש (אופציונלי - למיון לפי מרחק)
-        user_lng: קו אורך של המשתמש (אופציונלי)
-        count: מספר התוצאות להחזיר
-    
-    Returns:
-        רשימת אתרים מהקטגוריה
-    """
-    try:
-        with httpx.Client(timeout=10.0) as client:
-            resp = client.get(f"{DATA_SERVER_URL}/api/permanent-sites")
-            if resp.status_code != 200:
-                return "שגיאה בטעינת אתרים"
-            
-            all_sites = resp.json()
-        
-        # Filter by category (case-insensitive partial match)
-        category_lower = category.lower()
-        filtered = [
-            s for s in all_sites
-            if category_lower in (s.get("category") or "").lower() or
-               category_lower in (s.get("sub_category") or "").lower() or
-               category_lower in (s.get("name") or "").lower()
-        ]
-        
-        if not filtered:
-            return f"לא נמצאו אתרים בקטגוריה '{category}'"
-        
-        # Calculate distances if location provided
-        if user_lat and user_lng:
-            for site in filtered:
-                if site.get("lat") and site.get("lng"):
-                    site["distance_km"] = round(
-                        haversine_distance(user_lat, user_lng, site["lat"], site["lng"]),
-                        2
-                    )
-            filtered.sort(key=lambda x: x.get("distance_km", float("inf")))
-        
-        # Take top N
-        results = filtered[:count]
-        
-        result = f"🔍 נמצאו {len(filtered)} אתרים בקטגוריה '{category}':\n\n"
-        
-        for i, site in enumerate(results, 1):
-            result += f"{i}. **{site.get('name', 'ללא שם')}**\n"
-            if site.get("category"):
-                result += f"   קטגוריה: {site['category']}\n"
-            if site.get("street"):
-                result += f"   כתובת: {site.get('street', '')} {site.get('house_number', '')}\n"
-            if site.get("phone"):
-                result += f"   טלפון: {site['phone']}\n"
-            if site.get("distance_km"):
-                result += f"   מרחק: {site['distance_km']} ק\"מ\n"
-            result += "\n"
-        
-        return result
-        
-    except Exception as e:
-        return f"שגיאה בחיפוש: {str(e)}"
-
-
-@mcp.tool
-def get_recent_sites(
-    count: int = 5,
-    categories: list[str] = None,
 ) -> str:
     """
     מחזיר את האיתורים שנוספו או עודכנו לאחרונה במערכת.
+    מביא קודם מהאיתורים הזמניים, משלים מהאיתורים הקבועים אם צריך.
 
     Args:
-        count: מספר האיתורים להחזיר (ברירת מחדל: 5)
+        sites_count: מספר האיתורים להחזיר (ברירת מחדל: 10)
         categories: רשימת תת-קטגוריות לסינון (אופציונלי)
+        user_lat: קו רוחב של המשתמש (אופציונלי — למרחק)
+        user_lng: קו אורך של המשתמש (אופציונלי — למרחק)
 
     Returns:
         רשימת האיתורים החדשים ביותר
     """
     try:
-        sites = []
         categories_lower = [c.lower() for c in categories] if categories else None
+        has_location = user_lat is not None and user_lng is not None
 
         def matches_category(site: dict) -> bool:
             if not categories_lower:
@@ -374,7 +304,16 @@ def get_recent_sites(
             except (ValueError, AttributeError):
                 return None
 
+        def calc_distance(site: dict):
+            if not has_location or not site.get("lat") or not site.get("lng"):
+                return None
+            return round(haversine_distance(user_lat, user_lng, site["lat"], site["lng"]), 2)
+
+        temp_sites = []
+        perm_sites = []
+
         with httpx.Client(timeout=10.0) as client:
+            # זמניים — עדיפות ראשונה
             resp = client.get(f"{DATA_SERVER_URL}/api/temporary-sites")
             if resp.status_code == 200:
                 now = datetime.now(timezone.utc)
@@ -388,22 +327,47 @@ def get_recent_sites(
                             pass
                     if not matches_category(site):
                         continue
-                    sites.append({
+                    temp_sites.append({
                         "type": "temporary",
-                        "id": site.get("id"),
                         "name": site.get("name", "ללא שם"),
-                        "category": site.get("category", "אירוע"),
                         "sub_category": site.get("sub_category", ""),
-                        "address": f"{site.get('street', '')} {site.get('house_number', '')}".strip(),
-                        "phone": site.get("phone", ""),
-                        "description": site.get("description", ""),
-                        "end_date": site.get("end_date", ""),
+                        "category": site.get("category", "אירוע"),
+                        "street": f"{site.get('street', '')} {site.get('house_number', '')}".strip(),
+                        "contact_name": site.get("contact_name", ""),
+                        "end_date": site.get("end_date", "")[:10] if site.get("end_date") else "",
+                        "updated_at": (site.get("updated_at") or site.get("created_at") or "")[:10],
+                        "distance_km": calc_distance(site),
                         "sort_dt": parse_dt(site.get("updated_at")) or parse_dt(site.get("created_at")),
-                        "created_at": site.get("created_at", ""),
+                        "lat": site.get("lat"),
+                        "lng": site.get("lng"),
                     })
 
-        sites.sort(key=lambda x: x["sort_dt"] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
-        recent = sites[:count]
+            # קבועים — השלמה אם צריך
+            if len(temp_sites) < sites_count:
+                resp = client.get(f"{DATA_SERVER_URL}/api/permanent-sites")
+                if resp.status_code == 200:
+                    for site in resp.json():
+                        if not matches_category(site):
+                            continue
+                        perm_sites.append({
+                            "type": "permanent",
+                            "name": site.get("name", "ללא שם"),
+                            "sub_category": site.get("sub_category", ""),
+                            "category": site.get("category", ""),
+                            "street": f"{site.get('street', '')} {site.get('house_number', '')}".strip(),
+                            "contact_name": site.get("contact_name", ""),
+                            "updated_at": (site.get("updated_at") or site.get("created_at") or "")[:10],
+                            "distance_km": calc_distance(site),
+                            "sort_dt": parse_dt(site.get("updated_at")) or parse_dt(site.get("created_at")),
+                            "lat": site.get("lat"),
+                            "lng": site.get("lng"),
+                        })
+
+        temp_sites.sort(key=lambda x: x["sort_dt"] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+        perm_sites.sort(key=lambda x: x["sort_dt"] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+
+        needed_from_perm = max(0, sites_count - len(temp_sites))
+        recent = temp_sites[:sites_count] + perm_sites[:needed_from_perm]
 
         if not recent:
             if categories:
@@ -416,22 +380,21 @@ def get_recent_sites(
         result = header + ":\n\n"
 
         for i, site in enumerate(recent, 1):
-            emoji = "📍" if site["type"] == "permanent" else "⚠️"
             result += f"{i}. שם: {site['name']}\n"
             if site.get("sub_category"):
                 result += f"   קטגוריה: {site['sub_category']}\n"
             elif site.get("category"):
                 result += f"   קטגוריה: {site['category']}\n"
-            if site.get("address"):
-                result += f"   כתובת: {site['address']}\n"
-            if site.get("phone"):
-                result += f"   טלפון: {site['phone']}\n"
-            if site.get("description"):
-                result += f"   תיאור: {site['description'][:150]}\n"
+            if site.get("distance_km") is not None:
+                result += f"   מרחק: {site['distance_km']} ק\"מ\n"
+            if site.get("street"):
+                result += f"   רחוב: {site['street']}\n"
+            if site.get("contact_name"):
+                result += f"   איש קשר: {site['contact_name']}\n"
+            if site.get("updated_at"):
+                result += f"   עודכן: {site['updated_at']}\n"
             if site["type"] == "temporary" and site.get("end_date"):
-                result += f"   בתוקף עד: {site['end_date'][:10]}\n"
-            if site.get("created_at"):
-                result += f"   נוסף: {site['created_at'][:10]}\n"
+                result += f"   בתוקף עד: {site['end_date']}\n"
             result += "\n"
 
         return result

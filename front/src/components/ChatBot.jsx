@@ -196,15 +196,13 @@ const ChatBot = ({ isOpen, setIsOpen, onSiteClick, allSites = [] }) => {
 
   return (
     <>
-      {!isOpen && (
-        <button
-          className={styles.chatToggle}
-          onClick={() => setIsOpen(true)}
-          title="פתח צ'אט AI"
-        >
-          🤖
-        </button>
-      )}
+      <button
+        className={`${styles.chatToggle} ${isOpen ? styles.chatToggleActive : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+        title={isOpen ? "סגור צ'אט" : "פתח צ'אט AI"}
+      >
+        {isOpen ? '✕' : '🤖'}
+      </button>
 
       {isOpen && (
         <div className={styles.chatWindow}>
@@ -213,10 +211,6 @@ const ChatBot = ({ isOpen, setIsOpen, onSiteClick, allSites = [] }) => {
               <span className={styles.headerIcon}>🤖</span>
               <div className={styles.headerText}>
                 <h3>AI Assistant</h3>
-                <span className={styles.headerStatus}>
-                  <span className={styles.statusDot}></span>
-                  מחכה לחיבור
-                </span>
               </div>
             </div>
             <button

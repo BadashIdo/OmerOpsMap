@@ -41,7 +41,7 @@ async def call_selected_tools(
         results = {}
 
         if use_nearby_sites:
-            params = {"count": sites_count, "include_temporary": True}
+            params = {"sites_count": sites_count, "include_temporary": True}
             if user_lat is not None and user_lng is not None:
                 params["user_lat"] = user_lat
                 params["user_lng"] = user_lng
@@ -55,7 +55,10 @@ async def call_selected_tools(
                 results["nearby_sites"] = f"שגיאה: {e}"
 
         if use_recent_sites:
-            params = {"count": sites_count}
+            params = {"sites_count": sites_count}
+            if user_lat is not None and user_lng is not None:
+                params["user_lat"] = user_lat
+                params["user_lng"] = user_lng
             if categories:
                 params["categories"] = categories
             try:

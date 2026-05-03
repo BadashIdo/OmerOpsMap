@@ -36,6 +36,10 @@ class ToolSelection(BaseModel):
         default=None,
         description="Specific place/site name if the user asks about a specific place. Null otherwise."
     )
+    sites_count: int = Field(
+        default=5,
+        description="How many results to return. Extract from user query if they specify a number (e.g. 'תן לי 2', 'הראה 3'). Default 5."
+    )
 
 
 _prompt = ChatPromptTemplate.from_messages([

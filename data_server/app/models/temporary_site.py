@@ -30,7 +30,7 @@ class TemporarySite(Base):
     contact_name = Column(String(255))
     phone = Column(String(50))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     def __repr__(self):
         return f"<TemporarySite(id={self.id}, name='{self.name}', status={self.status})>"

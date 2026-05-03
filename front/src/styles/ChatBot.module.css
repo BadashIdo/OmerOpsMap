@@ -24,6 +24,11 @@
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
+.chatToggleActive {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  font-size: 22px;
+}
+
 .chatToggle:active {
   transform: scale(0.95);
 }
@@ -31,7 +36,7 @@
 /* Chat Window */
 .chatWindow {
   position: fixed;
-  bottom: 20px;
+  bottom: 90px;
   left: 20px;
   width: 380px;
   height: 550px;
@@ -43,7 +48,7 @@
   flex-direction: column;
   overflow: hidden;
   animation: slideUp 0.3s ease-out;
-  touch-action: none;
+  touch-action: pan-y;
 }
 
 @keyframes slideUp {
@@ -137,11 +142,18 @@
 .messagesContainer {
   flex: 1;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   padding: 16px;
   background: #f9fafb;
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.messagesContainer * {
+  touch-action: pan-y;
 }
 
 .messagesContainer::-webkit-scrollbar {
@@ -287,6 +299,7 @@
   max-height: 100px;
   direction: rtl;
   text-align: right;
+  touch-action: pan-y;
 }
 
 .input:focus {
@@ -333,8 +346,9 @@
 @media (max-width: 768px) {
   .chatWindow {
     width: calc(100% - 40px);
-    height: calc(100svh - 40px);
-    bottom: 20px;
+    top: 75px;
+    bottom: 90px;
+    height: auto;
     left: 20px;
     right: 20px;
   }

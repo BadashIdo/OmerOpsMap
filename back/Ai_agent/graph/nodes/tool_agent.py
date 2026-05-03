@@ -66,6 +66,7 @@ async def tool_agent(state: GraphState) -> GraphState:
         user_lng=user_lng,
         categories=selection["categories"],
         name_search=selection["name_search"],
+        sites_count=selection.get("sites_count", 5),
     )
 
     print(f"[5] TOOL_RESULTS type: {type(tool_results)}")
