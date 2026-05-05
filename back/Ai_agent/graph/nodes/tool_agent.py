@@ -2,110 +2,107 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 
 from graph.state import GraphState
-from graph.agents.tool_router import decide_tools
+from graph.agents.tool_router import choose_tools
 from graph.mcp.tools import call_selected_tools
-
-
 from configuration.loader import get_llm_config
+from configuration.prompts import CITIZEN_ASSISTANT_SYSTEM, CITIZEN_ASSISTANT_HUMAN
 
-# Load configuration
 llm_config = get_llm_config("main_llm")
-llm = ChatOpenAI(
-    model=llm_config["model_name"],
-    temperature=llm_config["temperature"]
-)
+llm = ChatOpenAI(model=llm_config["model_name"], temperature=llm_config["temperature"])
 
-SYSTEM_PROMPT = """אתה עוזר עירוני חכם של היישוב עומר.
-אתה עונה בעברית בצורה ידידותית ומקצועית.
-יש לך גישה למיקום GPS האמיתי של המשתמש (אם זמין).
-ענה את התשובה הטובה ביותר שתענה על שאלת המשתמש (תושב היישוב עומר).
-אתענה לתושב תשובות עם מרחקים מדויקיים גם אם הוא רחוק!
-"""
+final_prompt = ChatPromptTemplate.from_messages([
+    ("system", CITIZEN_ASSISTANT_SYSTEM),
+    ("human", CITIZEN_ASSISTANT_HUMAN),
+])
 
 
-final_prompt = ChatPromptTemplate.from_messages(
-    [
-        ("system", SYSTEM_PROMPT),
-        ("human", """היסטוריית השיחה:
-{context_window}
+def _parse_location(self_location: str) -> tuple[float | None, float | None]:
+    if not self_location:
+        return None, None
+    try:
+        parts = self_location.split(",")
+        if len(parts) == 2:
+            return float(parts[0].strip()), float(parts[1].strip())
+    except (ValueError, AttributeError):
+        pass
+    return None, None
 
----
 
-📍 מיקום GPS של המשתמש: {self_location}
-
-שאלה נוכחית: {query}
-
-תוצאות כלים (אם רלוונטי):
-{tool_results}
-
-ענה על השאלה בעברית. המרחקים מחושבים מהמיקום האמיתי של המשתמש.""")
-    ]
-)
+def _recent_context(full_context: str, num_messages: int = 4) -> str:
+    if not full_context:
+        return ""
+    lines = full_context.strip().split("\n")
+    messages, current = [], []
+    for line in lines:
+        if line.startswith("[User]:") or line.startswith("[AI]:"):
+            if current:
+                messages.append("\n".join(current))
+            current = [line]
+        else:
+            current.append(line)
+    if current:
+        messages.append("\n".join(current))
+    return "\n".join(messages[-num_messages:])
 
 
 async def tool_agent(state: GraphState) -> GraphState:
     query = state["query"]
     context_window = state.get("context_window", "")
-    self_location = state.get("self_location", "")
+    self_location = state.get("self_location") or "מיקום עצמי כבוי"
 
-    # Extract last 4 messages for tool decision context
-    def get_recent_context(full_context: str, num_messages: int = 4) -> str:
-        if not full_context:
-            return ""
-        lines = full_context.strip().split("\n")
-        # Each message starts with [User] or [AI]
-        messages = []
-        current_msg = []
-        for line in lines:
-            if line.startswith("[User]:") or line.startswith("[AI]:"):
-                if current_msg:
-                    messages.append("\n".join(current_msg))
-                current_msg = [line]
-            else:
-                current_msg.append(line)
-        if current_msg:
-            messages.append("\n".join(current_msg))
-        # Return last N messages
-        recent = messages[-num_messages:] if len(messages) > num_messages else messages
-        return "\n".join(recent)
-    
-    recent_context = get_recent_context(context_window, 4)
-    
-    # 1️⃣ Decide if nearby_sites tool is needed (with recent context)
-    decision = decide_tools(query, recent_context)
-    use_nearby_sites = bool(decision.get("use_nearby_sites", False))
+    selection = choose_tools(query, _recent_context(context_window))
+    user_lat, user_lng = _parse_location(self_location)
 
-    # Parse user location if provided (format: "lat,lng")
-    user_lat, user_lng = None, None
-    if self_location:
-        try:
-            parts = self_location.split(",")
-            if len(parts) == 2:
-                user_lat = float(parts[0].strip())
-                user_lng = float(parts[1].strip())
-        except (ValueError, AttributeError):
-            pass
+    print(f"\n{'='*60}")
+    print(f"[1] QUERY: {query!r}")
+    print(f"[2] SELF_LOCATION raw: {self_location!r}")
+    print(f"[3] PARSED: lat={user_lat}, lng={user_lng}")
+    print(f"[4] SELECTION: {selection}")
 
-    # 2️⃣ Call MCP tools
     tool_results = await call_selected_tools(
-        query=query,
-        use_nearby_sites=use_nearby_sites,
+        use_nearby_sites=selection["use_nearby_sites"],
+        use_recent_sites=selection["use_recent_sites"],
         user_lat=user_lat,
         user_lng=user_lng,
+        categories=selection["categories"],
+        name_search=selection["name_search"],
+        sites_count=selection.get("sites_count", 5),
     )
 
-    # 3️⃣ Generate final answer with context
+    print(f"[5] TOOL_RESULTS type: {type(tool_results)}")
+    print(f"[5] TOOL_RESULTS keys: {list(tool_results.keys()) if tool_results else 'empty'}")
+    if tool_results:
+        for k, v in tool_results.items():
+            print(f"[5] TOOL_RESULTS[{k!r}] (type={type(v).__name__}):")
+            print(f"    {str(v)[:500]}")
+
+    # Extract plain text so the LLM gets clean formatted text, not a Python dict repr
+    parts = [v for v in (tool_results or {}).values() if v]
+    tool_results_str = "\n\n".join(parts) if parts else "(לא נעשה שימוש בכלים)"
+
+    print(f"[5b] TOOL_RESULTS_STR passed to LLM (first 400):")
+    print(tool_results_str[:400])
+
     messages = final_prompt.format_messages(
-        context_window=context_window if context_window else "(אין היסטוריה קודמת)",
-        query=query, 
-        tool_results=tool_results if tool_results else "(לא נעשה שימוש בכלים)",
-        self_location=self_location
+        context_window=context_window or "(אין היסטוריה קודמת)",
+        query=query,
+        tool_results=tool_results_str,
+        self_location=self_location,
     )
+
+    print(f"[6] SYSTEM PROMPT (first 300 chars):")
+    print(f"    {messages[0].content[:300]}")
+    print(f"[6] HUMAN PROMPT (last 600 chars):")
+    print(f"    {messages[1].content[-600:]}")
+
     msg = await llm.ainvoke(messages)
-    answer = msg.content
+
+    print(f"[7] LLM RESPONSE:")
+    print(f"    {msg.content[:600]}")
+    print(f"{'='*60}\n")
 
     return {
         **state,
         "tool_results": tool_results,
-        "final_answer": answer,
+        "final_answer": msg.content,
     }

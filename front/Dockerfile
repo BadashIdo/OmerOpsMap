@@ -16,9 +16,14 @@ RUN npm install --legacy-peer-deps
 # Copy source code
 COPY . .
 
-# Build argument for API URL (passed from Railway)
+# Build arguments — must be declared so docker passes them to vite build.
+# Without these ARG/ENV lines, Vite would fall back to localhost defaults.
 ARG VITE_API_URL=http://localhost:8001
+ARG VITE_WS_URL=ws://localhost:8001/ws
+ARG VITE_AI_AGENT_URL=http://localhost:8000
 ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_WS_URL=$VITE_WS_URL
+ENV VITE_AI_AGENT_URL=$VITE_AI_AGENT_URL
 
 # Build the application (needs devDependencies like vite)
 RUN npm run build

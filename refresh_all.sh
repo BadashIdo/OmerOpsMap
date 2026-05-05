@@ -32,7 +32,7 @@ echo "✅ All containers stopped and volumes removed"
 # Step 2: Remove images
 log_section "Step 2: Removing Docker images..."
 docker-compose down --rmi all 2>/dev/null || true
-docker rmi omeropsmap-frontend omeropsmap-data_server 2>/dev/null || true
+docker rmi omeropsmap-frontend omeropsmap-data_server omeropsmap-ai_agent omeropsmap-mcp_nearby_sites 2>/dev/null || true
 echo "✅ Docker images removed"
 
 # Step 3: Build images
@@ -63,7 +63,7 @@ echo "  • Database Admin UI:   http://localhost:8080"
 echo -e "\n${YELLOW}🔐 Default Credentials:${NC}"
 echo "  Admin:"
 echo "    • Username: ${GREEN}admin${NC}"
-echo "    • Password: ${GREEN}admin123${NC}"
+echo "    • Password: ${GREEN}123123${NC}"
 echo ""
 echo "  Subadmin:"
 echo "    • Username: ${GREEN}power_user${NC}"
@@ -72,6 +72,6 @@ echo "    • Password: ${GREEN}power1234${NC}"
 echo -e "\n${YELLOW}📋 Monitor Logs:${NC}"
 echo "  • All services:   docker-compose logs -f"
 echo "  • Specific service: docker-compose logs -f [service-name]"
-echo "  • Service names: postgres, data_server, frontend, adminer"
+echo "  • Service names: postgres, data_server, frontend, adminer, ai_agent, mcp_nearby_sites"
 
 echo ""

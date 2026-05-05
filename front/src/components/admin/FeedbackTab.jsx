@@ -32,7 +32,7 @@ function formatDate(iso) {
   }
 }
 
-export default function FeedbackTab({ authHeader, refreshTrigger, onCountChange }) {
+export default function FeedbackTab({ authHeader, refreshTrigger, onCountChange, onLocateFeedback }) {
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -239,6 +239,7 @@ export default function FeedbackTab({ authHeader, refreshTrigger, onCountChange 
           onClose={() => { setEditing(null); setEditMode("view"); }}
           onSaved={handleSaved}
           onSwitchToEdit={() => setEditMode("edit")}
+          onLocateFeedback={onLocateFeedback}
         />
       )}
 

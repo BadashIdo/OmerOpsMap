@@ -358,6 +358,10 @@ export default function MapPage() {
               setIsAdminPanelOpen(false);
               goToPoint(site);
             }}
+            onLocateFeedback={(lat, lng) => {
+              setIsAdminPanelOpen(false);
+              goToPoint({ name: "מיקום המשוב", lat, lng });
+            }}
             feedbackRefreshTrigger={feedbackRefreshTrigger}
           />
         )}
@@ -413,7 +417,12 @@ export default function MapPage() {
         <FeedbackButton open={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
 
         {/* ── AI ChatBot ── */}
-        <ChatBot isOpen={isChatOpen} setIsOpen={setIsChatOpen} />
+        <ChatBot
+          isOpen={isChatOpen}
+          setIsOpen={setIsChatOpen}
+          onSiteClick={goToPoint}
+          allSites={[...points, ...temporarySites]}
+        />
 
         {/* ── Pikud Haoref alert banner (top, only when active oref alert) ── */}
         <AlertBanner alerts={activeOrefAlerts} />

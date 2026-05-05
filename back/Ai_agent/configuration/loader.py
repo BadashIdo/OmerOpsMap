@@ -14,7 +14,6 @@ def load_llm_config():
         return {
             "main_llm": {"model_name": "gpt-4o-mini", "temperature": 0},
             "tool_router_llm": {"model_name": "gpt-4o-mini", "temperature": 0},
-            "category_selector_llm": {"model_name": "gpt-4o-mini", "temperature": 0},
             "moderation_llm": {"model_name": "gpt-4o-mini", "temperature": 0},
         }
 
