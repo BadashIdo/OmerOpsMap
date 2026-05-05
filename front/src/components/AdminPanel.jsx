@@ -16,7 +16,7 @@ const TABS = [
   { id: "feedback", label: "משובים", icon: "💬" },
 ];
 
-export default function AdminPanel({ isOpen, onClose, onDataChange, categoriesStructure, onLocateSite, feedbackRefreshTrigger = 0 }) {
+export default function AdminPanel({ isOpen, onClose, onDataChange, categoriesStructure, onLocateSite, onLocateFeedback, feedbackRefreshTrigger = 0 }) {
   const { admin, getAuthHeader } = useAuth();
   const [activeTab, setActiveTab] = useState("permanent");
   const [newFeedbackCount, setNewFeedbackCount] = useState(0);
@@ -114,6 +114,7 @@ export default function AdminPanel({ isOpen, onClose, onDataChange, categoriesSt
               authHeader={getAuthHeader()}
               refreshTrigger={feedbackRefreshTrigger}
               onCountChange={setNewFeedbackCount}
+              onLocateFeedback={onLocateFeedback}
             />
           )}
         </div>

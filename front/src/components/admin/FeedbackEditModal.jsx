@@ -16,7 +16,7 @@ const STATUSES = [
   { value: "resolved", label: "טופל" },
 ];
 
-export default function FeedbackEditModal({ feedback, mode, authHeader, onClose, onSaved, onSwitchToEdit }) {
+export default function FeedbackEditModal({ feedback, mode, authHeader, onClose, onSaved, onSwitchToEdit, onLocateFeedback }) {
   const isCreate = mode === "create";
   const isView = mode === "view";
   const readOnly = isView;
@@ -163,14 +163,18 @@ export default function FeedbackEditModal({ feedback, mode, authHeader, onClose,
           {(feedback?.lat != null && feedback?.lng != null) && (
             <div className={styles.field}>
               <span className={styles.labelText}>מיקום</span>
-              <a
-                href={`https://maps.google.com/?q=${feedback.lat},${feedback.lng}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => {
+                  onLocateFeedback?.(Number(feedback.lat), Number(feedback.lng));
+                  onClose?.();
+                }}
                 className={styles.locationLink}
+                style={{ background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "inherit", font: "inherit", color: "inherit" }}
+                title="הצג במפה"
               >
                 📍 {Number(feedback.lat).toFixed(5)}, {Number(feedback.lng).toFixed(5)}
-              </a>
+              </button>
             </div>
           )}
 

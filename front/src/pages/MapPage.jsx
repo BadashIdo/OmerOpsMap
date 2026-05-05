@@ -358,6 +358,10 @@ export default function MapPage() {
               setIsAdminPanelOpen(false);
               goToPoint(site);
             }}
+            onLocateFeedback={(lat, lng) => {
+              setIsAdminPanelOpen(false);
+              goToPoint({ name: "מיקום המשוב", lat, lng });
+            }}
             feedbackRefreshTrigger={feedbackRefreshTrigger}
           />
         )}
