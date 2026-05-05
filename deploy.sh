@@ -2,10 +2,16 @@
 
 #############################################################################
 # OmerOpsMap Deployment Script for DigitalOcean
-# Clone/pull latest "deploy" branch, restart all Docker containers
+# Clone/pull latest code from specified branch, restart all Docker containers
 #
-# Usage: ./deploy.sh [DROPLET_IP] [ADMIN_PASSWORD]
-# Example: ./deploy.sh 165.245.218.35 "admin123"
+# Usage: ./deploy.sh [DROPLET_IP] [ADMIN_PASSWORD] [BRANCH]
+#
+# Examples:
+#   ./deploy.sh                                    # Deploy "deploy" branch to default IP
+#   ./deploy.sh 165.245.218.35                     # Deploy "deploy" branch to IP
+#   ./deploy.sh 165.245.218.35 "admin123"          # Deploy "deploy" branch with password
+#   ./deploy.sh 165.245.218.35 "admin123" main     # Deploy "main" branch
+#   ./deploy.sh 165.245.218.35 "admin123" feature  # Deploy custom branch
 #############################################################################
 
 set -e
@@ -20,8 +26,8 @@ NC='\033[0m' # No Color
 # Parse arguments
 DROPLET_IP="${1:-165.245.218.35}"
 ADMIN_PASSWORD="${2:-admin123}"
+BRANCH="${3:-deploy}"
 REPO_URL="https://github.com/BadashIdo/OmerOpsMap.git"
-BRANCH="deploy"
 APP_DIR="/opt/omeropsmap"
 
 log_section() {
@@ -76,6 +82,18 @@ else
   echo "✅ Cloned repository (${BRANCH} branch)"
 fi
 
+# Show current commit info
+COMMIT_HASH=\$(git rev-parse --short HEAD)
+COMMIT_MESSAGE=\$(git log -1 --pretty=%B)
+COMMIT_DATE=\$(git log -1 --format=%ai)
+COMMIT_AUTHOR=\$(git log -1 --format=%an)
+
+log_info "\n${YELLOW}📍 DEPLOYING COMMIT:${NC}"
+echo "  • Hash:    ${GREEN}\${COMMIT_HASH}${NC}"
+echo "  • Author:  ${GREEN}\${COMMIT_AUTHOR}${NC}"
+echo "  • Date:    ${GREEN}\${COMMIT_DATE}${NC}"
+echo "  • Message: ${GREEN}\${COMMIT_MESSAGE}${NC}"
+
 log_info "\n${BLUE}[4/6]${NC} Stopping and removing old Docker containers..."
 docker compose down -v > /dev/null 2>&1 || echo "No existing containers"
 docker system prune -f > /dev/null 2>&1 || true
@@ -106,6 +124,12 @@ INITIAL_ADMIN_PASSWORD=${ADMIN_PASSWORD}
 INITIAL_ADMIN_DISPLAY_NAME=מנהל עיריית עומר
 INITIAL_ADMIN_EMAIL=admin@omer.com
 
+# Subadmin Account (auto-created on first startup)
+INITIAL_SUBADMIN_USERNAME=power_user
+INITIAL_SUBADMIN_PASSWORD=power1234
+INITIAL_SUBADMIN_DISPLAY_NAME=מנהל משנה
+INITIAL_SUBADMIN_EMAIL=subadmin@omer.com
+
 # Database
 DATABASE_URL=postgresql+asyncpg://omeropsmap:omeropsmap_prod_pass@postgres:5432/omeropsmap
 
@@ -133,6 +157,11 @@ echo "  • WebSocket (WSS):         wss://${DROPLET_IP}/ws"
 log_info "\n${YELLOW}🔐 Admin Login:${NC}"
 echo "  • Username: ${GREEN}admin${NC}"
 echo "  • Password: ${GREEN}${ADMIN_PASSWORD}${NC}"
+
+log_info "\n${YELLOW}🔐 Subadmin Login:${NC}"
+echo "  • Username: ${GREEN}power_user${NC}"
+echo "  • Password: ${GREEN}power1234${NC}"
+echo "  • Note: Subadmin cannot delete sites and has no access to system management"
 
 log_info "\n${YELLOW}⚠️  SSL CERTIFICATE INFO:${NC}"
 echo "  ⚠️  Using self-signed certificate for testing"

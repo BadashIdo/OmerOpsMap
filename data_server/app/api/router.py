@@ -1,5 +1,14 @@
 from fastapi import APIRouter
-from app.api import permanent_sites, temporary_sites, websocket, auth, import_data, export_data
+from app.api import (
+    permanent_sites,
+    temporary_sites,
+    websocket,
+    auth,
+    import_data,
+    export_data,
+    feedback,
+    external_features,
+)
 
 api_router = APIRouter()
 
@@ -9,5 +18,7 @@ api_router.include_router(permanent_sites.router)
 api_router.include_router(temporary_sites.router)
 api_router.include_router(import_data.router)
 api_router.include_router(export_data.router)
+api_router.include_router(feedback.router)
+api_router.include_router(external_features.router)
 api_router.include_router(websocket.router)
 

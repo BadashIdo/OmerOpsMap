@@ -15,7 +15,6 @@ langgraph = "*"
 langchain-openai = "*"
 langchain-chroma = "*"
 tiktoken = "*"
-tavily-python = "*"
 python-dotenv = "*"
 fastapi = "^0.127.1"
 uvicorn = {extras = ["standard"], version = "^0.40.0"}

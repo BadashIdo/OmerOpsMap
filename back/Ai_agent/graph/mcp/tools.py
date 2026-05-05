@@ -1,61 +1,69 @@
-import asyncio
 from contextlib import AsyncExitStack
+from langsmith import traceable
 from graph.mcp.clients import NEARBY_SITES_MCP
-from graph.agents.tool_router import select_categories
 
 
+def _extract_text(result) -> str:
+    if hasattr(result, "data") and result.data:
+        return result.data
+    if hasattr(result, "content") and result.content:
+        return result.content[0].text
+    return str(result)
+
+
+@traceable(name="get_nearby_sites")
+async def _call_nearby_sites(params: dict) -> str:
+    result = await NEARBY_SITES_MCP.call_tool("get_nearby_sites", params)
+    return _extract_text(result)
+
+
+@traceable(name="get_recent_sites")
+async def _call_recent_sites(params: dict) -> str:
+    result = await NEARBY_SITES_MCP.call_tool("get_recent_sites", params)
+    return _extract_text(result)
+
+
+@traceable(name="mcp_tool_calls")
 async def call_selected_tools(
-    query: str,
     use_nearby_sites: bool = False,
+    use_recent_sites: bool = False,
     user_lat: float = None,
     user_lng: float = None,
-    sites_count: int = 8
+    categories: list = None,
+    name_search: str = None,
+    sites_count: int = 5,
 ) -> dict:
-    """
-    Call selected MCP tools based on the query.
-    
-    Args:
-        query: The user's query
-        use_nearby_sites: Whether to search for nearby sites
-        user_lat: User's latitude (for nearby sites)
-        user_lng: User's longitude (for nearby sites)
-        sites_count: Number of nearby sites to return
-    """
-    results = {}
-
-    if not use_nearby_sites:
-        return results
+    if not use_nearby_sites and not use_recent_sites:
+        return {}
 
     async with AsyncExitStack() as stack:
         await stack.enter_async_context(NEARBY_SITES_MCP)
+        results = {}
 
-        # Use LLM to select relevant categories and/or place name
-        selection = select_categories(query)
-        categories = selection.get("categories", [])
-        name_search = selection.get("name_search")
-        
-        params = {
-            "count": sites_count,
-            "include_temporary": True
-        }
-        
-        # Add location only if both lat and lng are provided
-        if user_lat is not None and user_lng is not None:
-            params["user_lat"] = user_lat
-            params["user_lng"] = user_lng
-        
-        # Add categories if found
-        if categories:
-            params["categories"] = categories
-        
-        # Add name search if found
-        if name_search:
-            params["name_search"] = name_search
-        
-        try:
-            result = await NEARBY_SITES_MCP.call_tool("get_nearby_sites", params)
-            results["nearby_sites"] = result
-        except Exception as e:
-            results["nearby_sites"] = {"error": str(e)}
+        if use_nearby_sites:
+            params = {"sites_count": sites_count, "include_temporary": True}
+            if user_lat is not None and user_lng is not None:
+                params["user_lat"] = user_lat
+                params["user_lng"] = user_lng
+            if categories:
+                params["categories"] = categories
+            if name_search:
+                params["name_search"] = name_search
+            try:
+                results["nearby_sites"] = await _call_nearby_sites(params)
+            except Exception as e:
+                results["nearby_sites"] = f"שגיאה: {e}"
 
-    return results
+        if use_recent_sites:
+            params = {"sites_count": sites_count}
+            if user_lat is not None and user_lng is not None:
+                params["user_lat"] = user_lat
+                params["user_lng"] = user_lng
+            if categories:
+                params["categories"] = categories
+            try:
+                results["recent_sites"] = await _call_recent_sites(params)
+            except Exception as e:
+                results["recent_sites"] = f"שגיאה: {e}"
+
+        return results

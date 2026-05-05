@@ -7,6 +7,7 @@ import {
   deletePermanentSiteAuth,
   deleteTemporarySiteAuth,
 } from "../../api/sitesApi";
+import { useAuth } from "../../context/AuthContext";
 import LocationPickerMap from "./LocationPickerMap";
 import { DISTRICTS } from "../../lib/constants";
 import styles from "../../styles/SiteEditModal.module.css";
@@ -37,7 +38,10 @@ const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, 
 const MINUTE_OPTIONS = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0"));
 
 export default function SiteEditModal({ site, siteType, authHeader, categoriesStructure, onClose, onSave }) {
+  const { admin } = useAuth();
   const isNew = !site?.id;
+  const isSubadmin = admin?.role === "subadmin";
+  const isFullAdmin = admin?.role === "admin";
 
   const getInitialFormData = (type) => {
     if (type === "permanent") {
@@ -86,10 +90,28 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Custom free-text mode for admin-only "אחר" option
+  const [categoryIsCustom, setCategoryIsCustom] = useState(() => {
+    if (!categoriesStructure) return false;
+    const cats = Object.keys(categoriesStructure).filter(k => !EXCLUDED_STRUCTURE_KEYS.includes(k));
+    const initial = site?.category || "";
+    return Boolean(initial && !cats.includes(initial));
+  });
+  const [subCategoryIsCustom, setSubCategoryIsCustom] = useState(() => {
+    if (!categoriesStructure) return false;
+    const allSubs = Object.entries(categoriesStructure)
+      .filter(([k]) => !EXCLUDED_STRUCTURE_KEYS.includes(k))
+      .flatMap(([, v]) => v);
+    const initial = site?.subCategory || site?.sub_category || "";
+    return Boolean(initial && !allSubs.includes(initial));
+  });
+
   const handleTypeToggle = (newType) => {
     if (newType === activeSiteType) return;
     setActiveSiteType(newType);
     setFormData(getInitialFormData(newType));
+    setCategoryIsCustom(false);
+    setSubCategoryIsCustom(false);
     setError("");
   };
   const [scrollTrigger, setScrollTrigger] = useState(0);
@@ -154,6 +176,48 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
     formData.end_date_h, formData.start_date_h,
     formData.start_date_m,
   ]);
+
+  const handleCategorySelectChange = (e) => {
+    const { value } = e.target;
+    if (value === "__other__") {
+      setCategoryIsCustom(true);
+      setSubCategoryIsCustom(false);
+      setFormData((prev) => ({ ...prev, category: "", sub_category: "" }));
+    } else {
+      setCategoryIsCustom(false);
+      setFormData((prev) => {
+        const subs = categoriesStructure?.[value] || [];
+        return {
+          ...prev,
+          category: value,
+          sub_category: subs.includes(prev.sub_category) ? prev.sub_category : "",
+        };
+      });
+    }
+  };
+
+  const handleSubCategorySelectChange = (e) => {
+    const { value } = e.target;
+    if (value === "__other__") {
+      setSubCategoryIsCustom(true);
+      setFormData((prev) => ({ ...prev, sub_category: "" }));
+    } else {
+      setSubCategoryIsCustom(false);
+      setFormData((prev) => {
+        const next = { ...prev, sub_category: value };
+        if (value && categoriesStructure) {
+          const parentCat = Object.entries(categoriesStructure).find(
+            ([cat, subs]) => !EXCLUDED_STRUCTURE_KEYS.includes(cat) && subs.includes(value)
+          )?.[0];
+          if (parentCat) {
+            next.category = parentCat;
+            setCategoryIsCustom(false);
+          }
+        }
+        return next;
+      });
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -430,6 +494,20 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
 
         <form className={styles.form} ref={modalRef} onSubmit={handleSubmit}>
           {error && <div className={styles.error}>{error}</div>}
+          {!isNew && isSubadmin && (
+            <div style={{
+              padding: "12px 16px",
+              background: "#fff3cd",
+              border: "1px solid #ffc107",
+              borderRadius: 8,
+              color: "#856404",
+              marginBottom: 16,
+              textAlign: "center",
+              fontWeight: 500
+            }}>
+              ⚠️ ניתן רק ליצור אתרים חדשים, לא לערוך קיימים
+            </div>
+          )}
 
           <div className={styles.field}>
             <label>שם *</label>
@@ -456,28 +534,68 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
           <div className={styles.row}>
             <div className={styles.field}>
               <label>קטגוריה *</label>
-              <select name="category" value={formData.category} onChange={handleChange}>
-                <option value="">בחר קטגוריה</option>
-                {(siteCategories.length > 0 ? siteCategories : []).map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
+              {categoryIsCustom ? (
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input
+                    type="text"
+                    value={formData.category}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value, sub_category: "" }))}
+                    placeholder="הזן קטגוריה חופשית..."
+                    autoFocus
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    title="חזור לרשימה"
+                    onClick={() => { setCategoryIsCustom(false); setSubCategoryIsCustom(false); setFormData((prev) => ({ ...prev, category: "", sub_category: "" })); }}
+                    style={{ padding: "0 10px", borderRadius: 6, border: "1px solid #ccc", background: "#f5f5f5", cursor: "pointer", fontWeight: "bold" }}
+                  >✕</button>
+                </div>
+              ) : (
+                <select name="category" value={formData.category} onChange={handleCategorySelectChange}>
+                  <option value="">בחר קטגוריה</option>
+                  {(siteCategories.length > 0 ? siteCategories : []).map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                  {isFullAdmin && <option value="__other__">✍️ אחר</option>}
+                </select>
+              )}
             </div>
 
             <div className={styles.field}>
               <label>תת-קטגוריה *</label>
-              <select name="sub_category" value={formData.sub_category} onChange={handleChange}>
-                <option value="">
-                  {formData.category
-                    ? availableSubCategories.length > 0
-                      ? "בחר תת-קטגוריה"
-                      : "אין תת-קטגוריות"
-                    : "בחר קטגוריה "}
-                </option>
-                {availableSubCategories.map((sub) => (
-                  <option key={sub} value={sub}>{sub}</option>
-                ))}
-              </select>
+              {subCategoryIsCustom ? (
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input
+                    type="text"
+                    value={formData.sub_category}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, sub_category: e.target.value }))}
+                    placeholder="הזן תת-קטגוריה חופשית..."
+                    autoFocus
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    title="חזור לרשימה"
+                    onClick={() => { setSubCategoryIsCustom(false); setFormData((prev) => ({ ...prev, sub_category: "" })); }}
+                    style={{ padding: "0 10px", borderRadius: 6, border: "1px solid #ccc", background: "#f5f5f5", cursor: "pointer", fontWeight: "bold" }}
+                  >✕</button>
+                </div>
+              ) : (
+                <select name="sub_category" value={formData.sub_category} onChange={handleSubCategorySelectChange}>
+                  <option value="">
+                    {formData.category
+                      ? availableSubCategories.length > 0
+                        ? "בחר תת-קטגוריה"
+                        : "אין תת-קטגוריות"
+                      : "בחר קטגוריה"}
+                  </option>
+                  {availableSubCategories.map((sub) => (
+                    <option key={sub} value={sub}>{sub}</option>
+                  ))}
+                  {isFullAdmin && <option value="__other__">✍️ אחר</option>}
+                </select>
+              )}
             </div>
           </div>
 
@@ -668,46 +786,48 @@ export default function SiteEditModal({ site, siteType, authHeader, categoriesSt
             </div>
           </div>
 
-          <div className={styles.actions} style={{ display: "flex", gap: 12, width: "100%" }}>
-            <button 
-              type="submit" 
-              className={styles.saveBtn} 
-              disabled={isLoading}
-              style={{ flex: 1, padding: "14px 16px" }}
-            >
-              {isLoading ? "שומר..." : isNew ? "הוסף" : "שמור"}
-            </button>
-            <button 
-              type="button" 
-              className={styles.cancelBtn} 
-              onClick={onClose}
-              style={{ flex: 1, padding: "14px 16px", textAlign: "center" }}
-            >
-              בטל
-            </button>
-            {!isNew && (
-              <button 
-                type="button" 
-                onClick={() => setShowDeleteConfirm(true)}
-                style={{
-                  flex: 1,
-                  background: "#ffebee",
-                  color: "#d32f2f",
-                  border: "1px solid #ffcdd2",
-                  borderRadius: 8,
-                  padding: "14px 16px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 6,
-                }}
+          {!(!isNew && isSubadmin) && (
+            <div className={styles.actions} style={{ display: "flex", gap: 12, width: "100%" }}>
+              <button
+                type="submit"
+                className={styles.saveBtn}
+                disabled={isLoading}
+                style={{ flex: 1, padding: "14px 16px" }}
               >
-                🗑️ מחיקה
+                {isLoading ? "שומר..." : isNew ? "הוסף" : "שמור"}
               </button>
-            )}
-          </div>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={onClose}
+                style={{ flex: 1, padding: "14px 16px", textAlign: "center" }}
+              >
+                בטל
+              </button>
+              {!isNew && !isSubadmin && (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  style={{
+                    flex: 1,
+                    background: "#ffebee",
+                    color: "#d32f2f",
+                    border: "1px solid #ffcdd2",
+                    borderRadius: 8,
+                    padding: "14px 16px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                  }}
+                >
+                  🗑️ מחיקה
+                </button>
+              )}
+            </div>
+          )}
         </form>
       </div>
     </>

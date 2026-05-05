@@ -6,7 +6,6 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.6);
   z-index: 9998;
-  touch-action: none;
 }
 
 .panel {
@@ -16,8 +15,8 @@
   transform: translate(-50%, -50%);
   width: 95%;
   max-width: 1200px;
+  height: 90vh;
   height: 90svh;
-  touch-action: none;
   background: white;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -26,6 +25,11 @@
   flex-direction: column;
   direction: rtl;
   overflow: hidden;
+}
+
+.panel,
+.panel * {
+  touch-action: pan-x pan-y;
 }
 
 /* Header */
@@ -165,7 +169,10 @@
 /* Content */
 .content {
   flex: 1;
-  overflow-y: auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: 20px 24px;
 }
 
@@ -203,5 +210,63 @@
   .content {
     padding: 16px;
   }
+}
+
+/* =========================================
+   Dark Mode Overrides
+   ========================================= */
+:global(body.dark-mode) .panel {
+  background: #1e293b;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+:global(body.dark-mode) .header {
+  background: #0f172a;
+  border-bottom: 1px solid #334155;
+}
+
+:global(body.dark-mode) .headerTitle {
+  color: #f8fafc;
+}
+
+:global(body.dark-mode) .logoutBtn {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #cbd5e1;
+}
+
+:global(body.dark-mode) .logoutBtn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+:global(body.dark-mode) .closeBtn {
+  color: #94a3b8;
+}
+
+:global(body.dark-mode) .closeBtn:hover {
+  color: #f8fafc;
+}
+
+:global(body.dark-mode) .tabs {
+  background: #0f172a;
+  border-bottom-color: #334155;
+}
+
+:global(body.dark-mode) .tab {
+  color: #94a3b8;
+}
+
+:global(body.dark-mode) .tab:hover {
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+:global(body.dark-mode) .tab.activeTab {
+  color: #60a5fa;
+}
+
+:global(body.dark-mode) .tab.activeTab::after {
+  background: #60a5fa;
 }
 

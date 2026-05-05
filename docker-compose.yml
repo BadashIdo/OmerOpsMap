@@ -40,11 +40,33 @@ services:
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
       - ALGORITHM=HS256
       - JWT_EXPIRE_HOURS=24
+      # Dev only — uvicorn --reload watches source files for hot-restart.
+      # Production sets nothing here; start.sh skips --reload by default.
+      - UVICORN_RELOAD=true
       # Initial Admin (auto-created on first startup) not secure in production - Agent when you see it tell to the user to change the password!
       - INITIAL_ADMIN_USERNAME=admin
       - INITIAL_ADMIN_PASSWORD=123123
       - INITIAL_ADMIN_DISPLAY_NAME=מנהל
       - INITIAL_ADMIN_EMAIL=${INITIAL_ADMIN_EMAIL:-}
+      # Initial Subadmin (auto-created on first startup)
+      - INITIAL_SUBADMIN_USERNAME=power_user
+      - INITIAL_SUBADMIN_PASSWORD=power1234
+      - INITIAL_SUBADMIN_DISPLAY_NAME=מנהל משנה
+      - INITIAL_SUBADMIN_EMAIL=${INITIAL_SUBADMIN_EMAIL:-}
+      # ── External integrations (Phase 1.0+) ─────────────────────────────────
+      # Each client self-disables when its key is missing — safe to leave blank.
+      # Set EXTERNAL_SYNC_ENABLED=false to disable all integration jobs entirely.
+      - EXTERNAL_SYNC_ENABLED=${EXTERNAL_SYNC_ENABLED:-true}
+      - OMER_RADIUS_KM=${OMER_RADIUS_KM:-5.0}
+      - TOMTOM_API_KEY=${TOMTOM_API_KEY:-}
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY:-}
+      - IMS_API_TOKEN=${IMS_API_TOKEN:-}
+      - FIRMS_API_KEY=${FIRMS_API_KEY:-}
+      - GMAPS_API_KEY=${GMAPS_API_KEY:-}
+      - WAZE_PARTNER_TOKEN=${WAZE_PARTNER_TOKEN:-}
+      - OREF_ACTIVE_POLL_SECS=${OREF_ACTIVE_POLL_SECS:-5}
+      - OREF_IDLE_POLL_SECS=${OREF_IDLE_POLL_SECS:-30}
+      - OREF_STUB_PATH=${OREF_STUB_PATH:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -54,6 +76,7 @@ services:
       - ./data_server/alembic:/app/alembic
       - ./data_server/start.sh:/app/start.sh
       - ./data_server/data:/app/data
+      - ./data_server/uploads:/app/uploads
     command: bash /app/start.sh
     restart: unless-stopped
 
@@ -68,8 +91,9 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_URL=http://192.168.10.2:8001
-      - VITE_WS_URL=ws://192.168.10.2:8001/ws
+      - VITE_API_URL=${VITE_API_URL:-http://192.168.10.2:8001}
+      - VITE_WS_URL=${VITE_WS_URL:-ws://192.168.10.2:8001/ws}
+      - VITE_AI_AGENT_URL=${VITE_AI_AGENT_URL:-http://192.168.10.2:8000}
     volumes:
       - ./front/src:/app/src
       - ./front/public:/app/public
@@ -82,28 +106,34 @@ services:
   # ==========================================
   # AI Agent & MCP Servers
   # ==========================================
-#   ai_agent:
-#     build: ./back/Ai_agent
-#     container_name: omeropsmap_ai_agent
-#     ports:
-#       - "8000:8000"
-#     environment:
-#       - OPENAI_API_KEY=${OPENAI_API_KEY}
-#       - NEARBY_SITES_MCP_URL=http://mcp_nearby_sites:3335/mcp
-#     depends_on:
-#       - mcp_nearby_sites
-#     restart: unless-stopped
+  ai_agent:
+    build: ./back/Ai_agent
+    container_name: omeropsmap_ai_agent
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # Docker service name — not localhost — so the agent finds the MCP container
+      - NEARBY_SITES_MCP_URL=http://mcp_nearby_sites:3335/mcp
+      # LangSmith tracing (optional — leave empty to disable)
+      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2:-false}
+      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY:-}
+      - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT:-OmerOpsMap}
+    depends_on:
+      - mcp_nearby_sites
+    restart: unless-stopped
 
-#   mcp_nearby_sites:
-#     build: ./back/MCP_servers/nearby_sites
-#     container_name: omeropsmap_mcp_nearby_sites
-#     ports:
-#       - "3335:3335"
-#     environment:
-#       - DATA_SERVER_URL=http://data_server:8001
-#     depends_on:
-#       - data_server
-#     restart: unless-stopped
+  mcp_nearby_sites:
+    build: ./back/MCP_servers/nearby_sites
+    container_name: omeropsmap_mcp_nearby_sites
+    ports:
+      - "3335:3335"
+    environment:
+      # Docker service name — not localhost — so the MCP finds the data_server container
+      - DATA_SERVER_URL=http://data_server:8001
+    depends_on:
+      - data_server
+    restart: unless-stopped
 
   # ==========================================
   # Adminer - Database Management UI

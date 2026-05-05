@@ -1,0 +1,27 @@
+{
+  "latitude": 31.265,
+  "longitude": 34.84,
+  "generationtime_ms": 0.123,
+  "utc_offset_seconds": 7200,
+  "timezone": "Asia/Jerusalem",
+  "timezone_abbreviation": "IDT",
+  "elevation": 220.0,
+  "current_units": {
+    "time": "iso8601",
+    "interval": "seconds",
+    "temperature_2m": "°C",
+    "wind_speed_10m": "km/h",
+    "relative_humidity_2m": "%",
+    "weather_code": "wmo code",
+    "precipitation": "mm"
+  },
+  "current": {
+    "time": "2026-04-28T15:00",
+    "interval": 900,
+    "temperature_2m": 27.4,
+    "wind_speed_10m": 14.2,
+    "relative_humidity_2m": 38,
+    "weather_code": 2,
+    "precipitation": 0.0
+  }
+}

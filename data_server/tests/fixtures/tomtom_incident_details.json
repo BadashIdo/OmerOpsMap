@@ -1,0 +1,79 @@
+{
+  "incidents": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [34.84, 31.27],
+          [34.842, 31.272]
+        ]
+      },
+      "properties": {
+        "id": "tomtom-12345",
+        "iconCategory": 1,
+        "magnitudeOfDelay": 2,
+        "events": [
+          {
+            "description": "תאונה",
+            "code": 401,
+            "iconCategory": 1
+          }
+        ],
+        "startTime": "2026-04-28T13:30:00Z",
+        "endTime": "2026-04-28T15:00:00Z",
+        "from": "כביש 60",
+        "to": "צומת עומר",
+        "length": 320,
+        "delay": 180,
+        "roadNumbers": ["60"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [34.85, 31.265]
+      },
+      "properties": {
+        "id": "tomtom-67890",
+        "iconCategory": 9,
+        "magnitudeOfDelay": 1,
+        "events": [
+          {
+            "description": "עבודות בכביש",
+            "code": 701,
+            "iconCategory": 9
+          }
+        ],
+        "startTime": "2026-04-28T08:00:00Z",
+        "endTime": "2026-04-28T17:00:00Z",
+        "from": "כביש 25",
+        "to": "צומת באר שבע",
+        "length": 1200,
+        "delay": 60,
+        "roadNumbers": ["25"]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [34.92, 31.30]
+      },
+      "properties": {
+        "id": "tomtom-99999",
+        "iconCategory": 1,
+        "magnitudeOfDelay": 3,
+        "events": [],
+        "startTime": "2026-04-28T14:00:00Z",
+        "endTime": "2026-04-28T15:00:00Z",
+        "from": "רחוק",
+        "to": "מעומר",
+        "length": 100,
+        "delay": 60,
+        "roadNumbers": []
+      }
+    }
+  ]
+}

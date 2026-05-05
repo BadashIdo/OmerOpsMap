@@ -6,7 +6,6 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.7);
   z-index: 10000;
-  touch-action: none;
 }
 
 .modal {
@@ -16,6 +15,7 @@
   transform: translate(-50%, -50%);
   width: 95%;
   max-width: 600px;
+  max-height: 90vh;
   max-height: 90svh;
   background: white;
   border-radius: 16px;
@@ -25,7 +25,11 @@
   flex-direction: column;
   direction: rtl;
   overflow: hidden;
-  touch-action: none;
+}
+
+.modal,
+.modal * {
+  touch-action: pan-y;
 }
 
 .header {
@@ -56,7 +60,10 @@
 
 .form {
   flex: 1;
-  overflow-y: auto;
+  min-height: 0;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
@@ -183,5 +190,76 @@
   .row {
     grid-template-columns: 1fr;
   }
+}
+
+/* =========================================
+   Dark Mode Overrides
+   ========================================= */
+:global(body.dark-mode) .modal {
+  background: #1e293b;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+}
+
+:global(body.dark-mode) .header {
+  border-bottom-color: #334155;
+}
+
+:global(body.dark-mode) .header h2 {
+  color: #f8fafc;
+}
+
+:global(body.dark-mode) .closeBtn {
+  color: #94a3b8;
+}
+
+:global(body.dark-mode) .closeBtn:hover {
+  color: #f8fafc;
+}
+
+:global(body.dark-mode) .field label {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+:global(body.dark-mode) .field input,
+:global(body.dark-mode) .field textarea,
+:global(body.dark-mode) .field select {
+  background: #0f172a;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+:global(body.dark-mode) .field input:focus,
+:global(body.dark-mode) .field textarea:focus,
+:global(body.dark-mode) .field select:focus {
+  border-color: #3b82f6;
+  background: #1e293b;
+}
+
+:global(body.dark-mode) .field input::placeholder,
+:global(body.dark-mode) .field textarea::placeholder {
+  color: #64748b;
+}
+
+:global(body.dark-mode) .divider {
+  color: #94a3b8;
+}
+
+:global(body.dark-mode) .divider::before,
+:global(body.dark-mode) .divider::after {
+  background: #334155;
+}
+
+:global(body.dark-mode) .actions {
+  border-top-color: #334155;
+}
+
+:global(body.dark-mode) .cancelBtn {
+  background: #334155;
+  color: #f8fafc;
+}
+
+:global(body.dark-mode) .cancelBtn:hover {
+  background: #475569;
 }
 

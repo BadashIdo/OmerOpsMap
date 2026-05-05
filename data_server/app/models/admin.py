@@ -12,9 +12,10 @@ class Admin(Base):
     display_name = Column(String(100))
     email = Column(String(255))
     is_active = Column(Boolean, default=True, index=True)
+    role = Column(String(20), default="admin", nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     last_login = Column(DateTime(timezone=True))
 
     def __repr__(self):
-        return f"<Admin(id={self.id}, username='{self.username}')>"
+        return f"<Admin(id={self.id}, username='{self.username}', role='{self.role}')>"
 

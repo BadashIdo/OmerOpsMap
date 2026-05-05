@@ -329,3 +329,52 @@
   padding: 8px 15px;
   outline: none;
 }
+
+/* =========================================
+   Dark Mode Overrides
+   ========================================= */
+body.dark-mode .search-box {
+  background: #1e293b;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+}
+
+body.dark-mode .search-input {
+  color: #ffffff;
+  background: transparent;
+}
+
+body.dark-mode .search-input::placeholder {
+  color: #94a3b8;
+}
+
+body.dark-mode .search-clear {
+  color: #94a3b8;
+}
+
+body.dark-mode .search-clear:hover {
+  color: #f8fafc;
+}
+
+body.dark-mode .search-results {
+  border-top-color: #334155;
+}
+
+body.dark-mode .search-item {
+  border-bottom: 1px solid #334155;
+}
+
+body.dark-mode .search-item:last-child {
+  border-bottom: none;
+}
+
+body.dark-mode .search-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .search-item-title {
+  color: #ffffff;
+}
+
+body.dark-mode .search-item-sub {
+  color: #cbd5e1;
+}

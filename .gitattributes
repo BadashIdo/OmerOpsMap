@@ -1,0 +1,10 @@
+# Force LF line endings on shell scripts and other Unix-only files so that
+# checking out the repo on Windows (where core.autocrlf=true is common) does
+# NOT corrupt them with CRLF — which previously broke `bash /app/start.sh`
+# inside the data_server container with errors like:
+#   /app/start.sh: line 2: $'\r': command not found
+*.sh        text eol=lf
+Dockerfile  text eol=lf
+*.dockerfile text eol=lf
+docker-compose*.yml text eol=lf
+alembic.ini text eol=lf

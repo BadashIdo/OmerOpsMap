@@ -2,55 +2,71 @@ import React, { useState, useRef, useEffect } from 'react';
 import { sendChatMessage } from '../api/chatService';
 import styles from '../styles/ChatBot.module.css';
 
-/**
- * ChatBot Component
- * 
- * AI Chat interface that will connect to the AI Agent service (Port 8000)
- * Currently prepared for future integration with back/Ai_agent
- * 
- * Features:
- * - Toggle open/close chat window
- * - Message history display
- * - User input with send button
- * - Auto-scroll to latest message
- * - Responsive design
- * - Ready for WebSocket or REST API integration
- */
+const CHAT_STORAGE_KEY = 'chat_messages';
 
-const ChatBot = ({ isOpen, setIsOpen }) => {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      text: 'שלום! אני עוזר AI של מערכת OmerOpsMap. במה אוכל לעזור לך היום?',
-      sender: 'bot',
-      timestamp: new Date(),
-    },
-  ]);
+const WELCOME_MESSAGE = {
+  id: 1,
+  text: 'שלום! אני עוזר AI של מערכת OmerOpsMap. במה אוכל לעזור לך היום?',
+  sender: 'bot',
+  timestamp: new Date(),
+};
+
+function loadMessages() {
+  try {
+    const stored = sessionStorage.getItem(CHAT_STORAGE_KEY);
+    if (!stored) return [WELCOME_MESSAGE];
+    const parsed = JSON.parse(stored);
+    return parsed.map(m => ({ ...m, timestamp: new Date(m.timestamp) }));
+  } catch {
+    return [WELCOME_MESSAGE];
+  }
+}
+
+const ChatBot = ({ isOpen, setIsOpen, onSiteClick, allSites = [] }) => {
+  const [messages, setMessages] = useState(loadMessages);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [typingText, setTypingText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const typingRef = useRef(null);
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
   }, [messages]);
 
-  // Focus input when chat opens
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isTyping, typingText]);
+
   useEffect(() => {
     if (isOpen) {
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'instant' }), 50);
       inputRef.current?.focus();
     }
   }, [isOpen]);
 
-  /**
-   * Build context window from message history
-   * format:
-   * [User]: ...
-   * [AI]: ...
-   */
+  const typewriterEffect = (fullText, onDone) => {
+    setIsTyping(true);
+    setTypingText('');
+    let i = 0;
+    const speed = Math.max(7, Math.min(18, 1800 / fullText.length));
+    typingRef.current = setInterval(() => {
+      i++;
+      setTypingText(fullText.slice(0, i));
+      if (i >= fullText.length) {
+        clearInterval(typingRef.current);
+        setIsTyping(false);
+        setTypingText('');
+        onDone();
+      }
+    }, speed);
+  };
+
   const buildContextWindow = (currentMessages) => {
     return currentMessages
+      .slice(-4)
       .map(msg => {
         const role = msg.sender === 'user' ? '[User]' : '[AI]';
         return `${role}: ${msg.text}`;
@@ -58,18 +74,12 @@ const ChatBot = ({ isOpen, setIsOpen }) => {
       .join('\n');
   };
 
-  /**
-   * Get user location from sessionStorage (only if tracking is enabled)
-   */
   const getUserLocation = () => {
     const isTracking = sessionStorage.getItem('location_tracking') === 'true';
     if (!isTracking) return null;
     return sessionStorage.getItem('user_location') || null;
   };
 
-  /**
-   * Send message to AI Agent
-   */
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
@@ -81,28 +91,24 @@ const ChatBot = ({ isOpen, setIsOpen }) => {
       timestamp: new Date(),
     };
 
-    // Build context BEFORE adding the new message (as requested)
     const contextWindow = buildContextWindow(messages);
-
     setMessages((prev) => [...prev, userMessage]);
     setInputText('');
     setIsLoading(true);
 
     try {
-      // Get location from sessionStorage
       const location = getUserLocation();
-
-      // Call API
       const result = await sendChatMessage(userText, contextWindow, location);
 
       if (result.success) {
+        const fullText = result.response;
         const botMessage = {
           id: Date.now() + 1,
-          text: result.response,
+          text: fullText,
           sender: 'bot',
           timestamp: new Date(),
         };
-        setMessages((prev) => [...prev, botMessage]);
+        typewriterEffect(fullText, () => setMessages((prev) => [...prev, botMessage]));
       } else {
         throw new Error(result.error);
       }
@@ -110,7 +116,7 @@ const ChatBot = ({ isOpen, setIsOpen }) => {
       console.error('Error sending message to AI Agent:', error);
       const errorMessage = {
         id: Date.now() + 1,
-        text: 'מצטער, נראה ששירות הצ\'ט אינו זמין כרגע. 🔌',
+        text: "מצטער, נראה ששירות הצ'ט אינו זמין כרגע. 🔌",
         sender: 'bot',
         timestamp: new Date(),
       };
@@ -127,6 +133,60 @@ const ChatBot = ({ isOpen, setIsOpen }) => {
     }
   };
 
+  const renderBotText = (text) => {
+    if (!onSiteClick || !allSites?.length) {
+      return (
+        <div className={styles.botTextBlock}>
+          {text.split('\n').map((l, i) => <p key={i}>{l || ' '}</p>)}
+        </div>
+      );
+    }
+
+    // Sort longest names first to avoid partial matches
+    const sortedSites = [...allSites].sort((a, b) => (b.name?.length || 0) - (a.name?.length || 0));
+
+    const highlightLine = (line) => {
+      let remaining = line;
+      const parts = [];
+      let key = 0;
+      while (remaining.length > 0) {
+        let matched = false;
+        for (const site of sortedSites) {
+          if (!site.name) continue;
+          const idx = remaining.indexOf(site.name);
+          if (idx !== -1) {
+            if (idx > 0) parts.push(<span key={key++}>{remaining.slice(0, idx)}</span>);
+            parts.push(
+              <button
+                key={key++}
+                className={styles.siteLink}
+                onClick={() => { onSiteClick(site); setIsOpen(false); }}
+              >
+                {site.name}
+              </button>
+            );
+            remaining = remaining.slice(idx + site.name.length);
+            matched = true;
+            break;
+          }
+        }
+        if (!matched) {
+          parts.push(<span key={key++}>{remaining}</span>);
+          break;
+        }
+      }
+      return parts;
+    };
+
+    return (
+      <div className={styles.botTextBlock}>
+        {text.split('\n').map((line, i) => (
+          <p key={i}>{line ? highlightLine(line) : ' '}</p>
+        ))}
+      </div>
+    );
+  };
+
   const formatTime = (date) => {
     return new Intl.DateTimeFormat('he-IL', {
       hour: '2-digit',
@@ -136,30 +196,21 @@ const ChatBot = ({ isOpen, setIsOpen }) => {
 
   return (
     <>
-      {/* Chat Toggle Button */}
-      {!isOpen && (
-        <button
-          className={styles.chatToggle}
-          onClick={() => setIsOpen(true)}
-          title="פתח צ'אט AI"
-        >
-          💬
-        </button>
-      )}
+      <button
+        className={`${styles.chatToggle} ${isOpen ? styles.chatToggleActive : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+        title={isOpen ? "סגור צ'אט" : "פתח צ'אט AI"}
+      >
+        {isOpen ? '✕' : '🤖'}
+      </button>
 
-      {/* Chat Window */}
       {isOpen && (
         <div className={styles.chatWindow}>
-          {/* Header */}
           <div className={styles.chatHeader}>
             <div className={styles.headerContent}>
               <span className={styles.headerIcon}>🤖</span>
               <div className={styles.headerText}>
                 <h3>AI Assistant</h3>
-                <span className={styles.headerStatus}>
-                  <span className={styles.statusDot}></span>
-                  מחכה לחיבור
-                </span>
               </div>
             </div>
             <button
@@ -171,16 +222,14 @@ const ChatBot = ({ isOpen, setIsOpen }) => {
             </button>
           </div>
 
-          {/* Messages Area */}
           <div className={styles.messagesContainer}>
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`${styles.message} ${msg.sender === 'user' ? styles.userMessage : styles.botMessage
-                  }`}
+                className={`${styles.message} ${msg.sender === 'user' ? styles.userMessage : styles.botMessage}`}
               >
                 <div className={styles.messageContent}>
-                  <p>{msg.text}</p>
+                  {msg.sender === 'bot' ? renderBotText(msg.text) : <p>{msg.text}</p>}
                   <span className={styles.messageTime}>
                     {formatTime(msg.timestamp)}
                   </span>
@@ -191,17 +240,22 @@ const ChatBot = ({ isOpen, setIsOpen }) => {
               <div className={`${styles.message} ${styles.botMessage}`}>
                 <div className={styles.messageContent}>
                   <div className={styles.typingIndicator}>
-                    <span></span>
-                    <span></span>
-                    <span></span>
+                    <span></span><span></span><span></span>
                   </div>
+                </div>
+              </div>
+            )}
+            {isTyping && (
+              <div className={`${styles.message} ${styles.botMessage}`}>
+                <div className={styles.messageContent}>
+                  {renderBotText(typingText)}
+                  <span className={styles.cursor}>|</span>
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Area */}
           <div className={styles.inputContainer}>
             <textarea
               ref={inputRef}

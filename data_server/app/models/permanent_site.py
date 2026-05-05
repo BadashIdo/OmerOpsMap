@@ -20,7 +20,7 @@ class PermanentSite(Base):
     lat = Column(Float, nullable=False, index=True)
     lng = Column(Float, nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     def __repr__(self):
         return f"<PermanentSite(id={self.id}, name='{self.name}')>"
