@@ -99,8 +99,18 @@ function MapLongPressHandler({ onLongPress, mapRef }) {
     const container = mapRef.current.getContainer();
 
     const handleTouchStart = (e) => {
-      if (e.touches && e.touches[0]) {
+      // Only single-finger taps trigger long-press; multi-touch is a pinch-zoom gesture.
+      if (e.touches && e.touches.length === 1) {
         handlePressStart(e);
+      } else {
+        handlePressEnd();
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      // A second finger landing mid-press → user is pinching, cancel the pending long-press.
+      if (e.touches && e.touches.length > 1) {
+        handlePressEnd();
       }
     };
 
@@ -109,11 +119,13 @@ function MapLongPressHandler({ onLongPress, mapRef }) {
     };
 
     container.addEventListener('touchstart', handleTouchStart, { passive: false });
+    container.addEventListener('touchmove', handleTouchMove, { passive: true });
     container.addEventListener('touchend', handleTouchEnd);
     container.addEventListener('touchcancel', handleTouchEnd);
 
     return () => {
       container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
       container.removeEventListener('touchend', handleTouchEnd);
       container.removeEventListener('touchcancel', handleTouchEnd);
     };
