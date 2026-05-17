@@ -47,7 +47,7 @@ import AlertBanner from "../components/AlertBanner";
 import LayersControl from "../components/LayersControl";
 import WeatherWidget from "../components/WeatherWidget";
 import { useExternalFeatures } from "../hooks/useExternalFeatures";
-import { EXTERNAL_LAYERS } from "../lib/constants";
+import { EXTERNAL_LAYERS, STATIC_LAYERS } from "../lib/constants";
 
 export default function MapPage() {
   const { admin, isAdmin, getAuthHeader } = useAuth();
@@ -92,10 +92,11 @@ export default function MapPage() {
     }
   }, [isDarkMode]);
 
-  // ── External layer visibility (per-source toggle in LayersControl) ─────────
-  const [visibleLayers, setVisibleLayers] = useState(() =>
-    Object.fromEntries(EXTERNAL_LAYERS.map((l) => [l.id, l.defaultVisible]))
-  );
+  // ── External + static layer visibility (per-source toggle in LayersControl) ─
+  const [visibleLayers, setVisibleLayers] = useState(() => ({
+    ...Object.fromEntries(EXTERNAL_LAYERS.map((l) => [l.id, l.defaultVisible])),
+    ...Object.fromEntries(STATIC_LAYERS.map((l) => [l.id, l.defaultVisible])),
+  }));
   const toggleLayer = useCallback((layerId) => {
     setVisibleLayers((prev) => ({ ...prev, [layerId]: !prev[layerId] }));
   }, []);
@@ -113,6 +114,9 @@ export default function MapPage() {
   const [siteEditModalOpen, setSiteEditModalOpen] = useState(false);
   const [editingSite, setEditingSite] = useState(null);
   const [editingSiteType, setEditingSiteType] = useState("permanent");
+
+  // ── Admin quarters polygon editor ──────────────────────────────────
+  const [quartersEditing, setQuartersEditing] = useState(false);
 
   // ── Business logic hooks ───────────────────────────────────────────────────
   const { notifications, addNotification, removeNotification } =
@@ -465,7 +469,37 @@ export default function MapPage() {
             setEditingSiteType(type);
             setSiteEditModalOpen(true);
           }}
+          quartersEditing={quartersEditing}
+          onExitQuartersEditing={() => setQuartersEditing(false)}
         />
+
+        {/* Admin-only: trigger to enter quarters polygon edit mode */}
+        {isAdmin && visibleLayers.omer_quarters && !quartersEditing && (
+          <button
+            type="button"
+            onClick={() => setQuartersEditing(true)}
+            style={{
+              position: "absolute",
+              top: 12,
+              left: 12,
+              zIndex: 1000,
+              background: "#fff",
+              border: "1px solid #d1d5db",
+              borderRadius: 8,
+              padding: "8px 12px",
+              fontSize: 13,
+              cursor: "pointer",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+            title="ערוך פוליגוני רבעים"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>edit_location_alt</span>
+            ערוך רבעים
+          </button>
+        )}
       </div>
     </div>
   );

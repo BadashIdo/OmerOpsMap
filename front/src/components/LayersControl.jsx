@@ -7,7 +7,7 @@
  */
 
 import { useEffect } from "react";
-import { EXTERNAL_LAYERS } from "../lib/constants";
+import { EXTERNAL_LAYERS, STATIC_LAYERS } from "../lib/constants";
 import styles from "../styles/LayersControl.module.css";
 
 function relativeTimeHe(date) {
@@ -157,6 +157,44 @@ export default function LayersControl({ visibleLayers, onToggle, layerInfo, open
                 );
               })}
             </ul>
+
+            {STATIC_LAYERS.length > 0 && (
+              <ul className={styles.list}>
+                {STATIC_LAYERS.map((layer) => {
+                  const visible = !!visibleLayers?.[layer.id];
+                  return (
+                    <li key={layer.id} className={styles.row}>
+                      <button
+                        type="button"
+                        className={`${styles.card} ${visible ? styles.cardOn : ""}`}
+                        onClick={() => onToggle(layer.id)}
+                        aria-pressed={visible}
+                      >
+                        <span
+                          className={styles.iconWrap}
+                          style={{ "--card-accent": layer.color }}
+                          aria-hidden="true"
+                        >
+                          <span className={`material-symbols-outlined ${styles.icon}`}>
+                            {layer.icon}
+                          </span>
+                        </span>
+                        <div className={styles.cardText}>
+                          <span className={styles.cardTitle}>{layer.label_he}</span>
+                          <span className={styles.cardSub}>{layer.subline}</span>
+                        </div>
+                        <span
+                          className={`${styles.switch} ${visible ? styles.switchOn : ""}`}
+                          aria-hidden="true"
+                        >
+                          <span className={styles.switchKnob} />
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
 
             <footer className={styles.footer}>
               <span>נתונים בזמן אמת:</span>

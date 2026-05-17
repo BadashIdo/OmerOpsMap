@@ -21,7 +21,9 @@
  *  onLongPress     — called with { lat, lng } on a long mouse press
  */
 
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, GeoJSON, useMapEvents } from "react-leaflet";
+import omerQuartersGeoJSON from "../data/omer_quarters.json";
+import QuartersEditor from "./admin/QuartersEditor";
 import React, { useRef, useCallback, useMemo, useEffect } from "react";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
@@ -147,6 +149,8 @@ export default function MapView({
   onLongPress,
   isAdmin,
   onEditSite,
+  quartersEditing = false,
+  onExitQuartersEditing,
 }) {
   // Stable ref callback — not recreated on every render, prevents unnecessary updates while dragging
   const setMarkerRef = useCallback((el, key) => {
@@ -164,6 +168,37 @@ export default function MapView({
 
       {/* Long press handler for adding new requests */}
       {onLongPress && <MapLongPressHandler onLongPress={onLongPress} mapRef={mapRef} />}
+
+      {/* Static overlay — Omer quarters polygons (read-only). Hidden while admin is editing. */}
+      {visibleLayers?.omer_quarters && !quartersEditing && (
+        <GeoJSON
+          key="omer_quarters"
+          data={omerQuartersGeoJSON}
+          style={(feature) => ({
+            color: feature.properties.color,
+            weight: 2,
+            opacity: 0.9,
+            fillColor: feature.properties.color,
+            fillOpacity: 0.25,
+            dashArray: "6,4",
+          })}
+          onEachFeature={(feature, layer) => {
+            layer.bindTooltip(feature.properties.name, {
+              permanent: false,
+              direction: "center",
+              className: "quarter-tooltip",
+            });
+          }}
+        />
+      )}
+
+      {/* Admin-only editable version with Geoman */}
+      {isAdmin && quartersEditing && (
+        <QuartersEditor
+          initialGeoJSON={omerQuartersGeoJSON}
+          onExit={onExitQuartersEditing}
+        />
+      )}
 
       {/* User GPS location — not clustered, always shown individually */}
       {userLocation && (

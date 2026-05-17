@@ -48,3 +48,18 @@ export const EXTERNAL_LAYERS = [
     cadenceSeconds: 15 * 60,
   },
 ];
+
+/**
+ * Static map overlays — bundled with the app, no backend sync.
+ * Rendered in LayersControl as a separate section (no "last synced" line).
+ */
+export const STATIC_LAYERS = [
+  {
+    id: "omer_quarters",
+    label_he: "רבעי עומר",
+    color: "#7fbce0",
+    icon: "grid_view",
+    defaultVisible: false,
+    subline: "חלוקה לרבעים א'–ד' (כולל פארק ההייטק)",
+  },
+];
